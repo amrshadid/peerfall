@@ -38,6 +38,9 @@ export const VM_BASHRC = '/etc/pf-bashrc'
 /** bash's prompt on the terminal: `peerfall:~# `, or `a:~# ` in router a. */
 export const VM_PROMPT = /[a-z][a-z0-9]*:[^\n]*# $/
 
+/** Where a saved Machine is kept when no name is given. */
+export const VM_DEFAULT_SLOT = 'healthy'
+
 export const VM_OUTPUT_FLUSH_MS = 16
 /** A 9p read still in flight is lost from a saved state: it is saved after this much quiet. */
 export const VM_SAVE_DELAY_MS = 1_000
@@ -111,10 +114,13 @@ export interface VmSession {
   /** Starts a probe; its replies and losses arrive as events. Fails with every problem in its definition. */
   startProbe(probe: ProbeDefinition): Promise<Validated<null>>
   stopProbe(id: string): Promise<void>
-  /** Keeps the Machine as it is now, to come back to: the network, converged and untouched. */
-  saveHealthy(): Promise<boolean>
-  /** Back to the saved Machine, at the moment it was saved; false when none was saved. */
-  restoreHealthy(): Promise<boolean>
+  /**
+   * Keeps the Machine as it is now, to come back to, under a name: a mission's network as it was
+   * first built, or as the player configured it before a fault. A new network forgets them all.
+   */
+  saveHealthy(slot?: string): Promise<boolean>
+  /** Back to a saved Machine, at the moment it was saved; false when none was saved under that name. */
+  restoreHealthy(slot?: string): Promise<boolean>
   /** The terminal's shell moves into this router's namespace; `null` for the Machine itself. */
   selectRouter(router: string | null): Promise<void>
   stop(): Promise<void>

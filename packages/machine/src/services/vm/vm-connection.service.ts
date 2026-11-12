@@ -139,15 +139,15 @@ export async function stopVmProbe(id: string): Promise<void> {
 }
 
 /** Keeps the Machine as it is now, to come back to; false when it could not. */
-export async function saveVmHealthy(): Promise<boolean> {
+export async function saveVmHealthy(slot?: string): Promise<boolean> {
   const running = connection
-  return running ? running.session.saveHealthy() : false
+  return running ? running.session.saveHealthy(slot) : false
 }
 
 /** Back to the saved Machine; false when none was saved. */
-export async function restoreVmHealthy(): Promise<boolean> {
+export async function restoreVmHealthy(slot?: string): Promise<boolean> {
   const running = connection
-  return running ? running.session.restoreHealthy() : false
+  return running ? running.session.restoreHealthy(slot) : false
 }
 
 /** Moves the terminal into a router; false while no VM runs. */

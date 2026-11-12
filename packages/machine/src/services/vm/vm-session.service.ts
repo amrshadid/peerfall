@@ -7,6 +7,7 @@ import {
   VM_CMDLINE,
   VM_CONTROL_READY,
   VM_CONTROL_TIMEOUT_MS,
+  VM_DEFAULT_SLOT,
   VM_MEMORY_BYTES,
   VM_OUTPUT_FLUSH_MS,
   VM_PROMPT,
@@ -75,7 +76,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
   /** The Machine as it first reached its prompt, with no network: every setup starts from it. */
   let clean: ArrayBuffer | null = null
   /** The Machine with a mission's network built and converged, the router its terminal was in, and how many events it had sent. */
-  let healthy: { state: ArrayBuffer; router: string | null; events: number } | null = null
+  const saved = new Map<string, { state: ArrayBuffer; router: string | null; events: number }>()
   let network: NetworkDefinition | null = null
   /** Everything the event port has said since the network was built. */
   const events: StampedMachineEvent[] = []
@@ -321,7 +322,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
         }
         try {
           status('setting-up')
-          healthy = null
+          saved.clear()
           network = null
           if (!pristine && clean) {
             await restore(running, clean)
@@ -381,7 +382,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
       })
     },
 
-    saveHealthy() {
+    saveHealthy(slot = VM_DEFAULT_SLOT) {
       hold()
       return exclusive(async () => {
         const running = emulator
@@ -393,7 +394,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
           // FRR's files reach the 9p root before the save; a read in flight would be lost from it.
           await control.run('sync')
           await wait(VM_SAVE_DELAY_MS)
-          healthy = { state: await running.save_state(), router, events: events.length }
+          saved.set(slot, { state: await running.save_state(), router, events: events.length })
           return true
         } catch {
           return false
@@ -403,21 +404,21 @@ export function createVmSession(wasmUrl?: string): VmSession {
       })
     },
 
-    restoreHealthy() {
+    restoreHealthy(slot = VM_DEFAULT_SLOT) {
       hold()
       return exclusive(async () => {
         const running = emulator
-        const saved = healthy
-        if (!running || !saved) {
+        const kept = saved.get(slot)
+        if (!running || !kept) {
           release()
           return false
         }
         try {
           status('restoring')
           const wanted = router
-          await restore(running, saved.state)
-          rewindEvents(saved.events)
-          router = saved.router
+          await restore(running, kept.state)
+          rewindEvents(kept.events)
+          router = kept.router
           if (wanted !== router) {
             await moveShell(wanted)
           } else {

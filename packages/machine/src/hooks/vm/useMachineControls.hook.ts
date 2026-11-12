@@ -19,9 +19,9 @@ export interface UseMachineControlsResult {
   readonly startProbe: (probe: ProbeDefinition) => Promise<Validated<null>>
   readonly stopProbe: (id: string) => Promise<void>
   /** Keeps the Machine as it is now: the network, converged and untouched. */
-  readonly saveHealthy: () => Promise<boolean>
+  readonly saveHealthy: (slot?: string) => Promise<boolean>
   /** Back to the saved Machine, at the moment it was saved; the events go back with it. */
-  readonly restoreHealthy: () => Promise<boolean>
+  readonly restoreHealthy: (slot?: string) => Promise<boolean>
   /** Runs a line as root, apart from the player's terminal; null while no VM runs. */
   readonly run: (line: string, timeoutMs?: number) => Promise<ControlReply | null>
 }
