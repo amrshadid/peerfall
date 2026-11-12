@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      PF_VM_MIRROR: ${{ vars.PF_VM_MIRROR }}
+      MIRROR_DIR: node_modules/.cache/peerfall-vm-mirror
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,6 +36,18 @@ jobs:
         run: pnpm type-check
       - name: Test
         run: pnpm test
+      # Keyed on what the image is built from, so a release reuses the last one's downloads.
+      - name: Cache the VM downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            apps/web/public/vm
+            node_modules/.cache/peerfall-vm
+          key: vm-image-${{ hashFiles('packages/machine/scripts/vm-image/vm-image.lock.json', 'packages/machine/scripts/vm-image/*.ts', '!packages/machine/scripts/vm-image/*.test.ts', 'packages/machine/src/types/definitions/vm.ts') }}
+          restore-keys: vm-image-
+      # Always a full build here: it also writes every pinned download, flat, for the mirror.
+      - name: Build the VM image and its mirror files
+        run: pnpm vm:mirror
       - name: Build
         run: pnpm build
       - name: Create the GitHub Release
@@ -44,3 +59,13 @@ jobs:
           prerelease=$([[ "$TAG" == *-* ]] && echo --prerelease || true)
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes --verify-tag $prerelease
+      # The image build falls back to .../releases/download/vm-mirror/<file> when Alpine has
+      # dropped a pinned package, so the files go to one fixed release, by name.
+      - name: Update the vm-mirror release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view vm-mirror --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create vm-mirror --repo "$GITHUB_REPOSITORY" --title "VM image mirror" \
+              --notes "Pinned Alpine packages, minirootfs and BIOS for the VM image build." --latest=false --prerelease
+          gh release upload vm-mirror "$MIRROR_DIR"/* --repo "$GITHUB_REPOSITORY" --clobber
