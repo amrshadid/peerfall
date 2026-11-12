@@ -161,6 +161,11 @@ read. A run that is judged as `solution.yaml` says is written to
 events, and the state for a state-checked mission). With an id, only that mission is
 validated and recorded, and the other missions' runs stay untouched.
 
+Content that does not load stops the whole game, so a mission goes into `content/` only
+once it is complete and its runs are judged as its solution says. Until then keep it in a
+folder of its own, laid out like `content/`, and record it from there:
+`PEERFALL_CONTENT_DIR=<folder> PEERFALL_RUNS_DIR=<folder> pnpm --filter @peerfall/missions vm:golden <mission-id>`.
+
 The recorded runs are judged again without a VM by `pnpm --filter @peerfall/missions test`:
 one test file per mission, `src/test/golden-<mission-id>.test.ts`, built on
 `goldenMission(id)` from `#test/index`. A change to a check or to a mission that flips a
