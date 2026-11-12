@@ -5,6 +5,7 @@
 // the game's "check my work" reads it, which is recorded beside the events.
 // Usage: pnpm --filter @peerfall/missions vm:golden [mission-id …]
 //        (after pnpm vm:image; several minutes for every mission)
+//        PEERFALL_CONTENT_DIR and PEERFALL_RUNS_DIR read the content and write the runs elsewhere.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -35,8 +36,11 @@ const CHANGE_TIMEOUT_MS = 120_000
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = join(here, '../../..')
-const content = join(here, '../content')
-const runsDir = join(here, '../src/test/runs')
+// A mission that is not in the game yet can be recorded from a folder of its own: content that
+// does not load stops the whole game, so an unfinished mission stays out of content/ until its
+// runs are judged as its solution says.
+const content = process.env.PEERFALL_CONTENT_DIR ?? join(here, '../content')
+const runsDir = process.env.PEERFALL_RUNS_DIR ?? join(here, '../src/test/runs')
 const vm = join(repo, 'apps/web/public/vm')
 const started = Date.now()
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))

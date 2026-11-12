@@ -1,0 +1,26 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another. FRR is restarted on a
+# before every run is judged (the mission's restartOnCheck).
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Configured and never saved: the restart takes it away.
+  - id: not-saved
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a]
+  - id: saved
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a, end, write memory]
+  # Saved, then restarted by the player before the check restarts it again.
+  - id: saved-and-restarted
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a, end, write memory]
+      - router: a
+        restart: true

@@ -1,0 +1,34 @@
+id: the-silent-router
+version: 1
+title: The Silent Router
+chapter: first-router
+objective: FRR is running on router a, started the way FRR is started, and its daemons answer in vtysh.
+prerequisites: []
+
+# One router with FRR installed and configured, and nothing running: starting it is the player's.
+network:
+  routers:
+    - name: a
+      daemons: []
+      startup: none
+      config: ""
+  links: []
+
+objectives:
+  - id: daemons-answer
+    text: Start FRR on router a, so that its daemons zebra, mgmtd and staticd are running and answer.
+    check: { kind: daemons, router: a, daemons: [zebra, mgmtd, staticd] }
+    hints:
+      - text: Select router a on the map and type vtysh in its terminal. vtysh is FRR's console, and it can only talk to FRR's programs while they run. Read what it answers.
+      - text: FRR is not one program but several, called daemons. The file /etc/frr/a/daemons says which ones this router runs, and FRR's own script can tell you whether each one is running now.
+        command: /usr/lib/frr/frrinit.sh status a
+      - text: The same script starts them all. Its last word is the router's name, because here every router lives in one Linux machine.
+        command: /usr/lib/frr/frrinit.sh start a
+  - id: watchfrr-watches
+    text: Have watchfrr running beside them, the program that starts FRR's daemons and starts one again if it dies.
+    check: { kind: daemons, router: a, daemons: [watchfrr] }
+    hints:
+      - text: Open vtysh and ask which of FRR's programs answered. A daemon that was started by hand runs, but nothing watches it.
+        command: show daemons
+      - text: FRR's script starts watchfrr first, and watchfrr starts the others. Starting FRR again with it stops whatever runs now.
+        command: /usr/lib/frr/frrinit.sh restart a

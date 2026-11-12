@@ -7,6 +7,21 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+### Added
+
+- **The Silent Router** (stage 1, First router): FRR is installed on a router and not
+  running. Find its daemons, start them with FRR's own init script, see watchfrr keep
+  them alive, and open `vtysh`.
+- **Gone After the Restart** (stage 1): a change that worked until the router restarted.
+  The running configuration against the saved `frr.conf`, `write memory`, and a restart of
+  FRR before the work is judged.
+- **Missions without a fault.** A mission's checks can read the network as it is: the FRR
+  daemons that answer, a route in a router's kernel table, whether a router reaches an
+  address, a line in the running or the saved configuration. "Check my work" reads it as
+  root and judges; a mission can have FRR restarted first.
+- `pnpm --filter @peerfall/missions vm:golden <mission-id>` records one mission's golden
+  runs and leaves the others as they are.
+
 ### Fixed
 
 - The "needs a bigger screen" page fills the window and centres its words at every width,

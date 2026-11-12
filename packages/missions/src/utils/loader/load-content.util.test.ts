@@ -34,6 +34,22 @@ describe('the repository’s content', () => {
     ])
   })
 
+  it('starts with the first router, each mission unlocked by the one before it', () => {
+    const loaded = appContent()
+    if (!loaded.ok) {
+      throw new Error(loaded.errors.join('\n'))
+    }
+    const { game } = loaded.value
+    expect(game.missions[0]).toMatchObject({ id: 'the-silent-router', chapter: 'first-router', prerequisites: [] })
+    expect(game.missionsIn('first-router').map((mission) => [mission.id, mission.prerequisites])).toEqual([
+      ['the-silent-router', []],
+      ['gone-after-the-restart', ['the-silent-router']],
+    ])
+    // A mission that breaks nothing has no fault to run and no recovery target.
+    expect(game.missions[0]).not.toHaveProperty('fault')
+    expect(game.missions[0]).not.toHaveProperty('recoveryTargetMs')
+  })
+
   it('gives a mission its incident, its debrief and its folder', () => {
     const loaded = appContent()
     if (!loaded.ok) {
@@ -65,7 +81,9 @@ describe('broken content', () => {
   })
 
   it('wants an incident and a debrief beside every mission', () => {
-    expect(errorsOf(withFiles({ incidents: {}, debriefs: {} }))).toEqual([
+    const errors = errorsOf(withFiles({ incidents: {}, debriefs: {} }))
+    expect(errors).toHaveLength(2 * Object.keys(CONTENT_FILES.missions).length)
+    expect(errors.slice(-2)).toEqual([
       `${MISSION}/incident.md: missing or empty`,
       `${MISSION}/debrief.md: missing or empty`,
     ])
