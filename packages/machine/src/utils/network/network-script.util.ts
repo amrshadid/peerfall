@@ -1,13 +1,17 @@
+import type { LinkName, ProbeDefinition } from '#types/definitions/event'
 import {
   FRR_BASE_DAEMONS,
   FRR_DAEMONS,
+  type FrrDaemon,
+  IPV4,
   IPV4_WITH_PREFIX,
   type LinkDefinition,
   type NetworkDefinition,
+  PROBE_ID,
   ROUTER_NAME,
   type RouterDefinition,
 } from '#types/definitions/network'
-import { VM_FRR_USER } from '#types/definitions/vm'
+import { VM_EVENT_TTY, VM_FRR_USER } from '#types/definitions/vm'
 
 const FRR_BIN = '/usr/lib/frr'
 const OWNER = `${VM_FRR_USER.name}:${VM_FRR_USER.name}`
@@ -140,6 +144,85 @@ export function networkSetupLines(network: NetworkDefinition): string[] {
     ...network.routers.map(({ name }) => `vtysh -N ${name} -b`),
   ]
 }
+
+// awk flushes each line as it prints it, so a line reaches the port when it is written, and whole.
+const toEventPort = (source: string, name: string): string =>
+  `awk '{ print "${source} ${name} " $0; fflush() }' > ${VM_EVENT_TTY}`
+
+/** FRR's own switches for the log lines the events are read from, per daemon that has them. */
+const DEBUGS: Partial<Record<FrrDaemon, string>> = { bfdd: 'debug bfd peer', ospfd: 'debug ospf nsm' }
+
+/**
+ * Root's lines that start sending a built network's news to the event port: each router's FRR log
+ * from its first line, and every change to its kernel routing table. The debug switches are given
+ * at the prompt, not in configure mode, so they never show in a router's running configuration.
+ */
+export function networkWatchLines(network: NetworkDefinition): string[] {
+  return network.routers.flatMap(({ name, daemons }) => {
+    const debugs = daemons.flatMap((daemon) => DEBUGS[daemon] ?? [])
+    return [
+      ...(debugs.length === 0 ? [] : [`vtysh -N ${name} ${debugs.map((debug) => `-c '${debug}'`).join(' ')}`]),
+      `tail -n +1 -F ${routerLogPath(name)} 2>/dev/null | ${toEventPort('frr', name)} &`,
+      // -o keeps a route with several next hops on one line.
+      `ip netns exec ${name} ip -o -ts monitor route | ${toEventPort('fib', name)} &`,
+    ]
+  })
+}
+
+/** A link by its two routers, as its events name it. */
+export const linkName = ({ ends: [first, second] }: LinkDefinition): LinkName => [first.router, second.router]
+
+/**
+ * The fault, with its moment on the event port. The stamp is the control shell's own clock
+ * (bash's EPOCHREALTIME, no new process), taken as soon as the first end drops: from then on
+ * nothing sent from that end arrives.
+ */
+export function stampedFaultLine(link: LinkDefinition, dropping: boolean): string {
+  const [first, second] = link.ends
+  const near = interfaceName(first.router, second.router)
+  const far = interfaceName(second.router, first.router)
+  const action = dropping ? 'add' : 'del'
+  const loss = dropping ? ' netem loss 100%' : ''
+  return [
+    `tc -n ${first.router} qdisc ${action} dev ${near} root${loss}`,
+    `echo "fault ${dropping ? 'on' : 'off'} ${first.router} ${second.router} $EPOCHREALTIME" > ${VM_EVENT_TTY}`,
+    `tc -n ${second.router} qdisc ${action} dev ${far} root${loss}`,
+  ].join(' && ')
+}
+
+const pidFile = (probe: string): string => `/run/pf-probe-${probe}.pid`
+
+/** Every problem that would make a probe's lines wrong or unsafe to run as root. */
+export function probeProblems(probe: ProbeDefinition, network: NetworkDefinition): string[] {
+  const problems: string[] = []
+  if (!PROBE_ID.test(probe.id)) {
+    problems.push(`probe.id: expected a lower-case name of at most 16 characters, got "${probe.id}"`)
+  }
+  if (!network.routers.some((router) => router.name === probe.from)) {
+    problems.push(`probe.from: no router named "${probe.from}"`)
+  }
+  for (const field of ['source', 'destination'] as const) {
+    if (!IPV4.test(probe[field])) {
+      problems.push(`probe.${field}: expected an address like 10.255.0.3, got "${probe[field]}"`)
+    }
+  }
+  if (!(Number.isFinite(probe.intervalMs) && probe.intervalMs >= 10 && probe.intervalMs <= 10_000)) {
+    problems.push(`probe.intervalMs: expected 10 to 10000, got ${probe.intervalMs}`)
+  }
+  return problems
+}
+
+/**
+ * Starts a probe: ping from the router's namespace, each reply stamped with the time it arrived
+ * (-D) and each missing one reported when the next packet leaves (-O). Check `probeProblems` first.
+ */
+export function probeStartLine({ id, from, source, destination, intervalMs }: ProbeDefinition): string {
+  const ping = `ping -D -O -i ${(intervalMs / 1000).toFixed(3)} -I ${source} ${destination}`
+  // exec keeps the pid the file names, so stopping the probe stops ping itself.
+  return `ip netns exec ${from} sh -c 'echo $$ > ${pidFile(id)}; exec ${ping}' 2>&1 | ${toEventPort('probe', id)} &`
+}
+
+export const probeStopLine = (id: string): string => `kill "$(cat ${pidFile(id)})" 2>/dev/null; rm -f ${pidFile(id)}`
 
 /**
  * Drops every packet on a link, both ways, or stops dropping. The interfaces stay up: netem sits

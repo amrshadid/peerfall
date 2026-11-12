@@ -2,6 +2,7 @@ import {
   VM_BASHRC,
   VM_CONTROL_DONE,
   VM_CONTROL_READY,
+  VM_EVENT_TTY,
   VM_FRR_USER,
   VM_HOSTNAME,
   VM_ROUTER_FILE,
@@ -79,7 +80,10 @@ chown ${VM_FRR_USER.name}:${VM_FRR_USER.name} /run/frr /var/log/frr /var/lib/frr
 
 // The host's root channel for a mission's setup: a command line in, its status out. init starts
 // it, so it is no descendant of the player's shell.
-export const CONTROL = `#!/bin/sh
+// bash, for EPOCHREALTIME: a fault's moment is stamped by the shell that injects it, without
+// starting a process. The event port (COM2) is raw too, so lines arrive as they were written.
+export const CONTROL = `#!/bin/bash
+stty -F ${VM_EVENT_TTY} raw -echo
 stty -F /dev/ttyS2 raw -echo
 exec </dev/ttyS2 >/dev/ttyS2 2>&1
 echo ${VM_CONTROL_READY}

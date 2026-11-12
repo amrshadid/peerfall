@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createVmSession } from '#services/vm/vm-session.service'
 import { TRIANGLE, TRIANGLE_DIRECT_LINK } from '#test/triangle'
+import type { StampedMachineEvent } from '#types/definitions/event'
 import type { VmPhase } from '#types/definitions/vm'
 import { linkFaultLine } from '#utils/network/network-script.util'
 
@@ -32,6 +33,8 @@ let screen = ''
 let phase: VmPhase = 'off'
 let detail: string | null = null
 const failures: string[] = []
+const events: StampedMachineEvent[] = []
+const byTime = () => [...events].sort((first, second) => first.timeMs - second.timeMs || first.seq - second.seq)
 
 function check(what: string, ok: boolean, shown = '') {
   log(`${ok ? 'ok  ' : 'FAIL'} ${what}${ok || !shown ? '' : `\n${shown}`}`)
@@ -77,6 +80,10 @@ async function main() {
     (status) => {
       phase = status.phase
       detail = status.detail
+    },
+    (update) => {
+      events.length = Math.min(events.length, update.from)
+      events.push(...update.events)
     }
   )
   await until('Linux to boot', () => phase === 'ready' || phase === 'failed')
@@ -108,7 +115,21 @@ async function main() {
   const inA = await type("vtysh -c 'show ip ospf neighbor'", 'a:~#')
   check('the terminal is in router a and its vtysh reaches a’s daemons', (inA.match(/Full\//g) ?? []).length === 2, inA)
 
+  const full = events.filter(
+    (event) => event.type === 'ospf_adjacency_change' && event.router === 'a' && event.to === 'Full'
+  )
+  const direct = events.some(
+    (event) =>
+      event.type === 'fib_install' && event.router === 'a' && event.prefix === '10.255.0.3' && event.interface === 'a-c'
+  )
+  check(
+    'the events tell of a’s two adjacencies and its direct route to c',
+    full.length === 2 && direct,
+    JSON.stringify(events.slice(-12), null, 1)
+  )
+
   check('the healthy network is saved', await session.saveHealthy())
+  const savedEvents = events.length
   const before = await neighbors('a')
 
   await session.control(linkFaultLine(TRIANGLE_DIRECT_LINK, true))
@@ -125,6 +146,11 @@ async function main() {
   await wait(20_000)
 
   check('the healthy network is restored', await session.restoreHealthy())
+  check(
+    'the events go back to the saved moment with it',
+    events.length === savedEvents,
+    `${events.length} events, ${savedEvents} when saved`
+  )
   const after = await root('ls /tmp/after-save 2>&1; tc -n a qdisc show dev a-c')
   check(
     'the restore undid the fault and everything after the save',
@@ -142,6 +168,71 @@ async function main() {
   check('a’s log shows no adjacency going down', changes === '0', changes)
   const stillB = await type('echo $PF_ROUTER', 'b:~#')
   check('the terminal stays in router b across the restore', stillB.includes('\nb\n'), stillB)
+
+  // The first mission's repaired run: BFD on both ends of the direct link, a probe, then the fault.
+  await root("vtysh -N a -c 'configure terminal' -c 'interface a-c' -c 'ip ospf bfd'")
+  await root("vtysh -N c -c 'configure terminal' -c 'interface c-a' -c 'ip ospf bfd'")
+  await until(
+    'BFD to come up on both ends',
+    () =>
+      ['a', 'c'].every((router) => events.some((event) => event.type === 'bfd_session_up' && event.router === router)),
+    60_000
+  )
+  check('the events tell of the BFD session coming up on both ends', true)
+  const probe = { id: 'direct', from: 'a', source: '10.255.0.1', destination: '10.255.0.3', intervalMs: 50 }
+  const probing = await session.startProbe(probe)
+  check('the probe starts', probing.ok, probing.ok ? '' : probing.errors.join('\n'))
+  await wait(4000)
+  check('the fault is injected', await session.setFault(TRIANGLE_DIRECT_LINK, true))
+  await wait(8000)
+  await session.stopProbe(probe.id)
+  await session.setFault(TRIANGLE_DIRECT_LINK, false)
+  await wait(2500)
+
+  const run = byTime()
+  const fault = run.find((event) => event.type === 'fault_injected')
+  if (!fault) {
+    check('the events tell of the fault', false, JSON.stringify(run.slice(-10), null, 1))
+    return
+  }
+  const sinceFault = run.filter((event) => event.timeMs >= fault.timeMs)
+  const since = (event: StampedMachineEvent | undefined) =>
+    event ? `+${(event.timeMs - fault.timeMs).toFixed(0)} ms` : 'never'
+  const down = sinceFault.find((event) => event.type === 'bfd_session_down' && event.router === 'a')
+  const adjacency = sinceFault.find(
+    (event) => event.type === 'ospf_adjacency_change' && event.router === 'a' && event.from === 'Full'
+  )
+  const route = sinceFault.find(
+    (event) =>
+      event.type === 'fib_install' && event.router === 'a' && event.prefix === '10.255.0.3' && event.interface === 'a-b'
+  )
+  const replies = run.filter((event) => event.type === 'probe_received')
+  const lastGood = replies.filter((event) => event.timeMs < fault.timeMs).at(-1)
+  const firstGood = replies.find(
+    (event) => event.timeMs > fault.timeMs && (!route || event.timeMs >= route.timeMs - 50)
+  )
+  log(
+    `fault at 0; BFD down ${since(down)}; adjacency lost ${since(adjacency)}; backup route ${since(route)}; first reply ${since(firstGood)}; last reply before the fault ${since(lastGood)}`
+  )
+  check(
+    'BFD detects the fault on a',
+    down !== undefined && down.type === 'bfd_session_down' && down.reason === 'control-expired'
+  )
+  check(
+    'a’s adjacency with c is lost, with no dead timer expiring',
+    adjacency !== undefined && !sinceFault.some((event) => event.type === 'ospf_dead_timer_expired')
+  )
+  check('the kernel installs the route through b', route !== undefined)
+  check(
+    'probes were lost, then answered again',
+    sinceFault.some((event) => event.type === 'probe_lost') && firstGood !== undefined
+  )
+  const outage = lastGood && firstGood ? firstGood.timeMs - lastGood.timeMs : Number.POSITIVE_INFINITY
+  check(`traffic recovers in under 2 s (outage ${outage.toFixed(0)} ms)`, outage < 2000)
+  check(
+    'the fault being cleared is an event too',
+    run.some((event) => event.type === 'fault_cleared')
+  )
 }
 
 try {

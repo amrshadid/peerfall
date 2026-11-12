@@ -1,6 +1,7 @@
 import { V86 } from 'v86'
 import { CONTROL_LOST, createVmControl } from '#services/vm/vm-control.service'
 import { loadVmState, saveVmState } from '#services/vm/vm-state.service'
+import type { StampedMachineEvent } from '#types/definitions/event'
 import { type NetworkDefinition, ROUTER_NAME } from '#types/definitions/network'
 import {
   VM_CMDLINE,
@@ -15,15 +16,26 @@ import {
   VM_SAVE_DELAY_MS,
   VM_SETUP_TIMEOUT_MS,
   VM_SHELL_PID_FILE,
+  type VmEventUpdate,
   type VmManifest,
   type VmPhase,
   type VmSession,
   type VmStartOptions,
 } from '#types/definitions/vm'
-import { networkProblems, networkSetupLines } from '#utils/network/network-script.util'
+import { parseEventLine } from '#utils/events/event-parser.util'
+import {
+  networkProblems,
+  networkSetupLines,
+  networkWatchLines,
+  probeProblems,
+  probeStartLine,
+  probeStopLine,
+  stampedFaultLine,
+} from '#utils/network/network-script.util'
 
 const PROMPT_TAIL = 64
 const CONTROL_UART = 2
+const NEWLINE = 0x0a
 const CONSOLE_TTY = '/dev/ttyS0'
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -62,8 +74,39 @@ export function createVmSession(wasmUrl?: string): VmSession {
   const control = createVmControl((bytes) => emulator?.serial_send_bytes(CONTROL_UART, bytes))
   /** The Machine as it first reached its prompt, with no network: every setup starts from it. */
   let clean: ArrayBuffer | null = null
-  /** The Machine with a mission's network built and converged, and the router its terminal was in. */
-  let healthy: { state: ArrayBuffer; router: string | null } | null = null
+  /** The Machine with a mission's network built and converged, the router its terminal was in, and how many events it had sent. */
+  let healthy: { state: ArrayBuffer; router: string | null; events: number } | null = null
+  let network: NetworkDefinition | null = null
+  /** Everything the event port has said since the network was built. */
+  const events: StampedMachineEvent[] = []
+  let sent = 0
+  let eventLine: number[] = []
+  let onEvents: (update: VmEventUpdate) => void = () => {}
+  const eventText = new TextDecoder()
+  const flushEvents = () => {
+    if (events.length > sent) {
+      onEvents({ from: sent, events: events.slice(sent) })
+      sent = events.length
+    }
+  }
+  /** The Machine is back at an earlier moment: what it said after that never happened. */
+  const rewindEvents = (kept: number) => {
+    events.length = Math.min(events.length, kept)
+    eventLine = []
+    sent = events.length
+    onEvents({ from: sent, events: [] })
+  }
+  const pushEventByte = (byte: number) => {
+    if (byte !== NEWLINE) {
+      eventLine.push(byte)
+      return
+    }
+    const parsed = parseEventLine(eventText.decode(new Uint8Array(eventLine)))
+    eventLine = []
+    if (parsed) {
+      events.push({ ...parsed.event, seq: events.length, timeMs: parsed.timeMs })
+    }
+  }
   let pristine = false
   let router: string | null = null
   let status: (phase: VmPhase, detail?: string | null) => void = () => {}
@@ -121,8 +164,9 @@ export function createVmSession(wasmUrl?: string): VmSession {
   }
 
   return {
-    async start(options: VmStartOptions, onOutput, onStatus) {
+    async start(options: VmStartOptions, onOutput, onStatus, onEventUpdate) {
       status = (phase, detail = null) => onStatus({ phase, detail })
+      onEvents = onEventUpdate ?? (() => {})
       status('loading')
       try {
         // The one file that changes with each image; everything it points to has a versioned path.
@@ -238,11 +282,13 @@ export function createVmSession(wasmUrl?: string): VmSession {
             onBooted()
           }
         })
+        running.add_listener('serial1-output-byte', pushEventByte)
         flushTimer = setInterval(() => {
           if (pending.length > 0) {
             onOutput(new Uint8Array(pending))
             pending = []
           }
+          flushEvents()
         }, VM_OUTPUT_FLUSH_MS)
       } catch (error) {
         status('failed', error instanceof Error ? error.message : String(error))
@@ -260,8 +306,8 @@ export function createVmSession(wasmUrl?: string): VmSession {
       }
     },
 
-    setupNetwork(network: NetworkDefinition) {
-      const problems = networkProblems(network)
+    setupNetwork(wanted: NetworkDefinition) {
+      const problems = networkProblems(wanted)
       if (problems.length > 0) {
         return Promise.resolve({ ok: false, errors: problems })
       }
@@ -276,12 +322,15 @@ export function createVmSession(wasmUrl?: string): VmSession {
         try {
           status('setting-up')
           healthy = null
+          network = null
           if (!pristine && clean) {
             await restore(running, clean)
             router = null
           }
+          rewindEvents(0)
           pristine = false
-          for (const line of networkSetupLines(network)) {
+          // The watchers start last, and read each log from its first line: nothing is missed.
+          for (const line of [...networkSetupLines(wanted), ...networkWatchLines(wanted)]) {
             const reply = await control.capture(line, VM_SETUP_TIMEOUT_MS)
             if (reply.status !== 0) {
               const why = reply.status === CONTROL_LOST ? 'did not answer' : `exited with status ${reply.status}`
@@ -289,11 +338,39 @@ export function createVmSession(wasmUrl?: string): VmSession {
               return { ok: false as const, errors: [`${line}: ${why}`, reply.output.trim()].filter(Boolean) }
             }
           }
+          network = wanted
           status('ready')
           return { ok: true as const, value: null }
         } finally {
           release()
         }
+      })
+    },
+
+    setFault(link, dropping) {
+      return exclusive(async () => {
+        pristine = false
+        return (await control.run(stampedFaultLine(link, dropping))) === 0
+      })
+    },
+
+    startProbe(probe) {
+      const problems = network ? probeProblems(probe, network) : ['No network is built']
+      if (problems.length > 0) {
+        return Promise.resolve({ ok: false, errors: problems })
+      }
+      return exclusive(async () => {
+        pristine = false
+        const status = await control.run(probeStartLine(probe))
+        return status === 0
+          ? { ok: true as const, value: null }
+          : { ok: false as const, errors: [`The probe did not start (status ${status})`] }
+      })
+    },
+
+    stopProbe(id) {
+      return exclusive(async () => {
+        await control.run(probeStopLine(id))
       })
     },
 
@@ -316,7 +393,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
           // FRR's files reach the 9p root before the save; a read in flight would be lost from it.
           await control.run('sync')
           await wait(VM_SAVE_DELAY_MS)
-          healthy = { state: await running.save_state(), router }
+          healthy = { state: await running.save_state(), router, events: events.length }
           return true
         } catch {
           return false
@@ -339,6 +416,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
           status('restoring')
           const wanted = router
           await restore(running, saved.state)
+          rewindEvents(saved.events)
           router = saved.router
           if (wanted !== router) {
             await moveShell(wanted)

@@ -44,16 +44,17 @@ export type MachineEvent =
       readonly router: string
       /** `10.255.0.3` or `10.0.3.0/30`, as `ip route` prints it. */
       readonly prefix: string
-      /** The next hop's address; `null` for a directly connected route. */
+      /** The first next hop's address; `null` for a directly connected route. */
       readonly via: string | null
+      /** The first next hop's interface. */
       readonly interface: string
+      /** Every next hop: more than one when equal-cost paths share the traffic. */
+      readonly nextHops: readonly { readonly via: string | null; readonly interface: string }[]
       /** `ospf`, `static`, `kernel`… */
       readonly protocol: string
     }
   | { readonly type: 'fib_remove'; readonly router: string; readonly prefix: string }
-  /** One packet of a probe left its router. */
-  | { readonly type: 'probe_sent'; readonly probe: string; readonly sequence: number }
-  /** Its reply came back. */
+  /** A probe's reply came back. */
   | {
       readonly type: 'probe_received'
       readonly probe: string
@@ -71,7 +72,10 @@ export type MachineEventType = MachineEvent['type']
 
 /** What the stream adds to an event. */
 export interface MachineEventStamp {
-  /** Position in the stream. Strictly increasing, starts at 0. */
+  /**
+   * The order it reached the game in. Strictly increasing, starts at 0. Not the order things
+   * happened in: a log line is read up to a second after it was written, so sort by `timeMs`.
+   */
   readonly seq: number
   /** The Machine's own clock when it happened, in milliseconds since the Unix epoch. */
   readonly timeMs: number

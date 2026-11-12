@@ -35,4 +35,9 @@ export interface NetworkDefinition {
 /** The router is a shell word, a file name and half an interface name (15 characters at most). */
 export const ROUTER_NAME = /^[a-z][a-z0-9]{0,5}$/
 
+/** A probe's name is a shell word and part of a file name. */
+export const PROBE_ID = /^[a-z][a-z0-9-]{0,15}$/
+
+export const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/
+
 export const IPV4_WITH_PREFIX = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\/(3[0-2]|[12]?\d)$/

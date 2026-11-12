@@ -1,5 +1,6 @@
 import type { Validated } from '@peerfall/core/types'
-import type { NetworkDefinition } from '#types/definitions/network'
+import type { ProbeDefinition, StampedMachineEvent } from '#types/definitions/event'
+import type { LinkDefinition, NetworkDefinition } from '#types/definitions/network'
 
 /** What the VM emulates: enough for nine FRR daemons (about 45 MB) with room for more routers. */
 export const VM_MEMORY_BYTES = 256 * 1024 * 1024
@@ -23,6 +24,9 @@ export const VM_SETUP_TIMEOUT_MS = 120_000
 
 /** FRR's unprivileged user and its groups, as the `frr` package's install script creates them. */
 export const VM_FRR_USER = { name: 'frr', uid: 100, gid: 101, vtyGroup: 'frrvty', vtyGid: 102 } as const
+
+/** COM2: the Machine's news, one line each, for the event stream. */
+export const VM_EVENT_TTY = '/dev/ttyS1'
 
 /** The router whose namespace the terminal's next shell starts in; empty or missing for none. */
 export const VM_ROUTER_FILE = '/run/pf-router'
@@ -77,20 +81,36 @@ export interface ControlReply {
   readonly output: string
 }
 
+/**
+ * News from the event stream. `from` is where `events` start in it: less than what the listener
+ * holds when the Machine went back to an earlier moment (a restore, a new network), and everything
+ * from there on is replaced.
+ */
+export interface VmEventUpdate {
+  readonly from: number
+  readonly events: readonly StampedMachineEvent[]
+}
+
 /** One Linux VM: the terminal goes out as bytes, keys come in as text, root has a channel of its own. */
 export interface VmSession {
   start(
     options: VmStartOptions,
     onOutput: (bytes: Uint8Array) => void,
-    onStatus: (status: VmStatus) => void
+    onStatus: (status: VmStatus) => void,
+    onEvents?: (update: VmEventUpdate) => void
   ): Promise<void>
   /** Keys for the terminal. Held while the Machine is being set up or restored. */
   input(text: string): void
   resizeTerminal(rows: number, cols: number): void
   /** Back to the clean boot, then the network built on it. Fails with the line that failed and what it printed. */
   setupNetwork(network: NetworkDefinition): Promise<Validated<null>>
-  /** Runs a line as root, apart from the player's terminal: a fault, a probe, a report. */
+  /** Runs a line as root, apart from the player's terminal: a report, a check. */
   control(line: string, timeoutMs?: number): Promise<ControlReply>
+  /** Starts or stops dropping every packet on a link, both ways. Its interfaces stay up. */
+  setFault(link: LinkDefinition, dropping: boolean): Promise<boolean>
+  /** Starts a probe; its replies and losses arrive as events. Fails with every problem in its definition. */
+  startProbe(probe: ProbeDefinition): Promise<Validated<null>>
+  stopProbe(id: string): Promise<void>
   /** Keeps the Machine as it is now, to come back to: the network, converged and untouched. */
   saveHealthy(): Promise<boolean>
   /** Back to the saved Machine, at the moment it was saved; false when none was saved. */
