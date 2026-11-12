@@ -1,5 +1,6 @@
+import { VM_FILE_CACHE as MACHINE_VM_FILE_CACHE } from '@peerfall/machine/types'
 import { describe, expect, it } from 'vitest'
-import { SW_MANIFEST_TOKEN } from './offline-cache.constants'
+import { SW_MANIFEST_TOKEN, VM_FILE_CACHE } from './offline-cache.constants'
 import {
   appCacheName,
   injectSwManifest,
@@ -43,6 +44,10 @@ describe('app caches', () => {
     expect(isStaleAppCache(current, current)).toBe(false)
     expect(isStaleAppCache('peerfall-vm-files-v1', current)).toBe(false)
     expect(isStaleAppCache('peerfall-offline-v1', current)).toBe(false)
+  })
+
+  it("shares the machine's image cache", () => {
+    expect(VM_FILE_CACHE).toBe(MACHINE_VM_FILE_CACHE)
   })
 })
 
