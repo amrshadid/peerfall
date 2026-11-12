@@ -95,20 +95,29 @@ export function GuideContainer({ run, step, stepLabel, onStartOver }: GuideConta
               } as const,
             ]
           : []),
-        {
-          id: 'probe',
-          label: 'Send probe',
-          kind: !isCompleted && firstRun ? 'primary' : 'default',
-          unavailable: wait,
-          onSelect: () => void run.sendProbe(),
-        },
-        {
-          id: 'fault',
-          label: 'Break the link',
-          kind: !isCompleted && !firstRun ? 'primary' : 'default',
-          unavailable: wait,
-          onSelect: () => void run.runFault(),
-        },
+        // A mission with no traffic to watch has no probe to send; one that breaks nothing has no link to break.
+        ...(mission.probe
+          ? [
+              {
+                id: 'probe',
+                label: 'Send probe',
+                kind: !isCompleted && (firstRun || !mission.fault) ? 'primary' : 'default',
+                unavailable: wait,
+                onSelect: () => void run.sendProbe(),
+              } as const,
+            ]
+          : []),
+        ...(mission.fault
+          ? [
+              {
+                id: 'fault',
+                label: 'Break the link',
+                kind: !isCompleted && !firstRun ? 'primary' : 'default',
+                unavailable: wait,
+                onSelect: () => void run.runFault(),
+              } as const,
+            ]
+          : []),
         { id: 'start-over', label: 'Start over', kind: 'quiet', unavailable: wait, onSelect: onStartOver },
       ]
     : []

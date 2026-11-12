@@ -114,6 +114,81 @@ describe('failureText', () => {
   })
 })
 
+describe('checks that read the routers as they are', () => {
+  const DAEMONS: CheckDefinition = { kind: 'daemons', router: 'a', daemons: ['zebra', 'staticd'] }
+  const ROUTE: CheckDefinition = { kind: 'route', router: 'a', to: '10.255.0.3', protocol: 'static' }
+  const REACHES: CheckDefinition = { kind: 'reaches', from: 'a', to: '10.255.0.3', minReplies: 3 }
+  const CONFIG: CheckDefinition = { kind: 'config', router: 'a', source: 'saved', block: [], line: 'ip route' }
+  const OSPF_ROUTE = { prefix: '10.255.0.3', protocol: 'ospf', nextHops: [{ via: '10.0.2.2', interface: 'a-c' }] }
+
+  it('says nothing was read from the routers yet', () => {
+    const result: CheckResult = { kind: 'route', passed: false, failure: 'not_checked', router: 'a', route: null }
+    expect(failureText(ROUTE, result, NAMES)).toBe('this has not been checked on the routers yet.')
+  })
+
+  it('names the daemons that did not answer and says what a daemon is', () => {
+    const result: CheckResult = {
+      kind: 'daemons',
+      passed: false,
+      failure: 'daemons_down',
+      router: 'a',
+      running: ['zebra'],
+      missing: ['staticd'],
+    }
+    const text = failureText(DAEMONS, result, NAMES)
+    expect(text).toContain('`staticd` did not answer on router a.')
+    expect(text).toContain('A daemon is one of the programs FRR is made of')
+    expect(evidenceText({ ...result, passed: true, failure: null, missing: [] }, NAMES)).toContain(
+      '`zebra` answers on router a.'
+    )
+  })
+
+  it('shows the route the kernel has when it is not the one asked for, or that it has none', () => {
+    const wrong: CheckResult = { kind: 'route', passed: false, failure: 'wrong_route', router: 'a', route: OSPF_ROUTE }
+    expect(failureText(ROUTE, wrong, NAMES)).toContain(
+      'Router a has a route there, but not the one asked for: `10.255.0.3 from ospf via 10.0.2.2 on a-c`.'
+    )
+    const none: CheckResult = { kind: 'route', passed: false, failure: 'no_route', router: 'a', route: null }
+    expect(failureText(ROUTE, none, NAMES)).toContain('Router a has no route there.')
+    expect(evidenceText({ ...wrong, passed: true, failure: null }, NAMES)).toContain(
+      "Router a's kernel has `10.255.0.3 from ospf via 10.0.2.2 on a-c`."
+    )
+  })
+
+  it('counts the packets that were answered', () => {
+    const result: CheckResult = {
+      kind: 'reaches',
+      passed: false,
+      failure: 'unreachable',
+      from: 'a',
+      to: '10.255.0.3',
+      sent: 3,
+      received: 1,
+    }
+    expect(failureText(REACHES, result, NAMES)).toContain('1 of 3 packets from a to 10.255.0.3 was answered.')
+    expect(evidenceText({ ...result, passed: true, failure: null, received: 3 }, NAMES)).toContain(
+      '3 of 3 packets from a to 10.255.0.3 were answered.'
+    )
+  })
+
+  it('tells the running configuration from the saved one', () => {
+    const result: CheckResult = {
+      kind: 'config',
+      passed: false,
+      failure: 'not_configured',
+      router: 'a',
+      source: 'saved',
+      found: null,
+    }
+    const text = failureText(CONFIG, result, NAMES)
+    expect(text).toContain("Router a's saved configuration does not have that line yet.")
+    expect(text).toContain('`frr.conf`, is what it starts with after a restart')
+    expect(
+      evidenceText({ ...result, passed: true, failure: null, found: ' ip route 10.255.0.3/32 10.0.2.2' }, NAMES)
+    ).toContain("Router a's saved configuration has `ip route 10.255.0.3/32 10.0.2.2`.")
+  })
+})
+
 describe('evidenceText', () => {
   it('puts each term in plain words beside the evidence that shows it', () => {
     expect(evidenceText({ kind: 'reachable', passed: true, failure: null, replies: 60 }, NAMES)).toBe(

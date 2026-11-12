@@ -22,11 +22,12 @@ export function DebriefContainer() {
   }
   const before = baseline?.summary ?? null
   const after = repaired?.summary ?? null
+  const targetMs = mission.recoveryTargetMs ?? null
   return (
     <DebriefPresentation
       title={mission.title}
-      verdict={debriefVerdictOf(isCompleted, after, mission.recoveryTargetMs)}
-      measures={debriefMeasuresOf(before, after, mission.recoveryTargetMs)}
+      verdict={debriefVerdictOf(isCompleted, after, targetMs)}
+      measures={debriefMeasuresOf(before, after, targetMs)}
       explanation={[]}
       text={text}
       learned={[]}

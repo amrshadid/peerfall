@@ -8,7 +8,8 @@ import type {
   ObjectiveDefinition,
   RouteHop,
 } from '@peerfall/game/types'
-import { DETECTOR_NAMES, NOT_TESTED, TERMS } from './objective-text.constants'
+import type { KernelRoute } from '@peerfall/machine/types'
+import { DETECTOR_NAMES, NOT_CHECKED, NOT_TESTED, TERMS } from './objective-text.constants'
 
 const MS_PER_SECOND = 1000
 
@@ -20,11 +21,29 @@ export interface ProbeNames {
   readonly target: string
 }
 
+/** A mission with no traffic to watch has no probe; its checks name their own routers. */
+const NO_PROBE: ProbeNames = { from: 'the router', destination: 'the destination', target: 'the destination' }
+
 export function probeNamesOf(mission: Pick<MissionDefinition, 'probe' | 'network'>): ProbeNames {
+  if (!mission.probe) {
+    return NO_PROBE
+  }
   const { from, destination } = mission.probe
   const owner = mission.network.routers.find((router) => router.loopback?.split('/')[0] === destination)
   return { from, destination, target: owner?.name ?? destination }
 }
+
+/** A kernel route in one line, as `ip route` would say it. */
+const kernelRouteText = (route: KernelRoute): string => {
+  const hops = route.nextHops.map((hop) =>
+    hop.via === null ? `on ${hop.interface}` : `via ${hop.via} on ${hop.interface}`
+  )
+  return [route.prefix, ...(route.protocol === '' ? [] : [`from ${route.protocol}`]), hops.join(' and ')]
+    .filter((part) => part !== '')
+    .join(' ')
+}
+
+const packets = (count: number): string => (count === 1 ? '1 packet' : `${count} packets`)
 
 const seconds = (ms: number): string => formatSeconds(ms / MS_PER_SECOND)
 
@@ -47,13 +66,32 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
   switch (result.failure) {
     case 'no_fault':
       return NOT_TESTED
+    case 'not_checked':
+      return NOT_CHECKED
+    case 'daemons_down':
+      return result.kind === 'daemons'
+        ? `${result.missing.map(code).join(' and ')} did not answer on router ${result.router}. ${TERMS.daemon}`
+        : `A daemon this objective needs is not running. ${TERMS.daemon}`
+    case 'wrong_route':
+      return result.kind === 'route' && result.route
+        ? `Router ${result.router} has a route there, but not the one asked for: ${code(kernelRouteText(result.route))}. ${TERMS.route}`
+        : `The router has a route there, but not the one this objective asks for. ${TERMS.route}`
+    case 'not_configured':
+      return result.kind === 'config'
+        ? `Router ${result.router}'s ${result.source} configuration does not have that line yet. ${TERMS.configuration}`
+        : `The configuration does not have that line yet. ${TERMS.configuration}`
     case 'unreachable': {
+      if (result.kind === 'reaches') {
+        return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
+      }
       const got = result.kind === 'reachable' ? result.replies : 0
       const needed = check.kind === 'reachable' ? ` It takes ${check.minReplies}.` : ''
       return `${got === 0 ? 'No reply' : `Only ${replies(got)}`} came back from ${names.destination}.${needed} ${TERMS.reply}`
     }
     case 'no_route':
-      return `${names.from} had no route to ${names.destination} when it needed one. ${TERMS.route}`
+      return result.kind === 'route'
+        ? `Router ${result.router} has no route there. ${TERMS.route}`
+        : `${names.from} had no route to ${names.destination} when it needed one. ${TERMS.route}`
     case 'wrong_path': {
       if (result.kind === 'path' && check.kind === 'path') {
         if (check.before !== undefined && result.before && !onlyThrough(result.before, check.before)) {
@@ -116,6 +154,20 @@ export function evidenceText(result: CheckResult, names: ProbeNames): string | n
       return result.detection
         ? `${DETECTOR_NAMES[result.detection.event]} on ${result.detection.router} noticed the fault ${seconds(result.detection.afterFaultMs)} after it began.`
         : null
+    case 'daemons':
+      return `${result.running.map(code).join(', ')} ${result.running.length === 1 ? 'answers' : 'answer'} on router ${result.router}. ${TERMS.daemon}`
+    case 'route':
+      return result.route
+        ? `Router ${result.router}'s kernel has ${code(kernelRouteText(result.route))}. ${TERMS.route}`
+        : null
+    case 'reaches':
+      return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
+    case 'config':
+      return result.found !== null
+        ? `Router ${result.router}'s ${result.source} configuration has ${code(result.found.trim())}. ${TERMS.configuration}`
+        : null
+    default:
+      return null
   }
 }
 

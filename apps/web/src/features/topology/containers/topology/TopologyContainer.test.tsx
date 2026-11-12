@@ -24,16 +24,17 @@ const mission = content.ok ? content.value.game.mission('the-link-that-never-wen
 const stamped = (events: readonly MachineEvent[]): StampedMachineEvent[] =>
   events.map((event, seq) => ({ ...event, seq, timeMs: 1_760_000_000_000 + seq }) as StampedMachineEvent)
 
-const full = (router: string, peer: string): MachineEvent => ({
+const adjacency = (router: string, peer: string, to: 'Full' | 'Deleted'): MachineEvent => ({
   type: 'ospf_adjacency_change',
   router,
   neighbor: '10.255.0.9',
   address: '10.0.0.9',
   interface: `${router}-${peer}`,
-  from: 'Loading',
-  to: 'Full',
-  reason: 'LoadingDone',
+  from: to === 'Full' ? 'Loading' : 'Full',
+  to,
+  reason: to === 'Full' ? 'LoadingDone' : 'InactivityTimer',
 })
+const full = (router: string, peer: string): MachineEvent => adjacency(router, peer, 'Full')
 
 const route = (router: string, ...peers: readonly string[]): MachineEvent => ({
   type: 'fib_install',
@@ -107,7 +108,7 @@ describe('TopologyContainer', () => {
     mocks.events = stamped([
       ...HEALTHY,
       { type: 'fault_injected', link: ['a', 'c'] },
-      { ...full('c', 'a'), from: 'Full', to: 'Deleted', reason: 'InactivityTimer' },
+      adjacency('c', 'a', 'Deleted'),
       route('a', 'b'),
     ])
     render(<TopologyContainer />)

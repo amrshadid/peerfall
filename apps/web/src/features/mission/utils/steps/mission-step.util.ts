@@ -32,12 +32,14 @@ export function missionStepIndex({ phase, hasBaseline, hasAttempt, completed }: 
 
 /**
  * The panels a step has opened. The incident is read beside the map alone; the timeline comes
- * with the network, and the editor once there is a baseline to improve on.
+ * with the network, and the editor once there is a baseline to improve on. A mission that breaks
+ * nothing has no outage to time and no baseline to wait for: its editor opens with the network.
  */
-export function panelsOfStep(phase: MissionPhase, stepIndex: number): MissionPanels {
+export function panelsOfStep(phase: MissionPhase, stepIndex: number, hasFault = true): MissionPanels {
+  const begun = phase !== 'incident'
   return {
     topology: true,
-    timeline: phase !== 'incident',
-    editor: phase !== 'incident' && stepIndex > 0,
+    timeline: begun && hasFault,
+    editor: begun && (stepIndex > 0 || !hasFault),
   }
 }

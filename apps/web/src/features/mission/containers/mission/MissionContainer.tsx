@@ -108,7 +108,7 @@ export function MissionContainer({
     hasAttempt: repaired !== null,
     completed: active.isCompleted,
   })
-  const panels = panelsFor(panelsOfStep(phase, stepIndex), showAll)
+  const panels = panelsFor(panelsOfStep(phase, stepIndex, mission?.fault !== undefined), showAll)
   // Each new step can open a panel, which gets its own tour stop once.
   useTourScreen('mission', mission ? openPanelsKey(panels) : 'opening')
 
@@ -189,14 +189,24 @@ export function MissionContainer({
             label: 'Drawing',
             value: `${mission.network.routers.length} routers, ${mission.network.links.length} links`,
           },
-          { label: 'Probe', value: `${mission.probe.from} → ${mission.probe.destination}` },
-          { label: 'Fault', value: `link ${mission.fault.link.join('–')} drops every packet` },
-          { label: 'Recovery target', value: `under ${formatSeconds(mission.recoveryTargetMs / MS_PER_SECOND)}` },
+          // A mission states only what it has: one that breaks nothing has no fault and no target.
+          ...(mission.probe ? [{ label: 'Probe', value: `${mission.probe.from} → ${mission.probe.destination}` }] : []),
+          ...(mission.fault
+            ? [{ label: 'Fault', value: `link ${mission.fault.link.join('–')} drops every packet` }]
+            : []),
+          ...(mission.recoveryTargetMs !== undefined
+            ? [
+                {
+                  label: 'Recovery target',
+                  value: `under ${formatSeconds(mission.recoveryTargetMs / MS_PER_SECOND)}`,
+                },
+              ]
+            : []),
         ],
         debrief: phase === 'debrief' ? debrief : null,
         restart: {
           open: restartOpen,
-          unavailable: phase === 'play' ? waitReasonOf(run.phase) : 'The mission has not begun yet.',
+          unavailable: phase === 'incident' ? 'The mission has not begun yet.' : waitReasonOf(run.phase),
           onConfirm: () => {
             setRestartOpen(false)
             void run.startOver()

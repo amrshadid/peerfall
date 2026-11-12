@@ -1,14 +1,20 @@
 import type { ObjectiveHints } from '@peerfall/game/hooks'
-import type { MissionVerdict, ObjectiveDefinition } from '@peerfall/game/types'
+import type { MissionDefinition, MissionVerdict, ObjectiveDefinition } from '@peerfall/game/types'
 import type { MissionRunPhase } from '@peerfall/missions/hooks'
 import { describe, expect, it } from 'vitest'
+import { TRIANGLE } from '@/test/fixtures/network.fixture'
 import { hintsLeftOf, hintTargetOf, revealedHintsOf, runStatusOf, taskOf, waitReasonOf } from './run-text.util'
 
 const NAMES = { from: 'a', destination: '10.255.0.3', target: 'c' }
 const MISSION = {
   fault: { link: ['a', 'c'] },
   probe: { id: 'a-to-c', from: 'a', source: '10.255.0.1', destination: '10.255.0.3', intervalMs: 50 },
+  network: TRIANGLE,
 } as const
+/** A mission that breaks nothing and watches no traffic: its checks read the routers as they are. */
+const QUIET: Pick<MissionDefinition, 'fault' | 'probe' | 'network'> = {
+  network: { routers: [{ name: 'a', daemons: ['staticd'], config: '' }], links: [] },
+}
 
 const objective = (id: string): ObjectiveDefinition => ({
   id,
@@ -95,6 +101,19 @@ describe('taskOf', () => {
     expect(taskOf('predict', MISSION, NAMES).join(' ')).toContain('say what you expect')
     expect(taskOf('apply', MISSION, NAMES)).toHaveLength(1)
     expect(taskOf('verify', MISSION, NAMES).join(' ')).toContain('read the debrief')
+  })
+
+  it('asks for no baseline in a mission that breaks nothing', () => {
+    expect(taskOf('inspect', QUIET, NAMES).join(' ')).not.toContain('Break the link')
+    expect(taskOf('inspect', QUIET, NAMES).join(' ')).toContain('work through the objectives below')
+  })
+})
+
+describe('runStatusOf without OSPF', () => {
+  it('does not speak of OSPF neighbors where no router runs OSPF', () => {
+    expect(runStatusOf('settling', [], QUIET, NAMES)?.text).toBe(
+      'The routers are up and FRR is settling on each of them. A few seconds more.'
+    )
   })
 })
 

@@ -7,7 +7,11 @@ import type { MissionRunPhase } from '@peerfall/missions/hooks'
 /** The mission loop's steps, as docs/MISSIONS.md names them. */
 export type GuideStep = 'inspect' | 'predict' | 'apply' | 'verify'
 
-const linkText = (mission: Pick<MissionDefinition, 'fault'>): string => mission.fault.link.join('–')
+/** `a–c`, or plain words in a mission that breaks nothing. */
+const linkText = (mission: Pick<MissionDefinition, 'fault'>): string => mission.fault?.link.join('–') ?? 'under test'
+
+const runsOspf = (mission: Pick<MissionDefinition, 'network'>): boolean =>
+  mission.network.routers.some((router) => router.daemons.includes('ospfd'))
 
 /**
  * What the network is doing, for the line over the actions. Null while it is the player's to use.
@@ -17,9 +21,10 @@ const linkText = (mission: Pick<MissionDefinition, 'fault'>): string => mission.
 export function runStatusOf(
   phase: MissionRunPhase,
   errors: readonly string[],
-  mission: Pick<MissionDefinition, 'fault' | 'probe'>,
+  mission: Pick<MissionDefinition, 'fault' | 'probe' | 'network'>,
   names: ProbeNames
 ): GuideStatus | null {
+  const every = mission.probe ? ` every ${mission.probe.intervalMs} ms` : ''
   switch (phase) {
     case 'building':
       return {
@@ -30,14 +35,16 @@ export function runStatusOf(
       }
     case 'settling':
       return {
-        text: 'The routers are up and finding each other: each pair becomes OSPF neighbors and they share their routes. A few seconds more.',
+        text: runsOspf(mission)
+          ? 'The routers are up and finding each other: each pair becomes OSPF neighbors and they share their routes. A few seconds more.'
+          : 'The routers are up and FRR is settling on each of them. A few seconds more.',
         busy: true,
         failed: false,
         details: [],
       }
     case 'probing':
       return {
-        text: `Sending the probe: one packet from ${names.from} to ${names.destination} every ${mission.probe.intervalMs} ms, for about three seconds.`,
+        text: `Sending the probe: one packet from ${names.from} to ${names.destination}${every}, for about three seconds.`,
         busy: true,
         failed: false,
         details: [],
@@ -87,6 +94,12 @@ export function taskOf(
   names: ProbeNames
 ): readonly string[] {
   const link = linkText(mission)
+  // A mission that breaks nothing has no baseline to take: its objectives are the whole task.
+  if (!mission.fault) {
+    return [
+      'Select a router on the map to put the terminal in it, then work through the objectives below. Each is judged by what the routers do, never by what you typed.',
+    ]
+  }
   switch (step) {
     case 'inspect':
       return [

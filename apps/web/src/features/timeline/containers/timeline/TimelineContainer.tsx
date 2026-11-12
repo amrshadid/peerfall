@@ -22,9 +22,10 @@ export function TimelineContainer() {
   const { baseline, repaired } = useRunComparison()
   const events = useMachineEvents()
 
+  // A mission that breaks nothing, or watches no traffic, has no outage to time.
   const setting = useMemo<RunSetting | null>(
     () =>
-      mission
+      mission?.fault && mission.probe
         ? { faultLink: mission.fault.link, from: mission.probe.from, destination: mission.probe.destination }
         : null,
     [mission]
@@ -47,7 +48,7 @@ export function TimelineContainer() {
     <TimelinePresentation
       baseline={lanes.baseline}
       repaired={lanes.repaired}
-      targetSeconds={mission.recoveryTargetMs / MS_PER_SECOND}
+      targetSeconds={mission.recoveryTargetMs === undefined ? null : mission.recoveryTargetMs / MS_PER_SECOND}
     />
   )
 }

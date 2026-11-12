@@ -57,17 +57,19 @@ export function TopologyPresentation({
         </div>
       </div>
 
-      <p className="topology__path" role="status">
-        {view.pathText ? (
-          <>
-            <span className="topology__path-swatch" aria-hidden="true" />
-            <span className="topology__path-label">{pathLabel}</span> <b>{view.pathText}</b>
-            {view.shared && <span className="topology__path-label">(traffic is shared over these)</span>}
-          </>
-        ) : (
-          <span className="topology__path-label">{pathLabel}: no path</span>
-        )}
-      </p>
+      {pathLabel !== null && (
+        <p className="topology__path" role="status">
+          {view.pathText ? (
+            <>
+              <span className="topology__path-swatch" aria-hidden="true" />
+              <span className="topology__path-label">{pathLabel}</span> <b>{view.pathText}</b>
+              {view.shared && <span className="topology__path-label">(traffic is shared over these)</span>}
+            </>
+          ) : (
+            <span className="topology__path-label">{pathLabel}: no path</span>
+          )}
+        </p>
+      )}
       {legend !== null && <p className="topology__legend">{legend}</p>}
     </section>
   )

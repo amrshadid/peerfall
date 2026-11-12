@@ -83,8 +83,8 @@ export interface TopologyPresentationProps {
   linkStates: readonly LinkStatus[]
   /** The routers traffic passes, in order, e.g. `['a', 'b', 'c']`; null when no path is known. */
   activePath: readonly string[] | null
-  /** What takes that path, e.g. "Probe a → c"; "Path" when left out. */
-  pathLabel?: string
+  /** What takes that path, e.g. "Probe a → c"; "Path" when left out. Null leaves the path's line out altogether. */
+  pathLabel?: string | null
   /** More paths the same traffic takes at once, when equal-cost routes share it. */
   otherPaths?: readonly (readonly string[])[]
   /** The OSPF adjacency on each link, as its routers last reported it; links left out say nothing. */

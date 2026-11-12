@@ -29,4 +29,9 @@ describe('panelsOfStep', () => {
     expect(panelsOfStep('play', 1)).toEqual({ topology: true, timeline: true, editor: true })
     expect(panelsOfStep('debrief', 4)).toEqual({ topology: true, timeline: true, editor: true })
   })
+
+  it('has no timeline in a mission that breaks nothing, and opens its editor with the network', () => {
+    expect(panelsOfStep('incident', 0, false)).toEqual({ topology: true, timeline: false, editor: false })
+    expect(panelsOfStep('play', 0, false)).toEqual({ topology: true, timeline: false, editor: true })
+  })
 })

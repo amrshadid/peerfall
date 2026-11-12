@@ -22,10 +22,12 @@ export function TopologyContainer() {
   const paths = useMemo(() => (network && probe ? probePathsOf(network, probe, events) : []), [network, probe, events])
   const otherPaths = useMemo(() => paths.slice(1), [paths])
 
-  if (!network || !probe) {
+  if (!network) {
     return null
   }
-  const owner = network.routers.find((candidate) => candidate.loopback?.split('/')[0] === probe.destination)
+  const owner = probe
+    ? network.routers.find((candidate) => candidate.loopback?.split('/')[0] === probe.destination)
+    : undefined
 
   return (
     <TopologyPresentation
@@ -35,7 +37,8 @@ export function TopologyContainer() {
       otherPaths={otherPaths}
       adjacencies={adjacencies}
       legend={adjacencies.some((each) => each.ends.some((end) => end.state !== null)) ? ADJACENCY_LEGEND : null}
-      pathLabel={`Probe ${probe.from} → ${owner?.name ?? probe.destination} takes`}
+      // A mission with no traffic to watch has no path to tell.
+      pathLabel={probe ? `Probe ${probe.from} → ${owner?.name ?? probe.destination} takes` : null}
       selectedRouter={router}
       onSelectRouter={(name) => void select(name)}
     />
