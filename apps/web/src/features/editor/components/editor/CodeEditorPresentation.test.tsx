@@ -80,4 +80,16 @@ describe('CodeEditorPresentation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
     expect(onReset).toHaveBeenCalledTimes(1)
   })
+
+  it('says what to do while there is nothing to edit', () => {
+    editor({ kind: 'idle' }, { notice: 'Select a router on the map.' })
+    expect(screen.getByText('Select a router on the map.')).toBeTruthy()
+  })
+
+  it('prints what the router answered to the lines it refused, as an alert', () => {
+    editor({ kind: 'idle' }, { errors: ['% Unknown command: ip ospf bdf'] })
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toContain('What it accepted stays applied.')
+    expect(alert.textContent).toContain('% Unknown command: ip ospf bdf')
+  })
 })

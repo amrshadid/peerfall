@@ -107,4 +107,49 @@ describe('GuidePresentation', () => {
     expect(screen.queryByRole('region')).toBeNull()
     expect(screen.getByText('Nothing is timed.')).toBeTruthy()
   })
+
+  it('folds the report under its title once it has been read, one key away', () => {
+    guide({
+      incident: { ...INCIDENT, content: [{ kind: 'paragraph', text: 'Traffic **stopped**.' }], folded: true },
+    })
+    const incident = screen.getByRole('article', { name: 'The Link That Never Went Down' })
+    const report = incident.querySelector('details')
+    expect(report?.open).toBe(false)
+    expect(within(incident).getByText('Read the report again').tagName).toBe('SUMMARY')
+    expect(within(incident).getByText('stopped').tagName).toBe('B')
+  })
+
+  it('says what a met objective was met by, in quiet words under it', () => {
+    guide({
+      objectives: [{ id: 'direct', text: 'a reaches c directly.', passed: true, evidence: '60 replies came back.' }],
+    })
+    expect(screen.getByText(/Last run: 60 replies came back\./).closest('.guide__evidence')).not.toBeNull()
+  })
+
+  it('keeps what the network is doing in view, marked busy while it works and as an alert when it failed', () => {
+    guide({ status: { text: 'Starting the routers…', busy: true, failed: false, details: [] } })
+    // The hints keep a live region of their own, for a copied command.
+    const status = screen.getAllByRole('status').find((each) => each.getAttribute('aria-busy') === 'true')
+    expect(status?.textContent).toContain('Working')
+    expect(status?.textContent).toContain('Starting the routers…')
+    cleanup()
+
+    guide({ status: { text: 'The network could not be started.', busy: false, failed: true, details: ['exit 2'] } })
+    expect(screen.getByRole('alert').textContent).toContain('exit 2')
+  })
+
+  it('keeps an action that has to wait focusable, and says why it waits', () => {
+    const onSelect = vi.fn()
+    guide({
+      actions: [
+        { id: 'fault', label: 'Break the link', kind: 'default', unavailable: 'A probe is being sent.', onSelect },
+      ],
+    })
+    const action = screen.getByRole('button', { name: /Break the link/ })
+    expect(action.hasAttribute('disabled')).toBe(false)
+    expect(action.getAttribute('aria-disabled')).toBe('true')
+    expect(action.textContent).toContain('not available: A probe is being sent.')
+    fireEvent.click(action)
+    expect(onSelect).not.toHaveBeenCalled()
+  })
 })
