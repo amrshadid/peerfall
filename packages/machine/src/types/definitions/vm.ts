@@ -12,6 +12,9 @@ export const VM_CONTROL_READY = '__PF_READY__'
 /** Root's control channel prints this and the exit status after each line it ran. */
 export const VM_CONTROL_DONE = '__PF_DONE__'
 
+/** Starting nine FRR daemons takes about 18 s in the emulator; a line slower than this is stuck. */
+export const VM_CONTROL_TIMEOUT_MS = 60_000
+
 /** FRR's unprivileged user and its groups, as the `frr` package's install script creates them. */
 export const VM_FRR_USER = { name: 'frr', uid: 100, gid: 101, vtyGroup: 'frrvty', vtyGid: 102 } as const
 
