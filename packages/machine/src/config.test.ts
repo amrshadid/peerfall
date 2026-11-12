@@ -4,8 +4,8 @@ import { configureMachine, getMachineConfig, resetMachineConfig } from '#config'
 describe('machine config', () => {
   afterEach(() => resetMachineConfig())
 
-  it('serves the image from /vm/ by default', () => {
-    expect(getMachineConfig()).toEqual({ vmBaseUrl: '/vm/' })
+  it('serves the image from /vm/ and uses the worker’s own wasm by default', () => {
+    expect(getMachineConfig()).toMatchObject({ vmBaseUrl: '/vm/', vmWasmUrl: null })
   })
 
   it('takes the app’s base URL and resets to the default', () => {

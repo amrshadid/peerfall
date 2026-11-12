@@ -145,9 +145,25 @@ importers:
       '@peerfall/core':
         specifier: workspace:*
         version: link:../core
+      comlink:
+        specifier: ^4.4.2
+        version: 4.4.2
       v86:
         specifier: 0.5.471
         version: 0.5.471
+      zustand:
+        specifier: ^5.1.0
+        version: 5.1.0(@types/react@19.3.0)(react@19.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      vite:
+        specifier: ^8.3.7
+        version: 8.3.8(@types/node@26.6.6)(jiti@2.7.0)
 
   packages/missions:
     dependencies:
@@ -749,6 +765,9 @@ packages:
   chai@6.3.0:
     resolution: {integrity: sha512-XWAtwJ6OHO+tj0EKCs0Y2UamnyOxseZWltU4x2U2wh8g4AigdjwvtUjvLP2tqkA/avxHEtzxNaqGq/YGNwckKg==}
     engines: {node: '>=18'}
+
+  comlink@4.4.2:
+    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
 
   crelt@1.0.7:
     resolution: {integrity: sha512-aK6BbWfhf4U/wCcLHKPJl/xa6VkVstRaPywWtMKGwuOLc/wZTyQYuoxgvZnNsBvv7Kg3YTBQYYBCggcviQczuA==}
@@ -1605,6 +1624,8 @@ snapshots:
       is-decimal: 2.0.1
 
   chai@6.3.0: {}
+
+  comlink@4.4.2: {}
 
   crelt@1.0.7: {}
 

@@ -1,4 +1,5 @@
-export { DEFAULT_MACHINE_CONFIG, type MachineConfig } from '#types/definitions/config'
+export type { MachineConfig } from '#types/definitions/config'
+export type { MachineEndpoint } from '#types/definitions/endpoint'
 export type {
   LinkName,
   MachineEvent,
