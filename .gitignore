@@ -12,3 +12,4 @@ apps/web/public/vm/
 .idea/
 .DS_Store
 .vercel
+.env*
