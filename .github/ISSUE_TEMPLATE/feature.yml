@@ -1,0 +1,34 @@
+name: Feature or improvement
+description: Suggest a feature or a change to an existing one.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is missing or hard today, and who does it affect (players, contributors)?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should change? Sketches and examples welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - machine (the Linux VM, its image, FRR and the terminal session)
+        - core (event bus, shared types and utils)
+        - game (rules, checks, progress, hints)
+        - theme (design tokens)
+        - web (game UI, topology, timeline, terminal, editor)
+        - missions
+        - lab (the same network on a Linux host)
+        - docs
+        - repo / CI
+    validations:
+      required: true

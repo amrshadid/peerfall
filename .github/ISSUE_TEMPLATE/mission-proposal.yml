@@ -1,0 +1,42 @@
+name: Mission proposal
+description: Propose a new mission or changes to a planned one.
+labels: [mission]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read docs/MISSIONS.md first. Every mission teaches one skill on a small
+        network the player can inspect, change, break and reset.
+  - type: input
+    id: stage
+    attributes:
+      label: Curriculum stage
+      placeholder: "Build and protect an underlay"
+    validations:
+      required: true
+  - type: input
+    id: skill
+    attributes:
+      label: The one skill it teaches
+      placeholder: "Measure how BFD changes failure recovery"
+    validations:
+      required: true
+  - type: textarea
+    id: network
+    attributes:
+      label: The network and the fault
+      description: Routers, links, the starting configuration, and what breaks.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: How the mission is passed
+      description: The outcome that is checked (reachability, recovery time, path, isolation), never a command.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: FRR documentation, RFCs and source files the debrief links to.
