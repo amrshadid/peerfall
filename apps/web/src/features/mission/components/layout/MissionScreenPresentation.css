@@ -1,0 +1,31 @@
+.mission-unavailable {
+  display: grid;
+  grid-template-rows: 2rem 1fr;
+  min-height: 100dvh;
+}
+
+.mission-unavailable__sheet {
+  margin: 0 1.5rem 1.5rem;
+  padding: 2rem;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 1rem;
+}
+
+.mission-unavailable__sheet h1 {
+  font-size: 2.25rem;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.mission-unavailable__sheet h1:focus {
+  outline: none;
+}
+
+.mission-unavailable__sheet p {
+  max-width: 40rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}

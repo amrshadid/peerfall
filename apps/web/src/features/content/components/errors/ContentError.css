@@ -1,0 +1,32 @@
+.content-error {
+  display: grid;
+  grid-template-rows: 2rem 1fr;
+  min-height: 100dvh;
+}
+
+.content-error__sheet {
+  margin: 0 1.5rem 1.5rem;
+  padding: 2rem;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  max-width: 60rem;
+}
+
+.content-error__title {
+  font-size: 2.5rem;
+  color: var(--red);
+}
+
+.content-error__list {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  border-top: var(--rule);
+  padding-top: 1rem;
+}
+
+.content-error__list code {
+  font-size: 0.875rem;
+}

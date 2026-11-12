@@ -1,0 +1,97 @@
+/* The status line is the one strip outside every panel; narrow enough to clear the left status text at 1024px. */
+.pf-notices {
+  position: fixed;
+  right: 7.5rem;
+  bottom: 0.25rem;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  max-width: min(32rem, calc(50vw - 10rem));
+  pointer-events: none;
+}
+
+.pf-notice {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  height: 1.5rem;
+  padding: 0 0.25rem 0 0.5rem;
+  background: var(--sheet);
+  border: var(--rule);
+  border-left-width: 4px;
+  animation: pf-notice-in var(--t-base) var(--ease-in);
+}
+
+.pf-notice--complete {
+  border-left-color: var(--green);
+}
+
+.pf-notice--info {
+  border-left-color: var(--blue);
+}
+
+.pf-notice--save-failed {
+  border-color: var(--red);
+  background: var(--red-wash);
+}
+
+.pf-notice__mark {
+  display: inline-flex;
+  color: var(--red);
+}
+
+.pf-notice__body {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pf-notice__kicker,
+.pf-notice__more {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.pf-notice__more {
+  flex: none;
+  letter-spacing: 0.04em;
+}
+
+.pf-notice__close {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0 0.25rem;
+  cursor: pointer;
+}
+
+.pf-notice__close:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@keyframes pf-notice-in {
+  from {
+    transform: translateY(0.25rem);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-notice {
+    animation: none;
+  }
+}

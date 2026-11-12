@@ -1,0 +1,150 @@
+.title {
+  margin: 0 1.5rem;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.title__wordmark {
+  padding: 1.75rem 2rem 0;
+  border-bottom: var(--rule);
+}
+
+.title__wordmark .pf-wordmark {
+  max-height: 24vh;
+}
+
+.title__tagline-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 0.875rem 0 1.125rem;
+}
+
+.title__tagline {
+  font-size: 1.625rem;
+  font-variation-settings: "wdth" 112;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.title__key {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.title__key b {
+  color: var(--red);
+}
+
+.title__lower {
+  display: grid;
+  grid-template-columns: minmax(25rem, 29.375rem) 1fr;
+  min-height: 0;
+}
+
+.title__menu {
+  padding: 1.75rem 2rem;
+  border-right: var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: auto;
+}
+
+.title__continue {
+  display: grid;
+  gap: 0.625rem;
+  justify-items: start;
+}
+
+.title__where {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.title__step {
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  max-width: 26rem;
+}
+
+/* The journey is long: its lines are set tighter than a four-line menu's, and the parts in the code face. */
+.title__menu .pf-contents__line {
+  padding: 0.25rem 0;
+  font-size: 1rem;
+}
+
+.title__menu .pf-contents__ref {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.title__drawing {
+  padding: 1.25rem 1.75rem 1rem;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+/* On the cover the drawing is the picture: its routers and labels are set a size up. */
+.title__drawing .topology__router {
+  min-width: 6rem;
+  padding: 0.625rem 0.875rem 0.5rem;
+}
+
+.title__drawing .topology__router-name {
+  font-size: 1.75rem;
+}
+
+.title__drawing .topology__router-address,
+.title__drawing .topology__link-label {
+  font-size: 0.8125rem;
+}
+
+.title__drawing figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  padding-top: 0.5rem;
+}
+
+.title__drawing figcaption span:last-child {
+  text-align: right;
+}
+
+.title__shortcuts {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-2);
+}
+
+.title__shortcuts:hover {
+  color: var(--ink);
+}
+
+@media (max-height: 52.5rem) {
+  .title__wordmark {
+    padding-top: 1.125rem;
+  }
+  .title__wordmark .pf-wordmark {
+    max-height: 21vh;
+  }
+  .title__menu {
+    padding: 1.25rem 2rem;
+    gap: 1.125rem;
+  }
+  .title__continue .pf-btn--lg {
+    min-height: 3rem;
+  }
+  .title__tagline-row {
+    padding: 0.625rem 0 0.75rem;
+  }
+}

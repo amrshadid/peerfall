@@ -1,0 +1,198 @@
+/* A global sheet beside theme.css: driver.js draws the tour outside React, so no component can own these rules. */
+/* driver.js resets its popover with `all: unset`, so every popover rule is scoped to `.pf-tour`. */
+.driver-popover.pf-tour {
+  box-sizing: border-box;
+  min-width: 16rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.875rem 1rem 0.75rem;
+  background: var(--sheet);
+  color: var(--ink);
+  border: var(--rule);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--face);
+  font-variation-settings: "wdth" 100;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.pf-tour .driver-popover-title {
+  padding-right: 2rem;
+  font-family: var(--face);
+  font-size: 1.0625rem;
+  font-variation-settings: "wdth" 112;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.pf-tour .driver-popover-description {
+  font-family: var(--face);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.pf-tour .driver-popover-title[style*="block"] + .driver-popover-description {
+  margin-top: 0.375rem;
+}
+
+.pf-tour .driver-popover-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: var(--rule-thin);
+  gap: 0.75rem;
+}
+
+.pf-tour .driver-popover-progress-text {
+  font-family: var(--face);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.pf-tour .driver-popover-navigation-btns {
+  gap: 0.375rem;
+}
+
+.pf-tour .driver-popover-navigation-btns button + button {
+  margin-left: 0;
+}
+
+/* Mirrors Button.css's .pf-btn--sm: driver.js builds these buttons, so they can't take its classes. */
+.pf-tour .driver-popover-footer-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.875rem;
+  padding: 0 0.625rem;
+  border: var(--rule);
+  border-radius: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: var(--face);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: none;
+  cursor: pointer;
+  transition:
+    background-color var(--t-instant) var(--ease),
+    color var(--t-instant) var(--ease),
+    border-color var(--t-instant) var(--ease);
+}
+
+.pf-tour .driver-popover-footer-btn:hover,
+.pf-tour .driver-popover-footer-btn:focus {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.pf-tour .driver-popover-footer-btn:active {
+  transform: translateY(1px);
+}
+
+.pf-tour .driver-popover-next-btn {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--on-red);
+}
+
+.pf-tour .driver-popover-next-btn:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--sheet);
+}
+
+.pf-tour .driver-popover-next-btn:focus:not(:hover) {
+  background: var(--red);
+  color: var(--on-red);
+}
+
+/* No greyed-out Back on the first stop: a disabled button only adds noise. */
+.pf-tour .driver-popover-footer .driver-popover-btn-disabled {
+  display: none;
+}
+
+.pf-tour .driver-popover-close-btn {
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--ink-2);
+  font-family: var(--face);
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.pf-tour .driver-popover-close-btn:hover {
+  color: var(--ink);
+}
+
+.pf-tour .driver-popover-footer-btn:focus-visible,
+.pf-tour .driver-popover-close-btn:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.pf-tour .driver-popover-close-btn:focus-visible {
+  color: var(--ink);
+}
+
+.pf-tour .driver-popover-arrow {
+  border-width: 6px;
+  border-color: var(--ink);
+}
+
+.pf-tour .driver-popover-arrow-side-left {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+}
+
+.pf-tour .driver-popover-arrow-side-right {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+}
+
+.pf-tour .driver-popover-arrow-side-top {
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.pf-tour .driver-popover-arrow-side-bottom {
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+/* Over driver.js's overlay (z-index 10000), but only ever inside its cut-out. */
+.pf-tour-aim {
+  position: fixed;
+  z-index: 10001;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* Inset, so the one line lands on the panel's own rules and never outside the cut-out. */
+.pf-tour-aim--shown {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-fade .driver-overlay,
+  .driver-fade .driver-popover {
+    animation: none;
+  }
+}

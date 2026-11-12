@@ -1,0 +1,41 @@
+.map-overview {
+  display: block;
+  min-height: 0;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.map-overview:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* The drawing is laid out at this box's size, so the box must not size to the drawing. */
+.map-overview__frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent
+  );
+}
+
+.map-overview__frame--fade-top {
+  --fade-top: 4rem;
+}
+
+.map-overview__frame--fade-bottom {
+  --fade-bottom: 4rem;
+}
+
+.map-overview__frame > .map-fig {
+  position: absolute;
+  inset: 0;
+}

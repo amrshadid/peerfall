@@ -1,0 +1,4 @@
+.pf-sheet {
+  background: var(--sheet);
+  border: var(--rule);
+}

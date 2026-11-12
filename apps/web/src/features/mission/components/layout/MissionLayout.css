@@ -1,0 +1,234 @@
+.mission-skip {
+  position: absolute;
+  left: 1.25rem;
+  top: 0.25rem;
+  z-index: 10;
+  padding: 0.25rem 0.75rem;
+  background: var(--ink);
+  color: var(--sheet);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.mission-skip:focus {
+  transform: none;
+}
+
+.mission-work {
+  /* Every panel's header is this tall, so their rules run as one line across the screen. */
+  --panel-head: 2.75rem;
+  /* Defaults per screen width; a size the player dragged to (--guide-w, --network-w) wins over them. */
+  --guide-default: 21.25rem;
+  --network-default: 27rem;
+  /* The containing block for the debrief, placed by grid lines. */
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.mission-work > * {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* The 2px tracks are the dividers: the only rules between panels. */
+.mission-work--with-network {
+  grid-template-columns:
+    max(var(--guide-min, 0rem), var(--guide-w, var(--guide-default))) 2px minmax(0, 1fr) 2px
+    var(--network-w, var(--network-default));
+}
+
+.mission-work--no-network {
+  grid-template-columns: max(var(--guide-min, 0rem), var(--guide-w, var(--guide-default))) 2px minmax(0, 1fr);
+}
+
+.mission-guide {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.mission-guide:focus,
+.mission-workspace:focus,
+.mission-workspace__editor:focus,
+.mission-terminal:focus,
+.mission-network:focus {
+  outline: none;
+}
+
+.mission-workspace {
+  position: relative;
+  display: grid;
+  /* Never past the cell: an auto track keeps xterm's opening width and paints it over the network dock. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--editor-share, 50%)) 2px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.mission-workspace--terminal-only {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.mission-workspace__editor {
+  min-height: 0;
+  display: grid;
+}
+
+.mission-terminal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--panel-head) minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--soft);
+  min-height: 0;
+}
+
+.mission-terminal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.75rem 0 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--sheet);
+}
+
+.mission-terminal__head span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.mission-terminal__slot {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
+/* xterm paints with its own colours; the slot keeps the terminal paper around them. */
+.mission-terminal__slot > div {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--soft);
+  /* The terminal pads its own text; this keeps it on the header's 1rem margin. */
+  padding: 0;
+}
+
+.mission-terminal__slot .xterm,
+.mission-terminal__slot .xterm .xterm-scrollable-element,
+.mission-terminal__slot .xterm .xterm-viewport,
+.mission-terminal__slot .xterm .xterm-screen {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  background-color: var(--soft) !important;
+}
+
+.mission-terminal__slot .xterm .scrollbar .slider {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  background-color: color-mix(in srgb, var(--hatch) 45%, transparent) !important;
+}
+
+.mission-terminal__slot .xterm .xterm-rows {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  color: var(--ink) !important;
+}
+
+.mission-terminal__slot .xterm .xterm-rows .xterm-cursor.xterm-cursor-outline {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  outline-color: var(--ink) !important;
+}
+
+.mission-terminal__slot .xterm .xterm-rows .xterm-cursor.xterm-cursor-block {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  background-color: var(--ink) !important;
+  /* biome-ignore lint/complexity/noImportantStyles: overrides colours set inline by xterm.js */
+  color: var(--soft) !important;
+}
+
+/* The network dock: the drawing takes what the timeline leaves, and the timeline scrolls inside its share. */
+.mission-network {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mission-network__topology {
+  flex: 1 1 13rem;
+  min-height: 11rem;
+  display: grid;
+}
+
+.mission-network__timeline {
+  flex: 0 1 auto;
+  min-height: 8rem;
+  max-height: 58%;
+  display: grid;
+  overflow: hidden;
+}
+
+/* With no drawing above it, the timeline has the dock to itself. */
+.mission-network__timeline:first-child {
+  flex: 1 1 auto;
+  max-height: none;
+}
+
+.mission-network__topology + .mission-network__timeline {
+  border-top: var(--rule);
+}
+
+.mission-network > .pf-title-block {
+  flex: none;
+}
+
+/* On a short screen the drawing needs the height more than its title block, which repeats the top bar. */
+@media (max-height: 50rem) {
+  .mission-network > .pf-title-block {
+    display: none;
+  }
+}
+
+/* An absolute grid child: it covers the workspace and network columns without taking a cell from them. */
+.mission-debrief {
+  position: absolute;
+  inset: 0;
+  grid-column: 3 / -1;
+  grid-row: 1;
+  z-index: 2;
+  display: grid;
+  min-height: 0;
+  background: var(--sheet);
+}
+
+.mission-status__shortcuts {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.mission-status__shortcuts:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 85rem) {
+  .mission-work {
+    --guide-default: 18.75rem;
+    --network-default: 23rem;
+  }
+}
+
+/* Small laptops: the side columns give way so the terminal keeps its 80 columns as long as it can. */
+@media (max-width: 72rem) {
+  .mission-work {
+    --guide-default: 16.25rem;
+    --network-default: 19.5rem;
+  }
+}

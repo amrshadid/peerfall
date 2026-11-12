@@ -1,0 +1,41 @@
+.pf-title-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: var(--rule);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.pf-title-block > div {
+  padding: 0.3125rem 0.625rem;
+  border-bottom: var(--rule-thin);
+  min-width: 0;
+}
+
+.pf-title-block > div:nth-child(odd) {
+  border-right: var(--rule-thin);
+}
+
+.pf-title-block > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.pf-title-block dt {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.pf-title-block dd {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-title-block--good dd {
+  color: var(--green);
+}
+
+.pf-title-block--bad dd {
+  color: var(--red);
+}

@@ -1,0 +1,112 @@
+/* Section hatching over the console, like a drawing's "not in service" area: the boot log shows through. */
+.pf-machine-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--hatch) 22%, transparent) 0 1px, transparent 1px 8px),
+    color-mix(in srgb, var(--soft) 72%, transparent);
+  cursor: not-allowed;
+}
+
+.pf-machine-lock__plate {
+  box-sizing: border-box;
+  width: min(26rem, 100%);
+  padding: 0.75rem 1rem 0.875rem;
+  background: var(--sheet);
+  color: var(--ink);
+  border: var(--rule);
+  font-family: var(--face);
+  cursor: default;
+}
+
+.pf-machine-lock__plate--failed {
+  border-left: 6px solid var(--red);
+}
+
+.pf-machine-lock__label {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.375rem;
+  border-bottom: var(--rule-thin);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variation-settings: "wdth" 75;
+  color: var(--ink-2);
+}
+
+.pf-machine-lock__plate--failed .pf-machine-lock__label {
+  color: var(--red);
+}
+
+.pf-machine-lock__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variation-settings: "wdth" 125;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pf-machine-lock__detail {
+  margin: 0.25rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* The start-up sequence as indexed cells: done ones hatched, the current one inked in steps. */
+.pf-machine-lock__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  border: var(--rule-thin);
+}
+
+.pf-machine-lock__steps li {
+  position: relative;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variation-settings: "wdth" 75;
+  color: var(--ink-2);
+  overflow: hidden;
+}
+
+.pf-machine-lock__steps li + li {
+  border-left: var(--rule-thin);
+}
+
+.pf-machine-lock__steps li.is-done {
+  background: repeating-linear-gradient(-45deg, var(--hatch) 0 1px, transparent 1px 5px);
+  color: var(--ink);
+}
+
+.pf-machine-lock__steps li.is-current {
+  color: var(--ink);
+}
+
+.pf-machine-lock__steps li.is-current::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--red);
+  transform-origin: left;
+  animation: pf-machine-lock-index 1.6s steps(4, end) infinite;
+}
+
+@keyframes pf-machine-lock-index {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

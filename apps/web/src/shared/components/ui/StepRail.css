@@ -1,0 +1,140 @@
+/* Takes the room the bar leaves; its width never depends on the labels, so measuring it can't loop. */
+.pf-rail {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  /* A last resort that never triggers when the measure is right: clipped beats drawn under the Hint button. */
+  overflow: hidden;
+}
+
+/* Room for the current square's outline at either end, inside the clip. */
+.pf-rail__list {
+  display: flex;
+  align-items: center;
+  padding: 0 0.25rem;
+}
+
+.pf-rail__measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.pf-rail__measure .pf-rail__list {
+  width: max-content;
+}
+
+.pf-rail__step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pf-rail__step + .pf-rail__step::before {
+  content: "";
+  width: 1.75rem;
+  height: 2px;
+  background: var(--ink);
+  margin: 0 0.625rem 0 0.125rem;
+}
+
+.pf-rail__step--current + .pf-rail__step::before,
+.pf-rail__step--future + .pf-rail__step::before {
+  background: none;
+  border-top: 2px dashed var(--ink-2);
+  height: 0;
+}
+
+.pf-rail__sq {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: var(--rule);
+  flex: none;
+}
+
+.pf-rail__step--done .pf-rail__sq {
+  background: var(--ink);
+}
+
+.pf-rail__step--current {
+  color: var(--red);
+  font-weight: 800;
+}
+
+.pf-rail__step--current .pf-rail__sq {
+  background: var(--red);
+  border-color: var(--red);
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+.pf-rail__step--future {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.pf-rail__step button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  background: none;
+  padding: 0.25rem 0;
+  font-weight: inherit;
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+/* Done steps read as steps, not links; hover, keyboard focus and a look back mark them in red. */
+.pf-rail__step button:hover,
+.pf-rail__step button:focus-visible,
+.pf-rail__step--reviewing button {
+  outline: none;
+  text-decoration: underline 2px;
+  color: var(--red);
+}
+
+/* Without a label the square is the target, so it carries the red too. */
+.pf-rail__step--reviewing button .pf-rail__sq {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.pf-rail__step button:hover .pf-rail__sq,
+.pf-rail__step button:focus-visible .pf-rail__sq {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.pf-rail__step button:focus-visible .pf-rail__sq {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+/* A bare square is a small target: the padding widens what a click can hit, the margin keeps the measured width. */
+.pf-rail__step--bare button {
+  padding: 0.375rem 0.25rem;
+  margin: 0 -0.25rem;
+}
+
+.pf-rail__list--current .pf-rail__step + .pf-rail__step::before,
+.pf-rail__list--marks .pf-rail__step + .pf-rail__step::before {
+  width: 0.75rem;
+  margin: 0 0.25rem 0 0;
+}
+
+@media (max-width: 85rem) {
+  .pf-rail__list--full .pf-rail__step + .pf-rail__step::before {
+    width: 0.875rem;
+    margin: 0 0.5rem 0 0;
+  }
+}

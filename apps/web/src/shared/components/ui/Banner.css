@@ -1,0 +1,19 @@
+.pf-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 1rem;
+  padding: 0.375rem 0.75rem;
+  border: 2px solid var(--red);
+  background: var(--red-wash);
+  font-size: 0.875rem;
+}
+
+.pf-banner p {
+  flex: 1;
+  font-weight: 600;
+}
+
+.pf-banner__mark {
+  color: var(--red);
+}

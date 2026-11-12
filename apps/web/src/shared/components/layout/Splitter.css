@@ -1,0 +1,53 @@
+/* The divider is the 2px rule between two panels; its hit area reaches a few pixels to each side. */
+.pf-splitter {
+  position: relative;
+  z-index: 2;
+  background: var(--ink);
+  touch-action: none;
+}
+
+.pf-splitter--vertical {
+  width: 2px;
+  cursor: col-resize;
+}
+
+.pf-splitter--horizontal {
+  height: 2px;
+  cursor: row-resize;
+}
+
+.pf-splitter::before {
+  content: "";
+  position: absolute;
+}
+
+.pf-splitter--vertical::before {
+  inset: 0 -0.3125rem;
+}
+
+.pf-splitter--horizontal::before {
+  inset: -0.3125rem 0;
+}
+
+.pf-splitter:hover,
+.pf-splitter:focus-visible,
+.pf-resizing .pf-splitter:active {
+  background: var(--red);
+  box-shadow: 0 0 0 1px var(--red);
+  outline: none;
+}
+
+/* While dragging, the cursor stays and no text gets selected, wherever the pointer goes. */
+.pf-resizing {
+  user-select: none;
+}
+
+.pf-resizing--vertical,
+.pf-resizing--vertical * {
+  cursor: col-resize;
+}
+
+.pf-resizing--horizontal,
+.pf-resizing--horizontal * {
+  cursor: row-resize;
+}

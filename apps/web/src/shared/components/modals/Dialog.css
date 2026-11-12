@@ -1,0 +1,82 @@
+.pf-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 4rem);
+  margin: auto;
+  padding: 0;
+  border: var(--rule);
+  border-radius: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  /* The one thing that truly floats gets the one hard offset shadow, like a sheet laid on top. */
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.pf-dialog--lg {
+  width: min(48rem, calc(100vw - 2rem));
+}
+
+.pf-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: pf-dialog-in var(--t-base) var(--ease-in);
+}
+
+.pf-dialog::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+
+@keyframes pf-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.pf-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem 0.75rem 1.25rem;
+  border-bottom: var(--rule);
+}
+
+.pf-dialog__head h2 {
+  font-size: 1.25rem;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pf-dialog__close {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid transparent;
+  background: none;
+}
+
+.pf-dialog__close:hover {
+  border-color: var(--ink);
+}
+
+.pf-dialog__body {
+  padding: 1rem 1.25rem;
+  overflow: auto;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.pf-dialog__body > * + * {
+  margin-top: 0.75rem;
+}
+
+.pf-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  padding: 0.75rem 1.25rem;
+  border-top: var(--rule);
+}
