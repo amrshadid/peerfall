@@ -1,6 +1,7 @@
 .small-screen {
   display: grid;
-  grid-template-rows: 2rem auto;
+  /* An empty row as tall as the running head, so the sheet centres on the screen. */
+  grid-template-rows: 2rem 1fr 2rem;
   min-height: 100dvh;
 }
 
@@ -15,8 +16,10 @@
   }
 }
 
+/* Centred both ways; a sheet taller than the screen starts at the top and scrolls. */
 .small-screen__sheet {
-  margin: 0 1rem 1rem;
+  place-self: safe center;
+  margin: 1rem;
   padding: 1.5rem 1.25rem 1.75rem;
   display: grid;
   align-content: start;
@@ -57,7 +60,7 @@
 
 @media (min-width: 40rem) {
   .small-screen__sheet {
-    margin: 0 1.5rem 1.5rem;
+    margin: 1.5rem;
     padding: 2rem 2.25rem 2.25rem;
   }
 }
