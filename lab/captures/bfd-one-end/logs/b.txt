@@ -1,0 +1,106 @@
+2026/11/12 18:06:41.475 BFD: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+2026/11/12 18:06:41.475 BFD: [G6NKK-8C6DV] end_config: VTY:0xf13539642380, pending SET-CFG: 0
+2026/11/12 18:06:41.486 OSPF: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+2026/11/12 18:06:41.486 OSPF: [G6NKK-8C6DV] end_config: VTY:0xf960709fd590, pending SET-CFG: 0
+2026/11/12 18:06:41.701 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.3, NbrIP 10.0.3.2 (default) on b-c:10.0.3.1: Down -> Init (HelloReceived)
+2026/11/12 18:06:51.307 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.1.1 (default) on b-a:10.0.1.2: Down -> Init (HelloReceived)
+2026/11/12 18:06:51.307 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.1.1 (default) on b-a:10.0.1.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:06:51.307 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:31548f8d , flags:7
+2026/11/12 18:06:51.307 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:31548f8d , flags:7
+2026/11/12 18:06:51.308 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x70580820, local:0x31548f8d
+2026/11/12 18:06:51.308 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:06:51.308 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x31548f8d, local:0x31548f8d
+2026/11/12 18:06:51.308 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:06:51.308 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.1.1 (default) on b-a:10.0.1.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:06:51.308 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:31548f8e , flags:1
+2026/11/12 18:06:51.309 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x31548f8e, local:0x31548f8e
+2026/11/12 18:06:51.309 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.1.1 (default) on b-a:10.0.1.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:06:51.309 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:06:51.487 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.3 state is Init, seq_num:0x60ca1087, local:0x0
+2026/11/12 18:06:51.488 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.3, NbrIP 10.0.3.2 (default) on b-c:10.0.3.1: Init -> ExStart (2-WayReceived)
+2026/11/12 18:06:51.488 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.3 with seqnum:4d9a0cf8 , flags:7
+2026/11/12 18:06:51.488 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.3 DB Desc send with seqnum:4d9a0cf8 , flags:7
+2026/11/12 18:06:51.488 OSPF: [QY7PX-A76VE] Packet[DD]: Neighbor 10.255.0.3 Negotiation done (Slave).
+2026/11/12 18:06:51.488 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.3, NbrIP 10.0.3.2 (default) on b-c:10.0.3.1: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:06:51.488 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.3 DB Desc send with seqnum:60ca1087 , flags:0
+2026/11/12 18:06:51.489 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.3 state is Exchange, seq_num:0x60ca1088, local:0x60ca1087
+2026/11/12 18:06:51.489 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.3 DB Desc send with seqnum:60ca1088 , flags:0
+2026/11/12 18:06:51.489 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.3, NbrIP 10.0.3.2 (default) on b-c:10.0.3.1: Exchange -> Loading (ExchangeDone)
+2026/11/12 18:06:56.310 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.3, NbrIP 10.0.3.2 (default) on b-c:10.0.3.1: Loading -> Full (LoadingDone)
+2026/11/12 18:06:56.310 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.3:default], Loading -> Full): scheduling new router-LSA origination
+2026/11/12 18:07:01.307 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:01.307 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:01.702 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:01.702 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:07:11.308 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:11.308 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:11.704 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:11.704 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:07:21.309 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:21.309 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:21.704 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:21.704 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:07:31.310 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:31.310 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:31.706 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:31.706 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:07:41.310 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:41.310 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:41.707 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:41.707 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:07:51.318 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:07:51.318 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:07:51.708 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:07:51.708 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:01.326 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:01.327 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:01.712 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:01.712 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:11.336 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:11.336 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:11.712 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:11.712 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:21.329 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:21.330 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:21.713 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:21.713 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:31.345 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:31.347 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:31.714 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:31.714 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:41.342 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:41.342 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:41.714 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:41.714 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:08:51.349 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:08:51.349 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:08:51.715 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:08:51.715 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:01.358 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:01.358 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:01.717 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:01.717 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:11.358 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:11.358 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:11.743 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:11.743 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:21.365 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:21.365 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:21.738 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:21.738 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:31.365 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:31.365 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:31.740 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:31.740 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:41.370 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:41.370 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:41.741 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:41.741 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:09:51.376 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:09:51.376 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:09:51.741 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:09:51.741 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)
+2026/11/12 18:10:01.376 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:10:01.376 OSPF: [PBVCE-PQKR1] NSM[b-a:10.0.1.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:10:01.742 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (HelloReceived)
+2026/11/12 18:10:01.742 OSPF: [PBVCE-PQKR1] NSM[b-c:10.0.3.1:10.255.0.3:default]: Full (2-WayReceived)

@@ -1,0 +1,407 @@
+2026/11/12 18:10:23.768 BFD: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+2026/11/12 18:10:23.768 BFD: [G6NKK-8C6DV] end_config: VTY:0xf4a4de548380, pending SET-CFG: 0
+2026/11/12 18:10:23.768 OSPF: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+2026/11/12 18:10:23.768 OSPF: [G6NKK-8C6DV] end_config: VTY:0xe9f2a094b590, pending SET-CFG: 0
+2026/11/12 18:10:33.476 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:10:33.476 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:10:33.476 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:3d058142 , flags:7
+2026/11/12 18:10:33.476 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3d058142 , flags:7
+2026/11/12 18:10:33.478 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x4ce32d8e, local:0x3d058142
+2026/11/12 18:10:33.478 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:10:33.478 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x3d058142, local:0x3d058142
+2026/11/12 18:10:33.478 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:10:33.478 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:10:33.478 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3d058143 , flags:1
+2026/11/12 18:10:33.481 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x3d058143, local:0x3d058143
+2026/11/12 18:10:33.481 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:10:33.481 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:10:33.640 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.2, NbrIP 10.0.3.1 (default) on c-b:10.0.3.2: Down -> Init (HelloReceived)
+2026/11/12 18:10:33.640 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.2, NbrIP 10.0.3.1 (default) on c-b:10.0.3.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:10:33.640 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.2 with seqnum:6cab1850 , flags:7
+2026/11/12 18:10:33.641 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.2 DB Desc send with seqnum:6cab1850 , flags:7
+2026/11/12 18:10:33.641 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.2 state is ExStart, seq_num:0x597b14bf, local:0x6cab1850
+2026/11/12 18:10:33.641 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.2: Initial DBD from Slave, ignoring.
+2026/11/12 18:10:33.641 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.2 state is ExStart, seq_num:0x6cab1850, local:0x6cab1850
+2026/11/12 18:10:33.641 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.2 Negotiation done (Master).
+2026/11/12 18:10:33.642 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.2, NbrIP 10.0.3.1 (default) on c-b:10.0.3.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:10:33.642 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.2 DB Desc send with seqnum:6cab1851 , flags:1
+2026/11/12 18:10:33.642 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.2 state is Exchange, seq_num:0x6cab1851, local:0x6cab1851
+2026/11/12 18:10:33.642 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.2, NbrIP 10.0.3.1 (default) on c-b:10.0.3.2: Exchange -> Loading (ExchangeDone)
+2026/11/12 18:10:38.482 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.2, NbrIP 10.0.3.1 (default) on c-b:10.0.3.2: Loading -> Full (LoadingDone)
+2026/11/12 18:10:38.482 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.2:default], Loading -> Full): scheduling new router-LSA origination
+2026/11/12 18:10:40.074 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:10:41.079 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:10:41.079 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:10:41.079 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:10:41.079 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:10:41.079 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:10:41.079 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:10:41.079 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:10:43.476 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:10:43.476 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:10:43.644 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:10:43.644 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:10:53.483 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:10:53.483 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:10:53.645 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:10:53.645 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:03.480 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:11:03.480 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:11:03.645 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:03.645 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:11.625 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:11:11.626 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:11:11.626 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:11:11.626 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:11:11.626 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:11:11.626 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:11:11.626 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:11:13.646 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:13.646 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:23.482 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:11:23.482 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:11:23.482 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:11:23.482 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:11:23.646 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:23.646 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:23.777 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x716510a1, local:0x0
+2026/11/12 18:11:23.777 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:11:23.777 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:11:23.777 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:11:23.777 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:5af65ccd , flags:7
+2026/11/12 18:11:23.777 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:5af65ccd , flags:7
+2026/11/12 18:11:23.777 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:11:23.777 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x5af65ccd, local:0x5af65ccd
+2026/11/12 18:11:23.777 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:11:23.777 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:11:23.777 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:11:23.777 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:11:23.777 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:11:23.777 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:5af65cce , flags:1
+2026/11/12 18:11:23.777 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x5af65cce, local:0x5af65cce
+2026/11/12 18:11:23.777 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:11:23.777 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:11:23.777 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:11:23.777 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:11:25.529 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:11:25.529 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:11:25.529 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:11:25.529 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:11:25.529 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:11:25.529 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:11:25.529 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:11:33.487 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:11:33.487 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:11:33.647 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:33.647 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:36.472 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:11:36.473 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:11:36.473 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:11:36.473 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:11:36.473 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:11:36.473 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:11:36.473 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:11:43.648 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:43.648 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:53.493 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:11:53.493 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:11:53.493 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:11:53.493 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:11:53.649 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:11:53.649 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:11:53.778 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x4c8e8a3c, local:0x0
+2026/11/12 18:11:53.778 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:11:53.778 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:11:53.778 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:11:53.778 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:3cc233d5 , flags:7
+2026/11/12 18:11:53.778 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3cc233d5 , flags:7
+2026/11/12 18:11:53.778 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:11:53.778 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x3cc233d5, local:0x3cc233d5
+2026/11/12 18:11:53.778 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:11:53.778 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:11:53.778 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:11:53.778 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:11:53.778 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3cc233d6 , flags:1
+2026/11/12 18:11:53.778 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x3cc233d6, local:0x3cc233d6
+2026/11/12 18:11:53.778 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:11:53.778 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:11:53.778 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:11:53.778 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:11:53.778 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:11:55.615 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:11:55.615 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:11:55.615 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:11:55.615 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:11:55.615 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:11:55.615 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:11:55.615 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:12:03.501 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:12:03.501 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:12:03.651 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:03.651 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:06.059 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:12:06.059 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:12:06.059 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:12:06.059 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:12:06.059 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:12:06.059 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:12:06.060 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:12:13.652 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:13.652 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:23.507 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:12:23.507 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:12:23.507 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:12:23.507 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:12:23.653 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:23.653 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:23.781 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x3725aab4, local:0x0
+2026/11/12 18:12:23.781 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:12:23.781 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:12:23.781 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:12:23.781 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:32190355 , flags:7
+2026/11/12 18:12:23.781 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:32190355 , flags:7
+2026/11/12 18:12:23.781 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:12:23.781 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:12:23.781 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x32190355, local:0x32190355
+2026/11/12 18:12:23.781 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:12:23.781 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:12:23.781 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:12:23.781 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:12:23.781 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:32190356 , flags:1
+2026/11/12 18:12:23.781 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x32190356, local:0x32190356
+2026/11/12 18:12:23.781 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:12:23.781 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:12:23.781 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:12:23.781 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:12:25.747 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:12:25.747 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:12:25.747 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:12:25.747 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:12:25.749 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:12:25.749 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:12:25.751 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:12:33.515 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:12:33.515 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:12:33.657 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:33.657 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:36.856 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:12:36.857 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:12:36.857 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:12:36.857 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:12:36.857 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:12:36.857 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:12:36.857 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:12:43.657 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:43.657 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:53.525 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:12:53.525 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:12:53.525 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:12:53.525 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:12:53.659 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:12:53.659 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:12:53.790 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x534effb, local:0x0
+2026/11/12 18:12:53.790 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:12:53.790 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:12:53.790 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:12:53.790 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:e2e53e9 , flags:7
+2026/11/12 18:12:53.790 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:e2e53e9 , flags:7
+2026/11/12 18:12:53.790 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:12:53.790 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0xe2e53e9, local:0xe2e53e9
+2026/11/12 18:12:53.790 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:12:53.790 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:12:53.790 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:12:53.790 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:12:53.790 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:e2e53ea , flags:1
+2026/11/12 18:12:53.790 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:12:53.791 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0xe2e53ea, local:0xe2e53ea
+2026/11/12 18:12:53.791 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:12:53.791 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:12:53.791 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:12:53.791 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:12:55.696 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:12:55.696 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:12:55.696 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:12:55.696 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:12:55.696 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:12:55.696 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:12:55.697 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:13:03.531 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:13:03.531 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:13:03.662 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:03.662 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:06.559 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:13:06.560 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:13:06.560 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:13:06.560 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:13:06.560 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:13:06.560 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:13:06.561 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:13:13.667 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:13.667 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:23.542 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:13:23.542 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:13:23.542 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:13:23.542 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:13:23.668 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:23.668 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:23.803 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x9f01170, local:0x0
+2026/11/12 18:13:23.803 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:13:23.804 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:13:23.804 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:13:23.804 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:436d9f5f , flags:7
+2026/11/12 18:13:23.804 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:436d9f5f , flags:7
+2026/11/12 18:13:23.804 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:13:23.804 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x436d9f5f, local:0x436d9f5f
+2026/11/12 18:13:23.804 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:13:23.804 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:13:23.804 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:13:23.804 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:13:23.804 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:436d9f60 , flags:1
+2026/11/12 18:13:23.804 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:13:23.804 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x436d9f60, local:0x436d9f60
+2026/11/12 18:13:23.804 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:13:23.804 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:13:23.804 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:13:23.804 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:13:25.560 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:13:25.560 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:13:25.560 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:13:25.560 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:13:25.560 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:13:25.560 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:13:25.561 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:13:33.550 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:13:33.550 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:13:33.670 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:33.670 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:36.420 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:13:36.420 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:13:36.420 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:13:36.420 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:13:36.420 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:13:36.420 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:13:36.424 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:13:43.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:43.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:53.558 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:13:53.558 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:13:53.558 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:13:53.558 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:13:53.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:13:53.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:13:53.811 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x59a31837, local:0x0
+2026/11/12 18:13:53.811 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:13:53.811 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:13:53.811 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:13:53.811 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:3671e33b , flags:7
+2026/11/12 18:13:53.811 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3671e33b , flags:7
+2026/11/12 18:13:53.811 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:13:53.811 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:13:53.811 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x3671e33b, local:0x3671e33b
+2026/11/12 18:13:53.811 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:13:53.811 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:13:53.811 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:13:53.811 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:13:53.811 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:3671e33c , flags:1
+2026/11/12 18:13:53.811 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x3671e33c, local:0x3671e33c
+2026/11/12 18:13:53.811 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:13:53.811 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:13:53.811 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:13:53.811 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:13:55.695 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:13:55.695 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:13:55.695 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:13:55.695 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:13:55.695 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:13:55.695 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:13:55.696 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:14:03.561 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:14:03.561 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:14:03.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:03.673 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:06.742 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:14:06.742 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:14:06.742 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:14:06.742 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:14:06.742 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:14:06.742 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:14:06.743 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:14:13.676 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:13.676 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:23.573 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:14:23.573 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:14:23.573 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:14:23.573 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:14:23.679 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:23.679 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:23.823 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x498204de, local:0x0
+2026/11/12 18:14:23.823 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:14:23.823 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:14:23.823 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:14:23.823 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:57abf31 , flags:7
+2026/11/12 18:14:23.823 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:57abf31 , flags:7
+2026/11/12 18:14:23.823 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:14:23.823 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x57abf31, local:0x57abf31
+2026/11/12 18:14:23.823 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:14:23.823 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:14:23.823 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:14:23.823 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:14:23.823 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:57abf32 , flags:1
+2026/11/12 18:14:23.824 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:14:23.824 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x57abf32, local:0x57abf32
+2026/11/12 18:14:23.824 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:14:23.824 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:14:23.824 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:14:23.824 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:14:25.710 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:14:25.710 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:14:25.710 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:14:25.710 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:14:25.710 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:14:25.710 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:14:25.711 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up
+2026/11/12 18:14:33.580 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (HelloReceived)
+2026/11/12 18:14:33.580 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (2-WayReceived)
+2026/11/12 18:14:33.681 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:33.681 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:37.420 BFD: [SEY1D-NT8EQ] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] up -> down reason:control-expired
+2026/11/12 18:14:37.422 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Down
+2026/11/12 18:14:37.422 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Full (InactivityTimer)
+2026/11/12 18:14:37.422 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Full -> Deleted (InactivityTimer)
+2026/11/12 18:14:37.422 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Full -> Deleted (InactivityTimer)
+2026/11/12 18:14:37.422 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Full -> Deleted): scheduling new router-LSA origination
+2026/11/12 18:14:37.423 BFD: [NW21R-MRYNT] session-delete: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:14:43.681 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:43.681 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:53.588 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Down (HelloReceived)
+2026/11/12 18:14:53.588 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Down -> Init (HelloReceived)
+2026/11/12 18:14:53.588 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Down -> Init (HelloReceived)
+2026/11/12 18:14:53.588 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (1-WayReceived)
+2026/11/12 18:14:53.685 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (HelloReceived)
+2026/11/12 18:14:53.685 OSPF: [PBVCE-PQKR1] NSM[c-b:10.0.3.2:10.255.0.2:default]: Full (2-WayReceived)
+2026/11/12 18:14:53.832 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Init, seq_num:0x3e5cf46a, local:0x0
+2026/11/12 18:14:53.832 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Init (2-WayReceived)
+2026/11/12 18:14:53.832 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Init -> ExStart (2-WayReceived)
+2026/11/12 18:14:53.832 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Init -> ExStart (2-WayReceived)
+2026/11/12 18:14:53.832 OSPF: [K9Q2W-82MY9] default: Initializing [DD]: 10.255.0.1 with seqnum:68b56a25 , flags:7
+2026/11/12 18:14:53.832 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:68b56a25 , flags:7
+2026/11/12 18:14:53.832 OSPF: [MJPRP-6G4WM] Packet[DD]: Neighbor 10.255.0.1: Initial DBD from Slave, ignoring.
+2026/11/12 18:14:53.832 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is ExStart, seq_num:0x68b56a25, local:0x68b56a25
+2026/11/12 18:14:53.832 OSPF: [S5PCG-77H23] Packet[DD]: Neighbor 10.255.0.1 Negotiation done (Master).
+2026/11/12 18:14:53.832 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: ExStart (NegotiationDone)
+2026/11/12 18:14:53.832 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:14:53.832 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: ExStart -> Exchange (NegotiationDone)
+2026/11/12 18:14:53.832 OSPF: [YPCA4-JHA8Q] default:Packet[DD]: 10.255.0.1 DB Desc send with seqnum:68b56a26 , flags:1
+2026/11/12 18:14:53.832 OSPF: [SXPB9-WR7E3] default:Packet[DD]: Neighbor 10.255.0.1 state is Exchange, seq_num:0x68b56a26, local:0x68b56a26
+2026/11/12 18:14:53.833 OSPF: [PBVCE-PQKR1] NSM[c-a:10.0.2.2:10.255.0.1:default]: Exchange (ExchangeDone)
+2026/11/12 18:14:53.833 OSPF: [J91RT-VKRP4] NSM[c-a:10.0.2.2:10.255.0.1:default]: State change Exchange -> Full (ExchangeDone)
+2026/11/12 18:14:53.833 OSPF: [Y05P2-YJVXY] AdjChg: Nbr 10.255.0.1, NbrIP 10.0.2.1 (default) on c-a:10.0.2.2: Exchange -> Full (ExchangeDone)
+2026/11/12 18:14:53.833 OSPF: [S3578-FNEB0] nsm_change_state:[10.255.0.1:default], Exchange -> Full): scheduling new router-LSA origination
+2026/11/12 18:14:53.833 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a
+2026/11/12 18:14:55.703 BFD: [JDVTV-0C5CA] [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] Setting polling=1 to negotiate timer change
+2026/11/12 18:14:55.703 BFD: [J1C6V-VMRW5] state-change: [mhop:no peer:10.0.2.1 local:10.0.2.2 vrf:default ifname:c-a] init -> up
+2026/11/12 18:14:55.703 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:14:55.703 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:14:55.703 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)
+2026/11/12 18:14:55.703 BFD: [GV40T-Q4HXQ]   APPLYING new xmt_TO=300000
+2026/11/12 18:14:55.703 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[c-a:10.0.2.2:10.0.2.1]: BFD Up

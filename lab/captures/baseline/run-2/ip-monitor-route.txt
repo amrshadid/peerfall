@@ -1,0 +1,7 @@
+# ip -ts -n a monitor route
+[2026-11-12T18:04:43.986183] 10.0.3.0/30 nhid 18 via 10.0.1.2 dev a-b proto ospf metric 20 
+[2026-11-12T18:04:43.986418] 10.255.0.3 nhid 18 via 10.0.1.2 dev a-b proto ospf metric 20 
+[2026-11-12T18:05:04.358629] 10.0.3.0/30 nhid 17 proto ospf metric 20 
+	nexthop via 10.0.1.2 dev a-b weight 1 
+	nexthop via 10.0.2.2 dev a-c weight 1 
+[2026-11-12T18:05:04.358718] 10.255.0.3 nhid 19 via 10.0.2.2 dev a-c proto ospf metric 20 

@@ -1,0 +1,3 @@
+qdisc noqueue 0: dev lo root refcnt 2 
+qdisc netem 8030: dev c-a root refcnt 7 limit 1000 loss 100% seed 2694587133314030947
+qdisc noqueue 0: dev c-b root refcnt 2 

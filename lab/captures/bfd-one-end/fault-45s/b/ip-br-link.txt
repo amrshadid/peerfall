@@ -1,0 +1,3 @@
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+b-a@if2          UP             42:6d:d5:6d:97:8b <BROADCAST,MULTICAST,UP,LOWER_UP> 
+b-c@if3          UP             3e:33:47:d4:f1:aa <BROADCAST,MULTICAST,UP,LOWER_UP> 

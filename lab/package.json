@@ -1,0 +1,10 @@
+{
+  "name": "peerfall-lab",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The game's network on a real Linux host: one container, one namespace per router, native FRR.",
+  "type": "module",
+  "imports": {
+    "#lab/*": "./src/*.ts"
+  }
+}
