@@ -7,8 +7,9 @@ const golden = goldenMission('the-silent-router')
 const daemons = (id: string) => golden.run(id).state?.routers.a?.daemons
 
 describe('The Silent Router, on the Machine', () => {
-  it('has all four golden runs, recorded for this version of the mission', () => {
+  it('has all five golden runs, recorded for this version of the mission', () => {
     expect(golden.runs.map((recorded) => recorded.run).sort()).toEqual([
+      'by-hand-then-init-script',
       'daemons-by-hand',
       'init-script',
       'start',
@@ -47,7 +48,9 @@ describe('The Silent Router, on the Machine', () => {
   })
 
   it('FRR’s init script: watchfrr and the three daemons it started all answer', () => {
-    expect(daemons('init-script')).toEqual(['mgmtd', 'zebra', 'staticd', 'watchfrr'])
-    expect(golden.objectives('init-script')).toEqual({ 'daemons-answer': true, 'watchfrr-watches': true })
+    for (const id of ['init-script', 'by-hand-then-init-script']) {
+      expect(daemons(id)).toEqual(['mgmtd', 'zebra', 'staticd', 'watchfrr'])
+      expect(golden.objectives(id)).toEqual({ 'daemons-answer': true, 'watchfrr-watches': true })
+    }
   })
 })

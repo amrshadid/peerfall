@@ -24,3 +24,13 @@ runs:
     changes:
       - router: a
         shell: [/usr/lib/frr/frrinit.sh start a]
+  # Started by hand first, then started again properly: the script stops what runs and starts watchfrr.
+  - id: by-hand-then-init-script
+    passes: true
+    changes:
+      - router: a
+        shell:
+          - /usr/lib/frr/zebra -d -N a
+          - /usr/lib/frr/mgmtd -d -N a
+          - /usr/lib/frr/staticd -d -N a
+          - /usr/lib/frr/frrinit.sh restart a
