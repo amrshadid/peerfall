@@ -21,19 +21,37 @@
   padding: 0.875rem 0 1.125rem;
 }
 
-.title__tagline {
+.title__tagline blockquote {
   font-size: 1.625rem;
   font-variation-settings: "wdth" 112;
   font-weight: 600;
   letter-spacing: -0.01em;
-  text-wrap: balance;
+}
+
+.title__tagline blockquote a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+.title__tagline blockquote a:hover,
+.title__tagline blockquote a:focus-visible {
+  text-decoration-thickness: 4px;
+  outline: none;
+}
+
+.title__tagline figcaption {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
 }
 
 .title__key {
   font-size: 0.875rem;
   color: var(--ink-2);
   text-align: right;
-  white-space: nowrap;
 }
 
 .title__key b {
@@ -51,13 +69,13 @@
   border-right: var(--rule);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
   overflow: auto;
 }
 
 .title__continue {
   display: grid;
-  gap: 0.625rem;
+  gap: 0.75rem;
   justify-items: start;
 }
 
@@ -69,18 +87,6 @@
 .title__step {
   font-size: 0.9375rem;
   color: var(--ink-2);
-  max-width: 26rem;
-}
-
-/* The journey is long: its lines are set tighter than a four-line menu's, and the parts in the code face. */
-.title__menu .pf-contents__line {
-  padding: 0.25rem 0;
-  font-size: 1rem;
-}
-
-.title__menu .pf-contents__ref {
-  font-family: var(--mono);
-  font-size: 0.75rem;
 }
 
 .title__drawing {
@@ -88,21 +94,6 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
-}
-
-/* On the cover the drawing is the picture: its routers and labels are set a size up. */
-.title__drawing .topology__router {
-  min-width: 6rem;
-  padding: 0.625rem 0.875rem 0.5rem;
-}
-
-.title__drawing .topology__router-name {
-  font-size: 1.75rem;
-}
-
-.title__drawing .topology__router-address,
-.title__drawing .topology__link-label {
-  font-size: 0.8125rem;
 }
 
 .title__drawing figcaption {
@@ -114,10 +105,6 @@
   padding-top: 0.5rem;
 }
 
-.title__drawing figcaption span:last-child {
-  text-align: right;
-}
-
 .title__shortcuts {
   border: 0;
   background: none;
@@ -127,6 +114,16 @@
 }
 
 .title__shortcuts:hover {
+  color: var(--ink);
+}
+
+.title__privacy {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.title__privacy:hover {
   color: var(--ink);
 }
 

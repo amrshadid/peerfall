@@ -1,1 +1,1 @@
-export { TitlePresentation, type TitlePresentationProps } from './TitlePresentation'
+export { type NewGameDialog, TitlePresentation, type TitlePresentationProps } from './TitlePresentation'

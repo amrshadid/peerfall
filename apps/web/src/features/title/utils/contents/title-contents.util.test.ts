@@ -1,40 +1,84 @@
+import type { ChapterEntry, MissionDefinition } from '@peerfall/game/types'
+import { appContent } from '@peerfall/missions/utils'
 import { hrefOf } from '@shared/navigation'
-import { describe, expect, it } from 'vitest'
-import { FIRST_MISSION, JOURNEY } from './title-contents.constants'
-import { titleContentsOf, titleStartOf } from './title-contents.util'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  continueTargetOf,
+  currentChapter,
+  firstMissionOf,
+  lastPlayedText,
+  titleContentsOf,
+  volumeOf,
+} from './title-contents.util'
+
+const loaded = appContent()
+if (!loaded.ok) {
+  throw new Error(loaded.errors.join('\n'))
+}
+const { game } = loaded.value
+const mission = game.missions[0] as MissionDefinition
+
+/** The real curriculum, every mission with the given status. */
+const chaptersWith = (status: 'available' | 'in_progress' | 'completed'): ChapterEntry[] =>
+  game.chapters.map((chapter) => ({
+    chapter,
+    missions: game.missionsIn(chapter.id).map((each) => ({ mission: each, status, attempts: 0, hintsUsed: 0 })),
+  }))
 
 describe('titleContentsOf', () => {
-  it('lists the eleven stages in play order, then Settings', () => {
-    const contents = titleContentsOf({ journey: JOURNEY, devRoutes: false })
-    expect(contents).toHaveLength(12)
-    expect(contents[0]).toMatchObject({ id: 'stage-1', name: '1 · First router' })
-    expect(contents[10]).toMatchObject({ id: 'stage-11', name: '11 · Operate a network' })
-    expect(contents.at(-1)).toMatchObject({ id: 'settings', href: hrefOf({ name: 'settings', section: null }) })
+  it('lists New game, then the map with the stage progress, and Settings', () => {
+    const onNewGame = vi.fn()
+    const chapters = chaptersWith('completed')
+    const contents = titleContentsOf({ chapter: currentChapter(chapters, mission), firstMission: mission, onNewGame })
+    expect(contents.map((entry) => entry.id)).toEqual(['new', 'map', 'settings'])
+    expect(contents[0]?.reference).toBe('from The Link That Never Went Down')
+    expect(contents[1]).toMatchObject({ reference: 'Stage 4, 1 of 1 passed', href: hrefOf({ name: 'map' }) })
+    contents[0]?.onSelect?.()
+    expect(onNewGame).toHaveBeenCalledOnce()
   })
 
-  it('links only the stage that has a mission: the rest are listed, with nothing to press', () => {
-    const contents = titleContentsOf({ journey: JOURNEY, devRoutes: false })
-    const linked = contents.filter((entry) => entry.id.startsWith('stage-') && entry.href !== undefined)
-    expect(linked.map((entry) => entry.id)).toEqual(['stage-4'])
-    expect(linked[0]?.href).toBe(hrefOf({ name: 'mission', missionId: FIRST_MISSION.id }))
-    expect(contents.some((entry) => entry.onSelect !== undefined)).toBe(false)
-  })
-
-  it('adds the workspace fixtures on a dev server only', () => {
-    const ids = (devRoutes: boolean) => titleContentsOf({ journey: JOURNEY, devRoutes }).map((entry) => entry.id)
-    expect(ids(false)).not.toContain('dev-workspace')
-    expect(ids(true).at(-1)).toBe('dev-workspace')
+  it('still names the journey before any content', () => {
+    const contents = titleContentsOf({ chapter: undefined, firstMission: undefined, onNewGame: () => {} })
+    expect(contents[1]?.reference).toBe('the journey')
   })
 })
 
-describe('titleStartOf', () => {
-  it('starts at the first mission and says which stage it belongs to', () => {
-    const start = titleStartOf()
-    expect(start.href).toBe(hrefOf({ name: 'mission', missionId: FIRST_MISSION.id }))
-    expect(start.where).toBe('Stage 4 · Recover from failure · The Link That Never Went Down')
+describe('the stage the player is in', () => {
+  it('is the chapter of the mission to continue, else the first with missions', () => {
+    const chapters = chaptersWith('available')
+    expect(currentChapter(chapters, mission)?.chapter.id).toBe('recover-from-failure')
+    expect(currentChapter(chapters, null)?.chapter.id).toBe('recover-from-failure')
+    expect(volumeOf(currentChapter(chapters, mission))).toBe('Stage 4: Recover from failure')
+    expect(volumeOf(undefined)).toBe('The journey')
   })
+})
 
-  it('still names the mission when its stage is not listed', () => {
-    expect(titleStartOf([]).where).toBe('The Link That Never Went Down')
+describe('continueTargetOf', () => {
+  it('links to the mission and says where it is and how far', () => {
+    const target = continueTargetOf({
+      mission,
+      chapters: chaptersWith('in_progress'),
+      lastPlayed: ' · last played just now',
+    })
+    expect(target.href).toBe(hrefOf({ name: 'mission', missionId: mission.id }))
+    expect(target.where).toBe('Stage 4 · Recover from failure · The Link That Never Went Down')
+    expect(target.step).toBe('In progress · last played just now')
+  })
+})
+
+describe('firstMissionOf', () => {
+  it('says where New game starts, with the mission in one sentence', () => {
+    expect(firstMissionOf(mission)).toEqual({
+      where: 'Start at The Link That Never Went Down.',
+      step: mission.objective,
+    })
+    expect(firstMissionOf(undefined).where).toBe('No mission is written yet.')
+  })
+})
+
+describe('lastPlayedText', () => {
+  it('is empty before the first save', () => {
+    expect(lastPlayedText(1000, null)).toBe('')
+    expect(lastPlayedText(1000, 1000)).toBe(' · last played just now')
   })
 })

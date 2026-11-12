@@ -1,50 +1,93 @@
-import type { JourneyStage, TitleStart } from '@features/title/types'
+import type { ContinueTarget, FirstMission } from '@features/title/types'
+import type { ChapterEntry, MissionDefinition, MissionStatus } from '@peerfall/game/types'
 import { hrefOf } from '@shared/navigation'
 import type { ContentsEntry } from '@shared/types'
-import { FIRST_MISSION, JOURNEY } from './title-contents.constants'
+import { formatLastPlayed } from '@shared/utils/format'
 
-export interface TitleContentsInput {
-  readonly journey: readonly JourneyStage[]
-  /** Adds the workspace fixtures to the list: on a dev server only. */
-  readonly devRoutes: boolean
+const STATUS_TEXT: Readonly<Record<MissionStatus, string>> = {
+  locked: 'Locked',
+  available: 'Not started',
+  in_progress: 'In progress',
+  completed: 'Passed',
 }
 
-/** The journey's stages, then Settings. A stage with no mission yet is listed without a link. */
-export function titleContentsOf({ journey, devRoutes }: TitleContentsInput): ContentsEntry[] {
-  const stages: ContentsEntry[] = journey.map((stage) => ({
-    id: `stage-${stage.number}`,
-    name: `${stage.number} · ${stage.name}`,
-    reference: stage.parts,
-    ...(stage.missionId === null ? {} : { href: hrefOf({ name: 'mission', missionId: stage.missionId }) }),
-  }))
+/** "Stage 4": a chapter by its place in the journey. */
+export function stageName(chapter: ChapterEntry | undefined): string {
+  return chapter ? `Stage ${chapter.chapter.stage}` : 'The journey'
+}
+
+/** "Stage 4: Recover from failure": the stage the player is in names the manual's volume. */
+export function volumeOf(chapter: ChapterEntry | undefined): string {
+  return chapter ? `Stage ${chapter.chapter.stage}: ${chapter.chapter.title}` : 'The journey'
+}
+
+/** The chapter a mission belongs to; the first one that has missions when there is none to continue. */
+export function currentChapter(
+  chapters: readonly ChapterEntry[],
+  mission: MissionDefinition | null
+): ChapterEntry | undefined {
+  return (
+    chapters.find((entry) => entry.chapter.id === mission?.chapter) ??
+    chapters.find((entry) => entry.missions.length > 0) ??
+    chapters[0]
+  )
+}
+
+export interface TitleContentsInput {
+  /** The stage the player is in. */
+  readonly chapter: ChapterEntry | undefined
+  /** Where New game starts. */
+  readonly firstMission: MissionDefinition | undefined
+  readonly onNewGame: () => void
+}
+
+export function titleContentsOf({ chapter, firstMission, onNewGame }: TitleContentsInput): ContentsEntry[] {
+  const passed = chapter?.missions.filter((entry) => entry.status === 'completed').length ?? 0
   return [
-    ...stages,
+    {
+      id: 'new',
+      name: 'New game',
+      reference: firstMission ? `from ${firstMission.title}` : 'from the first mission',
+      onSelect: onNewGame,
+    },
+    {
+      id: 'map',
+      name: 'Map',
+      reference: chapter ? `${stageName(chapter)}, ${passed} of ${chapter.missions.length} passed` : 'the journey',
+      href: hrefOf({ name: 'map' }),
+    },
     {
       id: 'settings',
       name: 'Settings',
-      reference: 'theme, text size, keys',
+      reference: 'theme, motion, saves',
       href: hrefOf({ name: 'settings', section: null }),
     },
-    ...(devRoutes
-      ? [
-          {
-            id: 'dev-workspace',
-            name: 'Workspace fixtures',
-            reference: 'dev only',
-            href: hrefOf({ name: 'dev-workspace' }),
-          },
-        ]
-      : []),
   ]
 }
 
-/** The primary button: the first mission, and where it sits in the journey. */
-export function titleStartOf(journey: readonly JourneyStage[] = JOURNEY): TitleStart {
-  const stage = journey.find((candidate) => candidate.number === FIRST_MISSION.stage)
+export interface ContinueTargetInput {
+  readonly mission: MissionDefinition
+  readonly chapters: readonly ChapterEntry[]
+  /** " · last played 2 days ago", or empty before the first save. */
+  readonly lastPlayed: string
+}
+
+export function continueTargetOf({ mission, chapters, lastPlayed }: ContinueTargetInput): ContinueTarget {
+  const chapter = chapters.find((entry) => entry.chapter.id === mission.chapter)
+  const status = chapter?.missions.find((entry) => entry.mission.id === mission.id)?.status ?? 'available'
   return {
-    href: hrefOf({ name: 'mission', missionId: FIRST_MISSION.id }),
-    label: 'Start',
-    where: [stage ? `Stage ${stage.number} · ${stage.name}` : null, FIRST_MISSION.title].filter(Boolean).join(' · '),
-    note: 'A link loses every packet while both of its interfaces stay up. Find out why nothing notices, and fix it.',
+    href: hrefOf({ name: 'mission', missionId: mission.id }),
+    where: [chapter ? stageName(chapter) : null, chapter?.chapter.title, mission.title].filter(Boolean).join(' · '),
+    step: `${STATUS_TEXT[status]}${lastPlayed}`,
   }
+}
+
+export function firstMissionOf(mission: MissionDefinition | undefined): FirstMission {
+  return mission
+    ? { where: `Start at ${mission.title}.`, step: mission.objective }
+    : { where: 'No mission is written yet.', step: 'The journey is on the map.' }
+}
+
+export function lastPlayedText(now: number, lastSavedAt: number | null): string {
+  return lastSavedAt === null ? '' : ` · last played ${formatLastPlayed(now, lastSavedAt)}`
 }
