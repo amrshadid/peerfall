@@ -1,0 +1,56 @@
+.map-section {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.map-scroll {
+  grid-column: 2;
+  grid-row: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-height: 0;
+  background: var(--sheet);
+}
+
+/* A fixed height: a longer note must not shrink the drawing under the pointer. */
+.map-note {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: calc(var(--map-foot) - var(--map-caption));
+  overflow: hidden;
+  padding: 0.5rem 1rem 0 0.875rem;
+  border-top: var(--rule);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+/* One line of title and facts, three of text: four lines in all. */
+.map-note__head {
+  display: flex;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.map-note__head b {
+  font-weight: 700;
+}
+
+.map-note__facts {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink-2);
+}
+
+.map-note__text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}

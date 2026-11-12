@@ -1,0 +1,42 @@
+.pf-tabs {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.pf-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  border: 0;
+  border-right: var(--rule);
+  background: var(--soft);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.pf-tabs--file .pf-tab {
+  font-family: var(--mono);
+  font-variant-ligatures: none;
+}
+
+.pf-tabs--view .pf-tab {
+  font-weight: 500;
+}
+
+.pf-tab[aria-selected="true"] {
+  background: var(--sheet);
+  font-weight: 600;
+  box-shadow: inset 0 -4px 0 var(--red);
+}
+
+.pf-tab:focus-visible {
+  outline-offset: -3px;
+}
+
+.pf-tab__mark {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--ink);
+}

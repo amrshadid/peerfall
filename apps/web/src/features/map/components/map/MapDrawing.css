@@ -1,0 +1,178 @@
+.map-fig {
+  display: block;
+}
+
+.map-fig text {
+  font-family: var(--face);
+  fill: var(--ink);
+}
+
+/* Words printed straight on the hatching keep a halo of paper. */
+.map-fig__region,
+.map-fig__num,
+.map-fig__label,
+.map-fig__meta,
+.map-fig__mono,
+.map-fig__tone-passed,
+.map-fig__tone-progress,
+.map-fig__tone-ahead,
+.map-fig__tone-planned,
+.map-fig__kicker,
+.map-fig__caption {
+  paint-order: stroke;
+  stroke: var(--sheet);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.map-fig__kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.map-fig text.map-fig__kicker {
+  fill: var(--ink-2);
+}
+
+.map-fig__zone {
+  font-size: 26px;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.map-fig__caption {
+  font-size: 14px;
+}
+
+.map-fig .map-fig__mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  fill: var(--ink-2);
+}
+
+.map-fig__meta {
+  font-size: 12px;
+}
+
+.map-fig text.map-fig__meta {
+  fill: var(--ink-2);
+}
+
+.map-fig__region {
+  font-size: 16px;
+  font-variation-settings: "wdth" 112;
+  font-weight: 700;
+}
+
+.map-fig__num {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.map-fig__label {
+  font-size: 13px;
+  font-variation-settings: "wdth" 75;
+  font-weight: 600;
+}
+
+.map-fig__tone-passed,
+.map-fig__tone-progress,
+.map-fig__tone-ahead,
+.map-fig__tone-planned {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.map-fig text.map-fig__tone-passed {
+  fill: var(--green);
+}
+
+.map-fig text.map-fig__tone-progress {
+  fill: var(--red);
+}
+
+.map-fig text.map-fig__tone-ahead,
+.map-fig text.map-fig__tone-planned,
+.map-fig text.map-fig__dim {
+  fill: var(--ink-2);
+}
+
+.map-fig__hit {
+  fill: transparent;
+}
+
+.map-fig__band--progress {
+  opacity: 0.45;
+}
+
+.map-fig__band--ahead,
+.map-fig__band--planned {
+  opacity: 0.8;
+}
+
+.map-fig__grade {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.map-fig__panel {
+  fill: var(--sheet);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.map-fig__start {
+  fill: var(--ink);
+}
+
+.map-fig__router {
+  fill: var(--sheet);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.map-fig__router-lbl {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.map-fig__bus {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
+.map-fig__wire {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.map-node {
+  cursor: pointer;
+}
+
+.map-node:focus {
+  outline: none;
+}
+
+.map-node__ring {
+  fill: none;
+  stroke: none;
+}
+
+.map-node--selected .map-node__ring {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 3;
+}
+
+.map-node:focus-visible .map-node__ring {
+  stroke: var(--blue);
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
+.map-node:hover text {
+  fill: var(--red);
+}

@@ -1,0 +1,7 @@
+10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1 
+10.0.2.0/30 dev a-c proto kernel scope link src 10.0.2.1 
+10.0.3.0/30 nhid 17 proto ospf metric 20 
+	nexthop via 10.0.1.2 dev a-b weight 1 
+	nexthop via 10.0.2.2 dev a-c weight 1 
+10.255.0.2 nhid 18 via 10.0.1.2 dev a-b proto ospf metric 20 
+10.255.0.3 nhid 19 via 10.0.2.2 dev a-c proto ospf metric 20 

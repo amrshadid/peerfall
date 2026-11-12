@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Tailwind's colours map onto the Section 2 tokens, so the features using it follow Day and Night print. */
+@theme {
+  --color-surface: var(--soft);
+  --color-panel: var(--sheet);
+  --color-ink: var(--ink);
+  --color-muted: var(--ink-2);
+  --color-accent: var(--red);
+  --color-deep: var(--soft);
+  --color-link: var(--blue);
+  --color-ok: var(--green);
+  --color-error: var(--red);
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius-lg: 0;
+  --radius-full: 0;
+}

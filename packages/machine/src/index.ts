@@ -1,2 +1,8 @@
+// The app uses configureMachine(), /types, /utils and /hooks; /services and /store are for packages.
+
 export { configureMachine, getMachineConfig, resetMachineConfig } from '#config'
-export { DEFAULT_MACHINE_CONFIG, type MachineConfig } from '#types/index'
+export * from '#hooks/index'
+export * from '#services/index'
+export * from '#store/index'
+export * from '#types/index'
+export * from '#utils/index'

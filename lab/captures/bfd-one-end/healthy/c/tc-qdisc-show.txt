@@ -1,0 +1,3 @@
+qdisc noqueue 0: dev lo root refcnt 2 
+qdisc noqueue 0: dev c-a root refcnt 2 
+qdisc noqueue 0: dev c-b root refcnt 2 

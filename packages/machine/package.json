@@ -8,11 +8,20 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./services": "./src/services/index.ts",
+    "./store": "./src/store/index.ts",
+    "./utils": "./src/utils/index.ts"
   },
   "imports": {
     "#config": "./src/config.ts",
+    "#hooks/*": "./src/hooks/*.ts",
+    "#services/*": "./src/services/*.ts",
+    "#store/*": "./src/store/*.ts",
+    "#test/*": "./src/test/*.ts",
     "#types/*": "./src/types/*.ts",
+    "#utils/*": "./src/utils/*.ts",
     "#vm-image/*": "./scripts/vm-image/*.ts"
   },
   "scripts": {
@@ -20,6 +29,17 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@peerfall/core": "workspace:*"
+    "@peerfall/core": "workspace:*",
+    "comlink": "^4.4.2",
+    "v86": "0.5.471",
+    "zustand": "^5.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.1",
+    "vite": "^8.3.7"
   }
 }

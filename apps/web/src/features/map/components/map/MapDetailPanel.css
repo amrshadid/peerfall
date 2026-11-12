@@ -1,0 +1,147 @@
+.map-detail {
+  border-left: var(--rule);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.map-detail__head {
+  padding: 1.125rem 1.25rem 0.875rem;
+  border-bottom: var(--rule);
+}
+
+.map-detail__head p {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.map-detail__head h2 {
+  font-size: 1.875rem;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.map-detail__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.map-detail__state--progress,
+.map-detail__state--available {
+  color: var(--red);
+}
+
+.map-detail__state--clean {
+  color: var(--green);
+}
+
+.map-detail__state--locked,
+.map-detail__state--planned {
+  color: var(--ink-2);
+}
+
+.map-detail__state .pf-node-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.map-detail__body {
+  overflow: auto;
+  padding-bottom: 1rem;
+}
+
+.map-detail dl {
+  padding: 0.375rem 1.25rem;
+  margin: 0;
+}
+
+.map-detail dl > div {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.625rem;
+  padding: 0.5625rem 0;
+  border-bottom: 2px solid var(--soft);
+  font-size: 0.9375rem;
+}
+
+.map-detail dt {
+  font-weight: 700;
+}
+
+.map-detail dd code {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.map-detail__need {
+  display: block;
+}
+
+.map-detail__parts {
+  line-height: 1.6;
+}
+
+.map-detail__ok {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.map-detail__missing {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.map-detail__note {
+  padding: 0.75rem 1.25rem 0;
+  color: var(--ink-2);
+}
+
+.map-detail__actions {
+  display: flex;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem 0;
+}
+
+.map-detail__legend {
+  height: var(--map-foot);
+  overflow: hidden;
+  border-top: var(--rule);
+  padding: 0.75rem 1.25rem 0.875rem;
+}
+
+.map-detail__legend h3 {
+  font-size: 0.875rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.map-detail__legend ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+}
+
+.map-detail__legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+}
+
+@media (max-height: 52.5rem) {
+  .map-detail dl > div {
+    padding: 0.375rem 0;
+    font-size: 0.875rem;
+  }
+  .map-detail__head h2 {
+    font-size: 1.625rem;
+  }
+  .map-detail__legend li {
+    font-size: 0.8125rem;
+  }
+}

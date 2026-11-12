@@ -1,5 +1,18 @@
 # Peerfall
 
+[![Play](https://img.shields.io/badge/play-peerfall.shadid.dev-1a1a1a?logo=vercel&logoColor=white)](https://peerfall.shadid.dev)
+[![CI](https://github.com/amrshadid/peerfall/actions/workflows/ci.yml/badge.svg)](https://github.com/amrshadid/peerfall/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/amrshadid/peerfall?include_prereleases&sort=semver)](https://github.com/amrshadid/peerfall/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![FRR 10.6](https://img.shields.io/badge/FRR-10.6-black)](docs/ARCHITECTURE.md#the-machine)
+
+**Play it in your browser: [peerfall.shadid.dev](https://peerfall.shadid.dev)** (a
+desktop browser; the first visit downloads the Linux machine).
+
+> We reject: kings, presidents and voting. We believe in: rough consensus and running code.
+>
+> — David D. Clark, at the IETF, 1992
+
 **Learn FRRouting from your first router to operating a multi-protocol network.**
 
 Peerfall is a free, open-source browser game where you build networks, diagnose outages
@@ -10,10 +23,13 @@ The network is real: a Linux kernel running in an emulated PC
 ([v86](https://github.com/copy/v86)) inside your browser, with one network namespace per
 router and FRR's own daemons in each. You type into the real `vtysh`, the routes are in
 the real Linux forwarding table, and the timeline is read from FRR's own logs. There is
-nothing to install and no server: your progress stays in your browser.
+nothing to install and no server: your progress stays in your browser. The public site
+asks first, and only if you allow it records how you play with Microsoft Clarity,
+including what you type in the terminal and the editor; Settings → Privacy changes your
+answer.
 
 Peerfall is in development. The first mission, **The Link That Never Went Down**, is
-being built ([roadmap](docs/ROADMAP.md)).
+playable; the first two stages are being written ([roadmap](docs/ROADMAP.md)).
 
 ## What you'll learn
 

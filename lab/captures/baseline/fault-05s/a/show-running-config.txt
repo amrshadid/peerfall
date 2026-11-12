@@ -1,0 +1,37 @@
+Building configuration...
+
+Current configuration:
+!
+frr version 10.6.1
+frr defaults traditional
+hostname peerfall
+log file /var/log/frr/a.log
+log timestamp precision 3
+hostname a
+service integrated-vtysh-config
+!
+debug bfd peer
+!
+interface a-b
+ ip ospf area 0
+ ip ospf cost 10
+ ip ospf network point-to-point
+exit
+!
+interface a-c
+ ip ospf area 0
+ ip ospf cost 10
+ ip ospf network point-to-point
+exit
+!
+interface lo
+ ip ospf area 0
+ ip ospf passive
+exit
+!
+router ospf
+ ospf router-id 10.255.0.1
+ log-adjacency-changes detail
+exit
+!
+end

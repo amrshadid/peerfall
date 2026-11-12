@@ -1,0 +1,10 @@
+.pf-kbd {
+  display: inline-flex;
+  gap: 0.125rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.pf-kbd kbd {
+  font: inherit;
+}

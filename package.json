@@ -1,6 +1,6 @@
 {
   "name": "peerfall",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -11,6 +11,8 @@
   "scripts": {
     "dev": "pnpm --filter @peerfall/web dev",
     "vm:image": "node packages/machine/scripts/vm-image/build.ts",
+    "vm:check": "node packages/machine/scripts/vm-check.ts",
+    "vm:mirror": "node packages/machine/scripts/vm-image/build.ts --mirror-out node_modules/.cache/peerfall-vm-mirror",
     "build": "pnpm -r --if-present build",
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
     "type-check": "pnpm -r --if-present type-check",

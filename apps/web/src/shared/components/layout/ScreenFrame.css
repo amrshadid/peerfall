@@ -1,0 +1,67 @@
+.screen {
+  /* Taller than a plain running head: its buttons keep 0.5rem of paper above and below. */
+  --screen-head: 2.5rem;
+  display: grid;
+  grid-template-rows: var(--screen-head) auto minmax(0, 1fr) 2rem;
+  height: 100dvh;
+  min-height: 34rem;
+  overflow: hidden;
+}
+
+.screen--with-topbar {
+  grid-template-rows: var(--screen-head) auto auto minmax(0, 1fr) 2rem;
+}
+
+.screen > .pf-man-head--head {
+  height: var(--screen-head);
+}
+
+.screen > .pf-man-head--head > :last-child {
+  gap: 0.5rem;
+}
+
+.screen__banner:not(:empty) {
+  padding-bottom: 0.5rem;
+}
+
+.screen__theme {
+  min-height: 1.5rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+  font-variation-settings: "wdth" 75;
+  text-transform: none;
+}
+
+.screen__page {
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+.screen__sheet {
+  margin: 0 1rem;
+  min-height: 0;
+  min-width: 0;
+}
+
+.screen__topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 0 1rem;
+  padding: 0 0.75rem;
+  border: var(--rule);
+  border-bottom: 0;
+  background: var(--sheet);
+  min-height: 3.75rem;
+  min-width: 0;
+}
+
+.screen h1:focus {
+  outline: none;
+}
+
+/* Focus lands on the title after every page change only so screen readers announce it; Tab never
+   reaches it, so it shows no ring. */
+.screen h1:focus-visible {
+  outline: none;
+}

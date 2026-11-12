@@ -1,0 +1,25 @@
+BFD Peers:
+	peer 10.0.2.1 local-address 10.0.2.2 vrf default interface c-a
+		ID: 1121709737
+		Remote ID: 2574251688
+		Active mode
+		Status: up
+		Uptime: 26 second(s)
+		Diagnostics: ok
+		Remote diagnostics: ok
+		Peer Type: dynamic
+		RTT min/avg/max: 0/0/0 usec
+		Local timers:
+			Detect-multiplier: 3
+			Receive interval: 300ms
+			Transmission interval: 300ms
+			Transmission interval (actual with jitter): 252ms
+			Detection timeout: 900ms
+			Echo receive interval: 50ms
+			Echo transmission interval: disabled
+		Remote timers:
+			Detect-multiplier: 3
+			Receive interval: 300ms
+			Transmission interval: 300ms
+			Echo receive interval: 50ms
+

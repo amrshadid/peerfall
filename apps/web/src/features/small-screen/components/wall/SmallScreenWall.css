@@ -1,0 +1,63 @@
+.small-screen {
+  display: grid;
+  grid-template-rows: 2rem auto;
+  min-height: 100dvh;
+}
+
+/* At phone widths the running head keeps only the page names. */
+.small-screen .pf-man-head {
+  padding: 0 1rem;
+}
+
+@media (max-width: 40rem) {
+  .small-screen .pf-man-head > :nth-child(2) {
+    visibility: hidden;
+  }
+}
+
+.small-screen__sheet {
+  margin: 0 1rem 1rem;
+  padding: 1.5rem 1.25rem 1.75rem;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  max-width: 44rem;
+  min-width: 0;
+}
+
+.small-screen__mark {
+  padding-bottom: 1rem;
+  border-bottom: var(--rule);
+}
+
+.small-screen__sheet h1 {
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  overflow-wrap: break-word;
+}
+
+.small-screen__sheet h1:focus {
+  outline: none;
+}
+
+.small-screen__sheet p {
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 36rem;
+}
+
+.small-screen__note {
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--soft);
+  color: var(--ink-2);
+}
+
+@media (min-width: 40rem) {
+  .small-screen__sheet {
+    margin: 0 1.5rem 1.5rem;
+    padding: 2rem 2.25rem 2.25rem;
+  }
+}

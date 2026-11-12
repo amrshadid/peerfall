@@ -1,0 +1,28 @@
+.pf-hint {
+  gap: 0.5rem;
+}
+
+.pf-hint__left {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.pf-hint:hover .pf-hint__left {
+  color: inherit;
+}
+
+.pf-hint--offered {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  animation: pf-hint-offer 1.2s var(--ease) 1;
+}
+
+@keyframes pf-hint-offer {
+  0% {
+    outline-offset: 8px;
+    outline-color: transparent;
+  }
+  100% {
+    outline-offset: 3px;
+  }
+}

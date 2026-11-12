@@ -1,0 +1,81 @@
+.pf-node__solid {
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.pf-node__open {
+  fill: var(--sheet);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.pf-node__fill {
+  fill: var(--ink);
+}
+
+.pf-node__inner {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.pf-node__clean {
+  fill: var(--green);
+}
+
+.pf-node__here {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.pf-node__here--pulse {
+  animation: pf-node-pulse 2.2s var(--ease) 3;
+}
+
+@keyframes pf-node-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.6;
+  }
+}
+
+.pf-node__locked {
+  fill: var(--sheet);
+  stroke: var(--ink-2);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.pf-node__planned {
+  fill: var(--sheet);
+  stroke: var(--ink-2);
+  stroke-width: 1.25;
+  stroke-dasharray: 2 2.5;
+}
+
+.pf-node__planned-stroke {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.25;
+}
+
+.pf-node__padlock {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.8;
+}
+
+.pf-node-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
+  <title>Peerfall</title>
+  <style>
+    .sheet { fill: #fafaf7; }
+    .ink { fill: #141414; }
+    .hatch { stroke: #141414; }
+    .edge { stroke: #141414; }
+    .section { stroke: #c8201a; }
+    @media (prefers-color-scheme: dark) {
+      .sheet { fill: #1c1e1d; }
+      .ink { fill: #eaeae4; }
+      .hatch { stroke: #eaeae4; }
+      .edge { stroke: #eaeae4; }
+      .section { stroke: #ff6a5c; }
+    }
+  </style>
+  <defs>
+    <!-- The bowl ends just above the section line, so only the stem is cut: no sliver of the bowl's outline shows under the line. -->
+    <path id="p" fill-rule="evenodd" d="M7 5H19.5C23.5 5 26 7 26 10S23.5 15 19.5 15H12V26H7ZM12 8.5V11.5H19.2C20.3 11.5 21 11 21 10S20.3 8.5 19.2 8.5Z" />
+    <pattern id="hatching" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line class="hatch" x1="0" y1="0" x2="0" y2="3" stroke-width="1" />
+    </pattern>
+    <clipPath id="above"><rect width="32" height="16" /></clipPath>
+    <clipPath id="below"><rect y="16" width="32" height="16" /></clipPath>
+  </defs>
+  <rect class="sheet" width="32" height="32" rx="0" />
+  <use href="#p" class="ink" clip-path="url(#above)" />
+  <use href="#p" fill="url(#hatching)" clip-path="url(#below)" />
+  <use href="#p" class="edge" fill="none" stroke-width="1" clip-path="url(#below)" />
+  <line class="section" x1="2" y1="16" x2="30" y2="16" stroke-width="1.6" stroke-dasharray="5 1.5 1.5 1.5" />
+</svg>

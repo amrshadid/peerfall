@@ -2,18 +2,39 @@
   "name": "@peerfall/missions",
   "version": "0.0.0",
   "private": true,
-  "description": "The game's content: every mission's incident, objectives, fault, checks, hints and debrief, and the order of play.",
+  "description": "The game's content: every mission's incident, objectives, fault, checks, hints and debrief, the order of play, the flow that runs a mission on the Machine, and the golden runs.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./utils": "./src/utils/index.ts"
+  },
+  "imports": {
+    "#hooks/*": "./src/hooks/*.ts",
+    "#test/*": "./src/test/*.ts",
+    "#types/*": "./src/types/*.ts",
+    "#utils/*": "./src/utils/*.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit -p ."
+    "type-check": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "vm:golden": "node scripts/golden-runs.ts"
   },
   "dependencies": {
+    "@peerfall/core": "workspace:*",
     "@peerfall/game": "workspace:*",
-    "@peerfall/machine": "workspace:*"
+    "@peerfall/machine": "workspace:*",
+    "yaml": "^2.9.1"
+  },
+  "peerDependencies": {
+    "react": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.1",
+    "vite": "^8.3.7"
   }
 }

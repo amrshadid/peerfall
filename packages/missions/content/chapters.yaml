@@ -1,0 +1,35 @@
+# The curriculum, in play order. A chapter's stage number is its place in this list.
+chapters:
+  - id: first-router
+    title: First router
+    summary: Start FRR on Linux, find its daemons, use vtysh, and save and reload a configuration.
+  - id: follow-a-packet
+    title: Follow a packet
+    summary: Connected and static routes, next hops, and a route's way from Zebra into Linux forwarding.
+  - id: build-an-underlay
+    title: Build an underlay
+    summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.
+  - id: recover-from-failure
+    title: Recover from failure
+    summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.
+  - id: other-interior-protocols
+    title: The other interior protocols
+    summary: RIP, EIGRP, Babel, OpenFabric and NHRP, and where each one fits.
+  - id: exchange-routes
+    title: Exchange routes
+    summary: BGP sessions, best-path selection, route reflectors, multipath and address families.
+  - id: control-what-is-advertised
+    title: Control what is advertised
+    summary: Prefix lists, communities, route maps, RPKI and policy routing.
+  - id: isolate-and-connect-tenants
+    title: Isolate and connect tenants
+    summary: VRFs, route leaking, L3VPN and an EVPN/VXLAN fabric.
+  - id: label-and-steer
+    title: Label and steer
+    summary: MPLS, LDP, Segment Routing, SRv6 and engineered paths.
+  - id: deliver-multicast
+    title: Deliver multicast
+    summary: Group membership, the distribution tree, rendezvous points and MSDP.
+  - id: operate-a-network
+    title: Operate a network
+    summary: Diagnose across protocol state and forwarding, monitor, automate, verify and roll back.

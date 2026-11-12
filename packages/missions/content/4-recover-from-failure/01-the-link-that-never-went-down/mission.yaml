@@ -1,0 +1,123 @@
+id: the-link-that-never-went-down
+version: 1
+title: The Link That Never Went Down
+chapter: recover-from-failure
+objective: When the link between a and c stops passing packets, traffic from a to c is back through b in under two seconds.
+prerequisites: []
+
+# Three routers in a triangle. Every link costs 10, so a reaches c directly (cost 10)
+# and keeps the way through b (cost 20) as its backup.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [ospfd, bfdd]
+      config: |
+        interface a-b
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface a-c
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd, bfdd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface b-c
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd, bfdd]
+      config: |
+        interface c-a
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface c-b
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: a, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: b, address: 10.0.3.1/30 }
+        - { router: c, address: 10.0.3.2/30 }
+
+# The link drops every packet, both ways. Its interfaces stay up.
+fault:
+  link: [a, c]
+
+probe:
+  id: a-to-c
+  from: a
+  source: 10.255.0.1
+  destination: 10.255.0.3
+  intervalMs: 50
+
+# FRR's default BFD timers (300 ms, three missed packets) detect within 900 ms. On the Machine
+# recovery measured 0.67 to 1.16 s, so a one-second target would fail runs that did everything right.
+recoveryTargetMs: 2000
+
+objectives:
+  - id: reaches-c
+    text: Send a probe from a to c and see the replies come back.
+    check: { kind: reachable, minReplies: 3 }
+    hints:
+      - text: Select router a on the map, then use Send probe. Each reply is one packet that reached c and came back.
+      - text: You can also ask a itself. In a's terminal, send three packets to c's address.
+        command: ping -c 3 10.255.0.3
+  - id: direct-while-healthy
+    text: Find the way a's traffic takes to c while the network is healthy.
+    check: { kind: path, before: a-c }
+    hints:
+      - text: A router's routing table says where each destination's packets leave. Open FRR's console on a with vtysh.
+      - text: Ask a for its route to c's address. The interface at the end of the line is the way out.
+        command: show ip route 10.255.0.3
+  - id: recovers-through-b
+    text: Break the link and get traffic back through b in under two seconds.
+    check: { kind: recovery, via: a-b }
+    hints:
+      - text: Run the fault once as it is and read the timeline. See how long a keeps c as a neighbor after the link stops passing packets, and what finally removes it.
+      - text: OSPF only notices a silent neighbor after its dead timer, 40 seconds. BFD is a small protocol whose only job is to notice sooner. Both routers on the link have to run it.
+      - text: Turn BFD on for OSPF on a's interface to c, and on c's interface to a. On a, inside vtysh, enter configure terminal, then interface a-c, then this line.
+        command: ip ospf bfd

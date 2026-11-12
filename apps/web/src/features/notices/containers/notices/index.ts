@@ -1,0 +1,1 @@
+export { NoticesContainer } from './NoticesContainer'

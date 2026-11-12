@@ -1,0 +1,259 @@
+/*
+ * Section 2: the network's own service manual.
+ * Paper, ink, one signal red. Zero radius, heavy 2px rules, drawing-sheet borders.
+ * Every colour is a token; components use tokens only.
+ * The values mirror @peerfall/theme (DAY_PRINT, NIGHT_PRINT, sharedVariables); change both together
+ * (theme.css.test.ts fails when they drift).
+ *
+ * Fonts are self-hosted so the game works offline and asks no third party for anything.
+ */
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400-italic.css";
+
+/* Day print (light) is the default. */
+:root {
+  color-scheme: light;
+  --ground: #eeeee9;
+  --sheet: #fafaf7;
+  --soft: #e5e5df;
+  --ink: #141414;
+  --ink-2: #55554f;
+  --red: #c8201a;
+  --on-red: #fafaf7;
+  --red-wash: #f3e9e6;
+  --blue: #1f4fa3;
+  --green: #1d6b3a;
+  --taint: #a3195b;
+  --hatch: #8a8a83;
+  --slot: #141414;
+  --code-kw: #141414;
+  --code-type: #1f4fa3;
+  --code-str: #1d6b3a;
+  --code-com: #55554f;
+  --code-pre: #7a4a00;
+  --code-num: #1f4fa3;
+
+  --face: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --rule: 2px solid var(--ink);
+  --rule-thin: 1px solid var(--ink);
+
+  --t-instant: 80ms;
+  --t-fast: 150ms;
+  --t-base: 220ms;
+  --t-slow: 400ms;
+  --t-story: 800ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-out: cubic-bezier(0.3, 0, 1, 1);
+
+  /* UI scale (Settings): every size in the kit is in rem, so this scales the whole UI. */
+  --ui-scale: 1;
+}
+
+/* Night print (dark): the same roles, inverted like a blueprint negative, kept neutral. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #141514;
+  --sheet: #1c1e1d;
+  --soft: #262928;
+  --ink: #eaeae4;
+  --ink-2: #a3a39b;
+  --red: #ff6a5c;
+  --on-red: #141414;
+  --red-wash: #3a2421;
+  --blue: #8fb0ff;
+  --green: #6fcf97;
+  --taint: #f27bb5;
+  --hatch: #6d6d66;
+  --slot: #050505;
+  --code-kw: #eaeae4;
+  --code-type: #8fb0ff;
+  --code-str: #6fcf97;
+  --code-com: #a3a39b;
+  --code-pre: #e8c27a;
+  --code-num: #8fb0ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #141514;
+    --sheet: #1c1e1d;
+    --soft: #262928;
+    --ink: #eaeae4;
+    --ink-2: #a3a39b;
+    --red: #ff6a5c;
+    --on-red: #141414;
+    --red-wash: #3a2421;
+    --blue: #8fb0ff;
+    --green: #6fcf97;
+    --taint: #f27bb5;
+    --hatch: #6d6d66;
+    --slot: #050505;
+    --code-kw: #eaeae4;
+    --code-type: #8fb0ff;
+    --code-str: #6fcf97;
+    --code-com: #a3a39b;
+    --code-pre: #e8c27a;
+    --code-num: #8fb0ff;
+  }
+}
+
+/*
+ * Element defaults live in the "base" layer so utility classes used inside
+ * mounted features (the terminal, the editor) still win over them.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: calc(100% * var(--ui-scale));
+  }
+
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--face);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    font-variation-settings: "wdth" 100;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  ol,
+  ul,
+  dl,
+  dd,
+  figure {
+    margin: 0;
+  }
+
+  ol,
+  ul {
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    color: var(--blue);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--mono);
+    font-variant-ligatures: none;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  /* A red-pencil wash with ink text: red, blue or hatched text stays readable when selected. */
+  ::selection {
+    background: var(--red-wash);
+    color: var(--ink);
+    -webkit-text-fill-color: var(--ink);
+  }
+
+  /* SVG text paints with fill, not color, so drawing labels need their own rule. */
+  svg text::selection {
+    fill: var(--ink);
+  }
+}
+
+/* ---------- Type roles ---------- */
+
+.pf-display {
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+}
+
+.pf-wide {
+  font-variation-settings: "wdth" 125;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.pf-condensed {
+  font-variation-settings: "wdth" 75;
+}
+
+.pf-muted {
+  color: var(--ink-2);
+}
+
+.pf-mono {
+  font-family: var(--mono);
+  font-variant-ligatures: none;
+}
+
+.pf-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Reduced motion: from the system, or forced on in Settings (data-motion="reduce"). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+    animation-duration: 1ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+    transition-duration: 1ms !important;
+  }
+}
+
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+  animation-duration: 1ms !important;
+  /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+  animation-iteration-count: 1 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component rule */
+  transition-duration: 1ms !important;
+}

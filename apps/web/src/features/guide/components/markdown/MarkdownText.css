@@ -1,0 +1,52 @@
+.guide-md {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.625rem;
+}
+
+.guide-md__heading {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.guide-md__heading:first-child {
+  margin-top: 0;
+}
+
+/* The page resets list marks; mission text gets them back. */
+.guide-md__list {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.guide-md__list--bullets {
+  list-style: square;
+}
+
+.guide-md__list--ordered {
+  list-style: decimal;
+}
+
+.guide-md__code {
+  padding: 0.625rem 0.75rem;
+  border: var(--rule-thin);
+  background: var(--soft);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variant-ligatures: none;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.guide-md__code:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

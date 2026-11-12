@@ -1,4 +1,14 @@
-import { VM_CONTROL_DONE, VM_CONTROL_READY, VM_FRR_USER, VM_HOSTNAME } from '#types/definitions/vm'
+import {
+  VM_BASHRC,
+  VM_CONTROL_DONE,
+  VM_CONTROL_READY,
+  VM_EVENT_TTY,
+  VM_FRR_USER,
+  VM_HOSTNAME,
+  VM_ROUTER_FILE,
+  VM_SHELL,
+  VM_SHELL_PID_FILE,
+} from '#types/definitions/vm'
 import type { ArchiveEntry } from '#vm-image/archive'
 
 // The 9p root is v86's "host9p" share; its modules come from this initramfs. cache=mmap, not
@@ -19,9 +29,31 @@ umount /proc /sys
 exec switch_root /newroot /sbin/init
 `
 
+// The terminal's shell starts inside the selected router's namespace, so ip, ping and the FRR
+// daemons' sockets are that router's. init starts the next one when this one is killed, which is
+// how the terminal moves to another router. Every exec keeps the pid, so the pid file names bash.
+export const SHELL = `#!/bin/sh
+echo $$ > ${VM_SHELL_PID_FILE}
+export TERM=xterm-256color HOME=/root
+cd /root
+router=$(cat ${VM_ROUTER_FILE} 2>/dev/null)
+[ -n "$router" ] && exec ip netns exec "$router" unshare -u sh -c "hostname $router && PF_ROUTER=$router exec bash --rcfile ${VM_BASHRC} -i"
+exec bash --rcfile ${VM_BASHRC} -i
+`
+
+// On a real router plain vtysh reaches its daemons. Here every router's daemons share one
+// filesystem and are told apart by FRR's -N <name>, so vtysh gets the selected router's name.
+export const BASHRC = `if [ -n "$PF_ROUTER" ]; then
+  PS1="$PF_ROUTER:\\w# "
+  vtysh() { command vtysh -N "$PF_ROUTER" "$@"; }
+else
+  PS1='${VM_HOSTNAME}:\\w# '
+fi
+`
+
 // busybox init: a login-free root shell on the player's terminal (COM1), root's control channel on COM3.
 export const INITTAB = `::sysinit:/etc/pf-rc
-ttyS0::respawn:/sbin/getty -n -l /bin/bash 115200 ttyS0 vt100
+ttyS0::respawn:/sbin/getty -n -l ${VM_SHELL} 115200 ttyS0 vt100
 ttyS2::respawn:/usr/sbin/pf-control
 ::ctrlaltdel:/sbin/reboot
 ::shutdown:/bin/umount -a -r
@@ -48,7 +80,10 @@ chown ${VM_FRR_USER.name}:${VM_FRR_USER.name} /run/frr /var/log/frr /var/lib/frr
 
 // The host's root channel for a mission's setup: a command line in, its status out. init starts
 // it, so it is no descendant of the player's shell.
-export const CONTROL = `#!/bin/sh
+// bash, for EPOCHREALTIME: a fault's moment is stamped by the shell that injects it, without
+// starting a process. The event port (COM2) is raw too, so lines arrive as they were written.
+export const CONTROL = `#!/bin/bash
+stty -F ${VM_EVENT_TTY} raw -echo
 stty -F /dev/ttyS2 raw -echo
 exec </dev/ttyS2 >/dev/ttyS2 2>&1
 echo ${VM_CONTROL_READY}

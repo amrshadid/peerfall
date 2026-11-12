@@ -1,0 +1,320 @@
+{
+  "scenario": "bfd-both-ends",
+  "what": "\"ip ospf bfd\" on both ends of the link, FRR's default timers (300 ms x 3).",
+  "setupSeconds": {
+    "namespaces": 0.04,
+    "links": 0.039,
+    "files": 0.018,
+    "daemons": 0.558,
+    "configuration": 0.144,
+    "ospfFull": 15.2
+  },
+  "bfdConfiguredOn": ["a a-c", "c c-a"],
+  "bfdStatusSeenWhileHealthy": {
+    "a": ["down", "up"],
+    "c": ["down", "up"]
+  },
+  "faultHeldSeconds": 10,
+  "outagesSeconds": [0.734, 0.739, 0.756, 0.741, 0.741, 0.791, 0.75, 0.799],
+  "shortest": 0.734,
+  "longest": 0.799,
+  "interfacesStayedUp": true,
+  "runs": [
+    {
+      "run": 1,
+      "faultAt": "2026/11/12 18:11:10.873",
+      "faultAtEpoch": 1794507070.873843,
+      "faultLineSeconds": 0.003,
+      "healedAt": "2026/11/12 18:11:21.373",
+      "outageSeconds": 0.734,
+      "lastReplyBeforeOutage": "2026/11/12 18:11:10.835",
+      "firstReplyAfterOutage": "2026/11/12 18:11:11.568",
+      "faultToLastReplySeconds": -0.039,
+      "faultToFirstReplySeconds": 0.695,
+      "probesLost": 13,
+      "replies": 342,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.677,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.662,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.664
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.751,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.752
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 4.812
+    },
+    {
+      "run": 2,
+      "faultAt": "2026/11/12 18:11:35.795",
+      "faultAtEpoch": 1794507095.795843,
+      "faultLineSeconds": 0.002,
+      "healedAt": "2026/11/12 18:11:46.218",
+      "outageSeconds": 0.739,
+      "lastReplyBeforeOutage": "2026/11/12 18:11:35.786",
+      "firstReplyAfterOutage": "2026/11/12 18:11:36.526",
+      "faultToLastReplySeconds": -0.009,
+      "faultToFirstReplySeconds": 0.73,
+      "probesLost": 13,
+      "replies": 421,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.688,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.68,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.681
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.676,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.677
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 9.563
+    },
+    {
+      "run": 3,
+      "faultAt": "2026/11/12 18:12:05.350",
+      "faultAtEpoch": 1794507125.350665,
+      "faultLineSeconds": 0.003,
+      "healedAt": "2026/11/12 18:12:15.778",
+      "outageSeconds": 0.756,
+      "lastReplyBeforeOutage": "2026/11/12 18:12:05.336",
+      "firstReplyAfterOutage": "2026/11/12 18:12:06.092",
+      "faultToLastReplySeconds": -0.014,
+      "faultToFirstReplySeconds": 0.742,
+      "probesLost": 13,
+      "replies": 437,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.719,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.709,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.709
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.708,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.708
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 10.396
+    },
+    {
+      "run": 4,
+      "faultAt": "2026/11/12 18:12:36.174",
+      "faultAtEpoch": 1794507156.174573,
+      "faultLineSeconds": 0.013,
+      "healedAt": "2026/11/12 18:12:46.587",
+      "outageSeconds": 0.741,
+      "lastReplyBeforeOutage": "2026/11/12 18:12:36.173",
+      "firstReplyAfterOutage": "2026/11/12 18:12:36.914",
+      "faultToLastReplySeconds": -0.001,
+      "faultToFirstReplySeconds": 0.74,
+      "probesLost": 13,
+      "replies": 421,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.695,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.797,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.798
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.681,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.682
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 9.511
+    },
+    {
+      "run": 5,
+      "faultAt": "2026/11/12 18:13:05.902",
+      "faultAtEpoch": 1794507185.902969,
+      "faultLineSeconds": 0.003,
+      "healedAt": "2026/11/12 18:13:16.715",
+      "outageSeconds": 0.741,
+      "lastReplyBeforeOutage": "2026/11/12 18:13:05.861",
+      "firstReplyAfterOutage": "2026/11/12 18:13:06.602",
+      "faultToLastReplySeconds": -0.042,
+      "faultToFirstReplySeconds": 0.699,
+      "probesLost": 13,
+      "replies": 423,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.669,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.857,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.859
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.656,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.657
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 9.138
+    },
+    {
+      "run": 6,
+      "faultAt": "2026/11/12 18:13:35.636",
+      "faultAtEpoch": 1794507215.636952,
+      "faultLineSeconds": 0.006,
+      "healedAt": "2026/11/12 18:13:46.049",
+      "outageSeconds": 0.791,
+      "lastReplyBeforeOutage": "2026/11/12 18:13:35.632",
+      "firstReplyAfterOutage": "2026/11/12 18:13:36.423",
+      "faultToLastReplySeconds": -0.004,
+      "faultToFirstReplySeconds": 0.787,
+      "probesLost": 14,
+      "replies": 425,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.744,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.732,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.733
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.783,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.783
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 9.836
+    },
+    {
+      "run": 7,
+      "faultAt": "2026/11/12 18:14:05.925",
+      "faultAtEpoch": 1794507245.925869,
+      "faultLineSeconds": 0.002,
+      "healedAt": "2026/11/12 18:14:16.443",
+      "outageSeconds": 0.75,
+      "lastReplyBeforeOutage": "2026/11/12 18:14:05.889",
+      "firstReplyAfterOutage": "2026/11/12 18:14:06.639",
+      "faultToLastReplySeconds": -0.036,
+      "faultToFirstReplySeconds": 0.714,
+      "probesLost": 13,
+      "replies": 429,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.7,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.689,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.689
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.816,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.816
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 10.005
+    },
+    {
+      "run": 8,
+      "faultAt": "2026/11/12 18:14:36.532",
+      "faultAtEpoch": 1794507276.532646,
+      "faultLineSeconds": 0.004,
+      "healedAt": "2026/11/12 18:14:47.002",
+      "outageSeconds": 0.799,
+      "lastReplyBeforeOutage": "2026/11/12 18:14:36.534",
+      "firstReplyAfterOutage": "2026/11/12 18:14:37.334",
+      "faultToLastReplySeconds": 0.002,
+      "faultToFirstReplySeconds": 0.802,
+      "probesLost": 14,
+      "replies": 411,
+      "hostUnreachableLines": 0,
+      "firstRouteChangeAfterFault": 0.769,
+      "ends": [
+        {
+          "router": "a",
+          "interfaceDuringFault": "a-c@if2          UP             32:4f:19:6f:40:a6 <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.3 via 10.0.1.2 dev a-b src 10.0.1.1 uid 0",
+          "bfdDownAfterFault": 0.757,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.758
+        },
+        {
+          "router": "c",
+          "interfaceDuringFault": "c-a@if3          UP             ca:1b:3f:e6:9f:ec <BROADCAST,MULTICAST,UP,LOWER_UP>",
+          "staysUp": true,
+          "routeDuringFault": "10.255.0.1 via 10.0.3.1 dev c-b src 10.0.3.2 uid 0",
+          "bfdDownAfterFault": 0.887,
+          "deadTimerAfterFault": null,
+          "adjacencyDownAfterFault": 0.889
+        }
+      ],
+      "fullAndDirectAgainAfterHealSeconds": 8.882
+    }
+  ]
+}

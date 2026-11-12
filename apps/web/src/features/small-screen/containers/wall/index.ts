@@ -1,0 +1,1 @@
+export { SmallScreenContainer } from './SmallScreenContainer'

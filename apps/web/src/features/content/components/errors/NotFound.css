@@ -1,0 +1,21 @@
+.not-found {
+  display: grid;
+  grid-template-rows: 2rem 1fr;
+  min-height: 100dvh;
+}
+
+.not-found__sheet {
+  margin: 0 1.5rem 1.5rem;
+  padding: 2rem;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 1rem;
+}
+
+.not-found__sheet h1 {
+  font-size: 2.25rem;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}

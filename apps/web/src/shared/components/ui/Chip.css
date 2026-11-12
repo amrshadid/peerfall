@@ -1,0 +1,25 @@
+.pf-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  border: var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variant-ligatures: none;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: background-color var(--t-instant) var(--ease);
+}
+
+.pf-chip:hover {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.pf-chip--current {
+  border-color: var(--red);
+  color: var(--red);
+  font-weight: 600;
+}

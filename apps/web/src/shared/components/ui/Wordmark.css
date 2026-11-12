@@ -1,0 +1,12 @@
+.pf-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pf-wordmark__text {
+  font-family: var(--face);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  letter-spacing: -6px;
+}

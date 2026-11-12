@@ -1,0 +1,78 @@
+/* A ruled notice plate above the status line, left of the notices: it covers no panel's controls. */
+.pf-consent {
+  position: fixed;
+  left: 1rem;
+  bottom: 2.25rem;
+  z-index: 45;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.625rem 0.875rem 0.75rem;
+  background: var(--sheet);
+  color: var(--ink);
+  border: var(--rule);
+  border-left: 6px solid var(--red);
+  font-family: var(--face);
+  animation: pf-consent-in var(--t-base) var(--ease-in);
+}
+
+.pf-consent__label {
+  margin: 0 0 0.375rem;
+  padding-bottom: 0.25rem;
+  border-bottom: var(--rule-thin);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.pf-consent__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  font-variation-settings: "wdth" 125;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pf-consent__text {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.pf-consent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.pf-consent__link {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.pf-consent__link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@keyframes pf-consent-in {
+  from {
+    transform: translateY(0.25rem);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-consent {
+    animation: none;
+  }
+}

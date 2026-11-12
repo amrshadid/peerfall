@@ -1,0 +1,192 @@
+.map-gauge {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.375rem;
+  padding: 0.75rem 0.625rem 0.625rem 0.875rem;
+  border-right: var(--rule);
+  min-height: 0;
+}
+
+.map-gauge__head {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-gauge__shaft {
+  position: relative;
+  min-height: 0;
+  border: var(--rule);
+  background: var(--sheet);
+}
+
+.map-gauge__scale {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.map-gauge__seg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+}
+
+.map-gauge__seg + .map-gauge__seg {
+  border-top: 2px solid var(--ink);
+}
+
+.map-gauge__layer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.0625rem;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 0.375rem 0 0.75rem;
+  border: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-gauge__layer--ahead,
+.map-gauge__layer--planned {
+  background-image: repeating-linear-gradient(-45deg, var(--hatch) 0 1.5px, transparent 1.5px 7px);
+}
+
+.map-gauge__layer--progress {
+  background-image: repeating-linear-gradient(-45deg, var(--soft) 0 1.5px, transparent 1.5px 7px);
+}
+
+.map-gauge__name,
+.map-gauge__count {
+  background: var(--sheet);
+  padding: 0 0.1875rem;
+  line-height: 1.2;
+}
+
+/* Eleven stages share the shaft: a long name is cut, and the button's label and tooltip say it whole. */
+.map-gauge__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variation-settings: "wdth" 75;
+}
+
+.map-gauge__num {
+  font-variation-settings: "wdth" 100;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pencil, like the stage's stretch of road. */
+.map-gauge__layer--planned .map-gauge__name {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.map-gauge__count {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-gauge__layer[aria-current="location"] .map-gauge__name {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.map-gauge__layer:hover .map-gauge__name {
+  color: var(--red);
+}
+
+.map-gauge__layer:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: -3px;
+}
+
+/* A transform, so following the scroll every frame costs no layout; no transition, so it never lags. */
+.map-gauge__view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.375rem;
+  height: 100%;
+  background: var(--ink);
+  pointer-events: none;
+  transform-origin: top;
+  transform: translateY(calc(var(--view-start, 0) * 100%)) scaleY(var(--view-size, 0));
+  will-change: transform;
+}
+
+.map-gauge__here {
+  position: absolute;
+  right: -0.625rem;
+  transform: translateY(-50%);
+  padding: 0 0.25rem;
+  background: var(--red);
+  color: var(--on-red);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.map-gauge__here::before {
+  content: "";
+  position: absolute;
+  left: -0.375rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0.3125rem solid transparent;
+  border-left: 0;
+  border-right: 0.375rem solid var(--red);
+}
+
+.map-gauge__find {
+  min-height: 2rem;
+  border: var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-gauge__find:hover:not(:disabled) {
+  background: var(--red-wash);
+}
+
+.map-gauge__find:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.map-gauge__find:disabled {
+  color: var(--ink-2);
+  border-color: var(--ink-2);
+  cursor: default;
+}
+
+/* A short shaft has one line a stage: the count stays in the button's label. */
+@media (max-height: 50rem) {
+  .map-gauge__count {
+    display: none;
+  }
+}
