@@ -18,7 +18,7 @@ Look at your second timeline. The order is the same as before: detection, neighb
 
 ## Why both ends
 
-BFD is a conversation. With `ip ospf bfd` on one router only, that router has nobody to talk to, no session forms, and nothing is detected early. Each end also detects the failure for itself: in your timeline the router that noticed first may be c, with a moving its route because c told the network before a's own BFD gave up.
+BFD is a conversation. With `ip ospf bfd` on one router only, that router starts a session and nobody answers: `show bfd peers` shows it `down`, it never comes up, and nothing is detected early. Each end also detects the failure for itself: in your timeline the router that noticed first may be c, with a moving its route because c told the network before a's own BFD gave up.
 
 ## Try it on real FRR
 
