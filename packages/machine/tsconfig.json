@@ -1,8 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"],
     "types": ["node"]
   },
-  "include": ["src", "scripts", "../env.d.ts"]
+  "include": ["src", "scripts", "env.d.ts"]
 }

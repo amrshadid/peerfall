@@ -8,10 +8,10 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gunzipSync } from 'node:zlib'
-import { VM_CMDLINE, VM_HOSTNAME, type VmManifest } from '#types/definitions/vm'
+import { VM_BASHRC, VM_CMDLINE, VM_HOSTNAME, VM_SHELL, type VmManifest } from '#types/definitions/vm'
 import { indexFromApkIndex, installedNames, type PackageIndex, parseIndex, resolve, sha256 } from '#vm-image/alpine'
 import { type ArchiveEntry, readTarGz, writeCpioGz } from '#vm-image/archive'
-import { CONTROL, FRR_GROUP, FRR_PASSWD, guestFile, INIT, INITTAB, RC } from '#vm-image/guest-files'
+import { BASHRC, CONTROL, FRR_GROUP, FRR_PASSWD, guestFile, INIT, INITTAB, RC, SHELL } from '#vm-image/guest-files'
 import { fetchPinnedFile, mirrorBase, writeMirror } from '#vm-image/mirror'
 import { mergeTree, writeV86Fs } from '#vm-image/v86-fs'
 
@@ -142,6 +142,8 @@ async function main() {
       guestFile('etc/inittab', INITTAB),
       guestFile('etc/pf-rc', RC, 0o755),
       guestFile('usr/sbin/pf-control', CONTROL, 0o755),
+      guestFile(VM_SHELL.slice(1), SHELL, 0o755),
+      guestFile(VM_BASHRC.slice(1), BASHRC),
       guestFile('etc/hostname', `${VM_HOSTNAME}\n`),
       guestFile('etc/passwd', rootfsText('etc/passwd') + FRR_PASSWD),
       guestFile('etc/group', rootfsText('etc/group') + FRR_GROUP),

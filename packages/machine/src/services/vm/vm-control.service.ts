@@ -1,14 +1,8 @@
-import { VM_CONTROL_DONE, VM_CONTROL_TIMEOUT_MS } from '#types/definitions/vm'
+import { type ControlReply, VM_CONTROL_DONE, VM_CONTROL_TIMEOUT_MS } from '#types/definitions/vm'
 
 const DONE = new RegExp(`${VM_CONTROL_DONE} (-?\\d+)\\r?\\n`)
 /** The status of a line that never answered: lost to a restore, or a guest that stopped listening. */
 export const CONTROL_LOST = -1
-
-/** A control line's exit status and everything it printed (stdout and stderr) before it. */
-export interface ControlReply {
-  readonly status: number
-  readonly output: string
-}
 
 /**
  * The root channel on COM3: one command line at a time, each answered `__PF_DONE__ <status>`. Lines
