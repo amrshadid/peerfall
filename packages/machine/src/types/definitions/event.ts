@@ -14,7 +14,10 @@ export type MachineEvent =
       readonly router: string
       readonly peer: string
       readonly interface: string
-      /** `control-expired` when this router stopped hearing the peer; `neighbor-down` when the peer said so. */
+      /**
+       * bfdd's reason when the line is its own: `control-expired` when this router stopped hearing
+       * the peer, `neighbor-down` when the peer said so. Empty when OSPF reported the session down.
+       */
       readonly reason: string
     }
   /** ospfd: `NSM[a-c:10.0.2.1:10.255.0.3:default]: Timer (Inactivity timer expire)`: no hello for the dead interval. */

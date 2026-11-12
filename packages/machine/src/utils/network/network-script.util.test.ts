@@ -58,7 +58,9 @@ describe('a network’s setup lines', () => {
       'ip link add a-c netns a type veth peer name c-a netns c && ip -n a addr add 10.0.2.1/30 dev a-c && ip -n c addr add 10.0.2.2/30 dev c-a && ip -n a link set a-c up && ip -n c link set c-a up'
     )
     expect(lines[8]).toBe(
-      'ip netns exec a /usr/lib/frr/zebra -d -N a && ip netns exec a /usr/lib/frr/mgmtd -d -N a && ip netns exec a /usr/lib/frr/ospfd -d -N a && ip netns exec a /usr/lib/frr/bfdd -d -N a'
+      ['zebra', 'mgmtd', 'ospfd', 'bfdd']
+        .map((daemon) => `ip netns exec a unshare -u sh -c 'hostname a && exec /usr/lib/frr/${daemon} -d -N a'`)
+        .join(' && ')
     )
     expect(lines.slice(11)).toEqual(['vtysh -N a -b', 'vtysh -N b -b', 'vtysh -N c -b'])
   })

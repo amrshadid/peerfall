@@ -124,9 +124,17 @@ function filesLine(router: RouterDefinition): string {
   ].join(' && ')
 }
 
+/**
+ * A program in a router: its network namespace, and a hostname of its own. On a real router the
+ * system's hostname is the router's; here every router shares the Machine's, and a daemon that
+ * reports it puts a second `hostname` line in `show running-config`.
+ */
+export const inRouter = (router: string, program: string): string =>
+  `ip netns exec ${router} unshare -u sh -c 'hostname ${router} && exec ${program}'`
+
 function daemonsLine({ name, daemons }: RouterDefinition): string {
   return [...FRR_BASE_DAEMONS, ...daemons]
-    .map((daemon) => `ip netns exec ${name} ${FRR_BIN}/${daemon} -d -N ${name}`)
+    .map((daemon) => inRouter(name, `${FRR_BIN}/${daemon} -d -N ${name}`))
     .join(' && ')
 }
 
@@ -150,7 +158,9 @@ const toEventPort = (source: string, name: string): string =>
   `awk '{ print "${source} ${name} " $0; fflush() }' > ${VM_EVENT_TTY}`
 
 /** FRR's own switches for the log lines the events are read from, per daemon that has them. */
-const DEBUGS: Partial<Record<FrrDaemon, string>> = { bfdd: 'debug bfd peer', ospfd: 'debug ospf nsm' }
+// ospfd's own account of BFD, not bfdd's `debug bfd peer`: that one shows in the running
+// configuration even when it is given at the prompt, and the player never wrote it.
+const DEBUGS: Partial<Record<FrrDaemon, readonly string[]>> = { ospfd: ['debug ospf nsm', 'debug ospf bfd'] }
 
 /**
  * Root's lines that start sending a built network's news to the event port: each router's FRR log

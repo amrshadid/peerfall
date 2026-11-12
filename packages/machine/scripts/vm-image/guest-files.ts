@@ -37,7 +37,7 @@ echo $$ > ${VM_SHELL_PID_FILE}
 export TERM=xterm-256color HOME=/root
 cd /root
 router=$(cat ${VM_ROUTER_FILE} 2>/dev/null)
-[ -n "$router" ] && exec ip netns exec "$router" env PF_ROUTER="$router" bash --rcfile ${VM_BASHRC} -i
+[ -n "$router" ] && exec ip netns exec "$router" unshare -u sh -c "hostname $router && PF_ROUTER=$router exec bash --rcfile ${VM_BASHRC} -i"
 exec bash --rcfile ${VM_BASHRC} -i
 `
 

@@ -32,6 +32,22 @@ describe('the Machine’s event lines', () => {
     })
   })
 
+  it('reads BFD as OSPF heard it, which is what the Machine switches on', () => {
+    expect(
+      parseEventLine(
+        'frr a 2026/11/12 18:11:11.538 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Down'
+      )
+    ).toEqual({
+      timeMs: at('2026-11-12T18:11:11.538Z'),
+      event: { type: 'bfd_session_down', router: 'a', peer: '10.0.2.2', interface: 'a-c', reason: '' },
+    })
+    expect(
+      parseEventLine(
+        'frr a 2026/11/12 18:10:41.079 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Up'
+      )?.event
+    ).toEqual({ type: 'bfd_session_up', router: 'a', peer: '10.0.2.2', interface: 'a-c' })
+  })
+
   it('reads the OSPF dead timer expiring', () => {
     expect(
       parseEventLine(

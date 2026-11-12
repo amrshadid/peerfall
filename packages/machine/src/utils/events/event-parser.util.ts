@@ -11,6 +11,8 @@ const FRR_LINE = /^(\d{4})\/(\d\d)\/(\d\d) (\d\d):(\d\d):(\d\d)\.(\d{3}) (\w+): 
 // reads bfdd/bfd.c: ptm_bfd_sess_up() and ptm_bfd_sess_dn()'s log lines
 const BFD_STATE =
   /^state-change: \[mhop:\S+ peer:(\S+) local:\S+ vrf:\S+ ifname:(\S+)\] (\S+) -> (\S+?)(?: reason:(\S+))?$/
+// reads ospfd/ospf_bfd.c: ospf_bfd_session_change()'s log line: `NSM[a-c:10.0.2.1:10.0.2.2]: BFD Down`
+const OSPF_BFD = /^ospf_bfd_session_change: NSM\[([^:\]]+):[^:\]]+:([^\]]+)\]: BFD (Up|Down)$/
 // reads ospfd/ospf_nsm.c: ospf_inactivity_timer()'s log line
 const OSPF_DEAD_TIMER = /^NSM\[([^:\]]+):[^:\]]+:([^:\]]+):[^\]]*\]: Timer \(Inactivity timer expire\)$/
 // reads ospfd/ospf_nsm.c: nsm_notice_state_change()'s log line
@@ -60,6 +62,14 @@ function parseFrr(router: string, line: string): TimedEvent | null {
   }
   if (daemon !== 'OSPF') {
     return null
+  }
+  // BFD as OSPF heard it, a millisecond or two after bfdd decided: the moment routing reacts to.
+  const bfd = OSPF_BFD.exec(message)
+  if (bfd) {
+    const session = { router, interface: bfd[1] ?? '', peer: bfd[2] ?? '' }
+    return bfd[3] === 'Up'
+      ? { timeMs, event: { type: 'bfd_session_up', ...session } }
+      : { timeMs, event: { type: 'bfd_session_down', ...session, reason: '' } }
   }
   const dead = OSPF_DEAD_TIMER.exec(message)
   if (dead) {
