@@ -3,7 +3,7 @@ import { useScreenChrome } from '@features/chrome/hooks/screen'
 import { JourneyMapPresentation } from '@features/map/components/map'
 import { useMapMotion } from '@features/map/hooks/drawing'
 import { EMPTY_DETAIL, mapDetailOf } from '@features/map/utils/detail'
-import { journeyChapters, journeyStops, journeySummary } from '@features/map/utils/journey'
+import { journeyChapters, journeyMarks, journeySummary } from '@features/map/utils/journey'
 import { mapNotesOf } from '@features/map/utils/note'
 import { useTourScreen } from '@features/tour/hooks/tour'
 import { useMissionList, useProgress } from '@peerfall/game/hooks'
@@ -23,10 +23,11 @@ export function JourneyMapContainer() {
   // than scroll to a guess and jump again once it is in.
   const next = status === 'opening' ? null : list.next
   const chapters = useMemo(() => journeyChapters(list.chapters, next), [list.chapters, next])
-  const stops = useMemo(() => journeyStops(chapters), [chapters])
+  // Every stop the drawing has: a stage with no missions yet is selected through its planned stop.
+  const stops = useMemo(() => journeyMarks(chapters), [chapters])
   const notes = useMemo(() => mapNotesOf(chapters), [chapters])
   const hereStop = stops.find((stop) => stop.here)
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(hereStop?.key ?? null)
   const selected = stops.find((stop) => stop.key === selectedKey) ?? hereStop ?? stops[0]
 
   // Stable while the stops are, so the memoized drawing doesn't render for a selection.

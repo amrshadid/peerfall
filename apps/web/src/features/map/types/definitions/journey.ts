@@ -1,7 +1,10 @@
 import type { ChapterDefinition, ChapterId, MissionDefinition, MissionEntry, MissionId } from '@peerfall/game/types'
 
-/** The shape a stop is drawn in; `progress` is a mission under way. */
-export type StopState = 'locked' | 'available' | 'progress' | 'done'
+/**
+ * The shape a stop is drawn in; `progress` is a mission under way. A completed mission is `clean`
+ * when it passed on its first judged run with no hint, `helped` when hints were used, else `done`.
+ */
+export type StopState = 'locked' | 'available' | 'progress' | 'done' | 'clean' | 'helped'
 
 /** How far a stage is: every mission passed, some open, none open yet, or no missions written. */
 export type Tone = 'passed' | 'progress' | 'ahead' | 'planned'
@@ -27,10 +30,12 @@ export interface JourneyNeed {
   readonly met: boolean
 }
 
-/** One mission: a stop on the road. */
+/** One mission: a stop on the road. A stage with no missions yet has one planned stop in their place. */
 export interface JourneyStop {
-  /** The mission's id: unique across the map. */
+  /** The mission's id, or `planned:<chapter id>`: unique across the map. */
   readonly key: MissionId
+  /** Stands for missions that are not built yet: pencilled, never playable. */
+  readonly planned: boolean
   /** Its stage and its place in it: "4.1". */
   readonly number: string
   readonly title: string
@@ -59,7 +64,12 @@ export interface JourneyChapter {
   readonly name: string
   /** One sentence: what the stage covers. */
   readonly caption: string
+  /** The FRR daemons and features the stage works with, as the README lists them. */
+  readonly parts: readonly string[]
+  /** Its missions; none for a planned stage. */
   readonly stops: readonly JourneyStop[]
+  /** What the road passes through, in travel order: the missions, or the one planned stop. */
+  readonly marks: readonly JourneyStop[]
   readonly done: number
   readonly total: number
   readonly tone: Tone

@@ -20,6 +20,10 @@
   stroke-width: 2;
 }
 
+.pf-node__clean {
+  fill: var(--green);
+}
+
 .pf-node__here {
   fill: none;
   stroke: var(--red);

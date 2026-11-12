@@ -1,7 +1,7 @@
 import type { JourneyChapter, JourneyStop, MapDetail } from '@features/map/types'
 import { isDone } from '@features/map/utils/journey'
 import { hrefOf } from '@shared/navigation'
-import { MS_PER_SECOND, PLAN_NOTES } from './map-detail.constants'
+import { ABOUT_TERMS, MS_PER_SECOND, PLAN_NOTES } from './map-detail.constants'
 
 /** "a", "a and b", "a, b and c". */
 export function listOf(words: readonly string[]): string {
@@ -17,7 +17,10 @@ export function playLabelOf(stop: Pick<JourneyStop, 'state'>): string {
 }
 
 /** Why the stop can't be played yet, naming what to complete first; null when it can. */
-export function lockNoteOf(stop: Pick<JourneyStop, 'playable' | 'needs'>): string | null {
+export function lockNoteOf(stop: Pick<JourneyStop, 'playable' | 'needs' | 'planned'>): string | null {
+  if (stop.planned) {
+    return PLAN_NOTES.planned
+  }
   if (stop.playable) {
     return null
   }
@@ -48,12 +51,34 @@ function countOf(count: number, none: string, one: string, many: string): string
 
 export function mapDetailOf(stop: JourneyStop, chapters: readonly JourneyChapter[]): MapDetail {
   const chapter = chapters.find((candidate) => candidate.id === stop.chapterId)
+  const status = stop.status.charAt(0).toUpperCase() + stop.status.slice(1)
+  const parts = chapter?.parts ?? []
+  if (stop.planned) {
+    // The stop stands for the whole stage, so the panel is headed by the stage's name.
+    return {
+      place: `Stage ${stop.stage} of ${chapters.length}`,
+      title: chapter?.name ?? stop.title,
+      state: stop.state,
+      planned: true,
+      status,
+      about: { term: ABOUT_TERMS.planned, text: stop.summary },
+      parts,
+      needs: null,
+      attempts: null,
+      hints: null,
+      recovery: null,
+      play: null,
+      note: lockNoteOf(stop),
+    }
+  }
   return {
     place: [`Stage ${stop.stage}`, chapter?.name, stop.number].filter((part) => part !== undefined).join(' · '),
     title: stop.title,
     state: stop.state,
-    status: stop.status.charAt(0).toUpperCase() + stop.status.slice(1),
-    objective: stop.summary,
+    planned: false,
+    status,
+    about: { term: ABOUT_TERMS.mission, text: stop.summary },
+    parts,
     needs: stop.needs,
     attempts: countOf(stop.attempts, 'None yet', 'judged run', 'judged runs'),
     hints: countOf(stop.hintsUsed, 'None', 'hint', 'hints'),

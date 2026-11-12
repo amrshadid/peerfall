@@ -30,30 +30,16 @@ describe('hereFlag', () => {
 
 describe('roadOf', () => {
   const points = [
-    { x: 0, y: 0, pencil: false },
-    { x: 10, y: 0, pencil: false },
-    { x: 10, y: 10, pencil: false },
+    { x: 0, y: 0 },
+    { x: 10, y: 0 },
+    { x: 10, y: 10 },
   ]
 
-  it('inks the road up to the split and pencils the rest', () => {
+  it('inks the road up to the split and dashes the rest', () => {
     expect(roadOf(points, 1)).toEqual({ reached: 'M0 0 L10 0', ahead: 'M10 0 L10 10' })
   })
 
   it('has nothing inked before the first stop is reached', () => {
     expect(roadOf(points, 0)).toEqual({ reached: '', ahead: pathOf(points) })
-  })
-
-  it('never inks a planned stretch, even behind the stop reached', () => {
-    const through = [
-      { x: 0, y: 0, pencil: false },
-      { x: 10, y: 0, pencil: true },
-      { x: 20, y: 0, pencil: true },
-      { x: 20, y: 10, pencil: false },
-      { x: 0, y: 10, pencil: false },
-    ]
-    expect(roadOf(through, 3)).toEqual({
-      reached: 'M20 0 L20 10',
-      ahead: 'M0 0 L10 0 L20 0 M20 10 L0 10',
-    })
   })
 })

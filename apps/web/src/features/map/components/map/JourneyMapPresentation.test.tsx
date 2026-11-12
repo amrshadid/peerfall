@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { EMPTY_DETAIL, mapDetailOf } from '@features/map/utils/detail'
 import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
-import { journeyChapters, journeyStops, journeySummary } from '@features/map/utils/journey'
+import { journeyChapters, journeyMarks, journeySummary } from '@features/map/utils/journey'
 import { mapNotesOf } from '@features/map/utils/note'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
@@ -59,7 +59,7 @@ const CHROME = {
 /** The presentation with the selection held as the container holds it. */
 function Harness({ chapters, next, onPlay, onShortcuts }: HarnessProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const stops = journeyStops(chapters)
+  const stops = journeyMarks(chapters)
   const selected = stops.find((stop) => stop.key === selectedKey) ?? stops.find((stop) => stop.here) ?? stops[0]
   return (
     <JourneyMapPresentation
@@ -98,14 +98,14 @@ function setup({ source = journeyFixture(), next = FIRST_MISSION }: Setup = {}) 
 describe('JourneyMapPresentation', () => {
   it('names the screen in one h1 that can take the focus, with the way back to the title', () => {
     setup()
-    const heading = screen.getByRole('heading', { level: 1, name: 'Map' })
+    const heading = screen.getByRole('heading', { level: 1, name: 'Peer Map' })
     expect(heading.getAttribute('tabindex')).toBe('-1')
     expect(screen.getByRole('link', { name: 'Title' }).getAttribute('href')).toBe('#/')
   })
 
   it('recommends the next mission and continues to it', () => {
     setup()
-    const bar = within(screen.getByRole('navigation', { name: 'Map' }))
+    const bar = within(screen.getByRole('navigation', { name: 'Peer Map' }))
     expect(bar.getByText('The Link That Never Went Down')).toBeTruthy()
     expect(bar.getByRole('link', { name: 'Continue' }).getAttribute('href')).toBe(
       '#/mission/the-link-that-never-went-down'
@@ -119,7 +119,7 @@ describe('JourneyMapPresentation', () => {
 
   it('lists all eleven stages, in the drawing and on the gauge', () => {
     const { chapters } = setup()
-    const drawing = within(screen.getByRole('group', { name: /^Map of the journey/ }))
+    const drawing = within(screen.getByRole('group', { name: /^Peer Map, drawn as the journey/ }))
     for (const chapter of chapters) {
       expect(drawing.getByRole('group', { name: `Stage ${chapter.stage}: ${chapter.name}` })).toBeTruthy()
     }
@@ -131,11 +131,26 @@ describe('JourneyMapPresentation', () => {
   it('says in words that a stage with no missions is planned', () => {
     setup()
     const stage = within(screen.getByRole('group', { name: 'Stage 6: Exchange routes' }))
-    expect(stage.getByText('Planned: no missions yet')).toBeTruthy()
-    expect(stage.queryByRole('button')).toBeNull()
+    expect(stage.getByText('planned')).toBeTruthy()
+    expect(stage.getByText('6 · planned')).toBeTruthy()
+    expect(stage.getByText('Missions to come')).toBeTruthy()
+    expect(stage.getAllByRole('button')).toHaveLength(1)
     expect(
       screen.getByRole('button', { name: 'Stage 6, Exchange routes, Planned: no missions yet' }).textContent
     ).toContain('planned')
+  })
+
+  it('shows a planned stage when its stop is selected: what it covers, its FRR parts, and no Play', () => {
+    const { stop, detail, status } = setup()
+    fireEvent.click(stop(/^Missions to come in stage 6, /))
+    expect(detail().getByRole('heading', { level: 2, name: 'Exchange routes' })).toBeTruthy()
+    expect(detail().getByText('Stage 6 of 11')).toBeTruthy()
+    expect(status()).toBe('Not built yet')
+    expect(detail().getByText('Covers')).toBeTruthy()
+    expect(detail().getByText('bgpd')).toBeTruthy()
+    expect(detail().queryByRole('link')).toBeNull()
+    expect(detail().queryByText('Attempts')).toBeNull()
+    expect(detail().getByText(/still being built/)).toBeTruthy()
   })
 
   it('shows the selected mission: its status in words, its objective, and a Play link to it', () => {
@@ -146,6 +161,8 @@ describe('JourneyMapPresentation', () => {
     expect(detail().getByText('Nothing: start here')).toBeTruthy()
     expect(detail().getByText('None yet')).toBeTruthy()
     expect(detail().getByText('Traffic back within 2 s')).toBeTruthy()
+    expect(detail().getByText('bfdd')).toBeTruthy()
+    expect(detail().getByText('graceful restart')).toBeTruthy()
     expect(detail().getByRole('link', { name: 'Play' }).getAttribute('href')).toBe(
       '#/mission/the-link-that-never-went-down'
     )
@@ -165,7 +182,7 @@ describe('JourneyMapPresentation', () => {
     const { stop, detail, status } = setup({ source: longerJourneyFixture(true), next: SECOND_MISSION })
     expect(detail().getByRole('link', { name: 'Play' })).toBeTruthy()
     fireEvent.click(stop(/^4\.1 /))
-    expect(status()).toBe('Completed')
+    expect(status()).toBe('Done with help')
     expect(detail().getByRole('link', { name: 'Replay' })).toBeTruthy()
     expect(detail().getByText('3 judged runs')).toBeTruthy()
     expect(detail().getByText('2 hints')).toBeTruthy()
@@ -184,20 +201,33 @@ describe('JourneyMapPresentation', () => {
     expect(second.getAttribute('aria-pressed')).toBe('true')
     expect(detail().getByRole('heading', { level: 2, name: 'A Restart Nobody Noticed' })).toBeTruthy()
 
+    // The road goes on into the next stage, through its planned stop.
+    const fifth = stop(/^Missions to come in stage 5, /)
     fireEvent.keyDown(second, { key: 'ArrowDown' })
-    expect(document.activeElement).toBe(second)
-    fireEvent.keyDown(second, { key: 'Home' })
-    expect(document.activeElement).toBe(first)
-    fireEvent.keyDown(first, { key: 'End' })
-    expect(document.activeElement).toBe(second)
+    expect(document.activeElement).toBe(fifth)
+    expect(detail().getByRole('heading', { level: 2, name: 'The other interior protocols' })).toBeTruthy()
+    fireEvent.keyDown(fifth, { key: 'Enter' })
+    expect(onPlay).toHaveBeenLastCalledWith('planned:other-interior-protocols')
+
+    fireEvent.keyDown(fifth, { key: 'Home' })
+    expect(document.activeElement).toBe(stop(/^Missions to come in stage 1, /))
+    fireEvent.keyDown(stop(/^Missions to come in stage 1, /), { key: 'End' })
+    expect(document.activeElement).toBe(stop(/^Missions to come in stage 11, /))
+    fireEvent.keyDown(stop(/^Missions to come in stage 11, /), { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(stop(/^Missions to come in stage 11, /))
+
     fireEvent.keyDown(second, { key: 'ArrowUp' })
     expect(document.activeElement).toBe(first)
-    // The only stage with missions: there is no other stage to change to.
+    // Page Down and Page Up change stage: the first stop of the next one, of the one before.
     fireEvent.keyDown(first, { key: 'PageDown' })
+    expect(document.activeElement).toBe(fifth)
+    fireEvent.keyDown(fifth, { key: 'PageUp' })
     expect(document.activeElement).toBe(first)
+    fireEvent.keyDown(first, { key: 'PageUp' })
+    expect(document.activeElement).toBe(stop(/^Missions to come in stage 3, /))
 
     fireEvent.keyDown(first, { key: 'Enter' })
-    expect(onPlay).toHaveBeenCalledWith(FIRST_MISSION.id)
+    expect(onPlay).toHaveBeenLastCalledWith(FIRST_MISSION.id)
   })
 
   it('explains the focused mission under the drawing, else the stage in view', () => {
@@ -231,13 +261,13 @@ describe('JourneyMapPresentation', () => {
     setup()
     const legend = within(screen.getByRole('region', { name: 'Legend' }))
     expect(legend.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Planned',
+      'Not built yet',
       'Locked',
       'Available',
       'In progress',
-      'Completed',
-      'Road travelled',
-      'Road ahead',
+      'Done',
+      'Done, first try',
+      'Done with help',
     ])
   })
 
@@ -251,8 +281,9 @@ describe('JourneyMapPresentation', () => {
 
   it('stays a whole screen before the content is loaded', () => {
     setup({ source: [], next: null })
-    expect(screen.getByRole('heading', { level: 2, name: 'Map' })).toBeTruthy()
-    expect(screen.getByText(EMPTY_DETAIL.note ?? '')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Peer Map' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: EMPTY_DETAIL.title })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Legend' })).toBeTruthy()
   })
 
   it('never calls the network anything but real', () => {

@@ -1,5 +1,5 @@
 import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
-import { journeyChapters, journeyStops } from '@features/map/utils/journey'
+import { journeyChapters, journeyMarks, journeyStops } from '@features/map/utils/journey'
 import { describe, expect, it } from 'vitest'
 import { PLAN_NOTES } from './map-detail.constants'
 import { formatTarget, lockNoteOf, mapDetailOf, playLabelOf } from './map-detail.util'
@@ -19,8 +19,10 @@ describe('mapDetailOf', () => {
       place: 'Stage 4 · Recover from failure · 4.1',
       title: 'The Link That Never Went Down',
       state: 'available',
+      planned: false,
       status: 'Available, you are here',
-      objective: FIRST_MISSION.objective,
+      about: { term: 'Objective', text: FIRST_MISSION.objective },
+      parts: ['bfdd', 'graceful restart', 'fast reroute', 'vrrpd'],
       needs: [],
       attempts: 'None yet',
       hints: 'None',
@@ -37,10 +39,33 @@ describe('mapDetailOf', () => {
       play: { label: 'Continue' },
     })
     expect(detailOf(longerJourneyFixture(true), SECOND_MISSION)).toMatchObject({
-      status: 'Completed',
+      state: 'helped',
+      status: 'Done with help',
       attempts: '3 judged runs',
       hints: '2 hints',
       play: { label: 'Replay' },
+    })
+    expect(detailOf(journeyFixture('completed', 1), null)).toMatchObject({ state: 'clean', status: 'Done, first try' })
+    expect(detailOf(journeyFixture('completed', 4), null)).toMatchObject({ state: 'done', status: 'Done' })
+  })
+
+  it('heads the planned stop of a stage with no missions by the stage, with what it covers and no action', () => {
+    const chapters = journeyChapters(journeyFixture(), FIRST_MISSION)
+    const stop = journeyMarks(chapters)[0]
+    expect(stop && mapDetailOf(stop, chapters)).toEqual({
+      place: 'Stage 1 of 11',
+      title: 'First router',
+      state: 'locked',
+      planned: true,
+      status: 'Not built yet',
+      about: { term: 'Covers', text: 'Start FRR on Linux, find its daemons, use vtysh, and save a configuration.' },
+      parts: ['watchfrr', 'mgmtd', 'vtysh', 'frr-reload'],
+      needs: null,
+      attempts: null,
+      hints: null,
+      recovery: null,
+      play: null,
+      note: PLAN_NOTES.planned,
     })
   })
 
@@ -59,11 +84,13 @@ describe('the small parts', () => {
     expect(playLabelOf({ state: 'available' })).toBe('Play')
     expect(playLabelOf({ state: 'progress' })).toBe('Continue')
     expect(playLabelOf({ state: 'done' })).toBe('Replay')
+    expect(playLabelOf({ state: 'clean' })).toBe('Replay')
+    expect(playLabelOf({ state: 'helped' })).toBe('Replay')
   })
 
   it('explains a lock with no known cause in plain words', () => {
-    expect(lockNoteOf({ playable: false, needs: [] })).toBe(PLAN_NOTES.locked)
-    expect(lockNoteOf({ playable: true, needs: [] })).toBeNull()
+    expect(lockNoteOf({ playable: false, needs: [], planned: false })).toBe(PLAN_NOTES.locked)
+    expect(lockNoteOf({ playable: true, needs: [], planned: false })).toBeNull()
   })
 
   it('formats a recovery target', () => {

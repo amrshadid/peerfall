@@ -1,9 +1,53 @@
 import type { JourneyChapter, JourneyChapterSource, JourneyNeed, JourneyStop, Tone } from '@features/map/types'
-import type { MissionId } from '@peerfall/game/types'
-import { HERE_WORDS, PLANNED_PROGRESS, STATUS_WORDS, STOP_STATES } from './journey.constants'
+import { partsOf } from '@features/map/utils/parts'
+import type { ChapterDefinition, MissionId, MissionStatus } from '@peerfall/game/types'
+import { DONE_STATES, HERE_WORDS, PLANNED_PROGRESS, PLANNED_STOP, STATUS_WORDS } from './journey.constants'
 
 export function isDone(stop: Pick<JourneyStop, 'state'>): boolean {
-  return stop.state === 'done'
+  return DONE_STATES.has(stop.state)
+}
+
+/** The shape a mission is drawn in: a completed one says whether it took hints, or passed first time. */
+export function markStateOf(status: MissionStatus, attempts: number, hintsUsed: number): JourneyStop['state'] {
+  switch (status) {
+    case 'locked':
+      return 'locked'
+    case 'available':
+      return 'available'
+    case 'in_progress':
+      return 'progress'
+    case 'completed':
+      if (hintsUsed > 0) {
+        return 'helped'
+      }
+      return attempts <= 1 ? 'clean' : 'done'
+  }
+}
+
+/** The key of the planned stop of a stage with no missions yet. */
+export function plannedKeyOf(chapterId: string): string {
+  return `planned:${chapterId}`
+}
+
+/** The one stop of a stage with no missions yet: it keeps the stage's place on the road. */
+export function plannedStopOf(chapter: ChapterDefinition): JourneyStop {
+  return {
+    key: plannedKeyOf(chapter.id),
+    planned: true,
+    number: String(chapter.stage),
+    title: PLANNED_STOP.title,
+    chapterId: chapter.id,
+    stage: chapter.stage,
+    state: 'locked',
+    status: PLANNED_STOP.status,
+    playable: false,
+    here: false,
+    summary: chapter.summary,
+    needs: [],
+    attempts: 0,
+    hintsUsed: 0,
+    recoveryTargetMs: 0,
+  }
 }
 
 /** The road is inked up to the last stop that isn't locked. */
@@ -45,10 +89,11 @@ export function journeyChapters(
 
   return chapters.map(({ chapter, missions }) => {
     const stops = missions.map(({ mission, status, attempts, hintsUsed }, index): JourneyStop => {
-      const state = STOP_STATES[status]
+      const state = markStateOf(status, attempts, hintsUsed)
       const here = mission.id === next?.id
       return {
         key: mission.id,
+        planned: false,
         number: `${chapter.stage}.${index + 1}`,
         title: mission.title,
         chapterId: chapter.id,
@@ -72,7 +117,9 @@ export function journeyChapters(
       kicker: `Stage ${chapter.stage} of ${chapters.length}`,
       name: chapter.title,
       caption: chapter.summary,
+      parts: partsOf(chapter.id),
       stops,
+      marks: stops.length === 0 ? [plannedStopOf(chapter)] : stops,
       done,
       total: stops.length,
       tone: toneOf(stops),
@@ -86,6 +133,11 @@ export function journeyChapters(
 
 export function journeyStops(chapters: readonly JourneyChapter[]): readonly JourneyStop[] {
   return chapters.flatMap((chapter) => chapter.stops)
+}
+
+/** Every stop the map draws, in travel order: the missions, and a planned stop for each stage without any. */
+export function journeyMarks(chapters: readonly JourneyChapter[]): readonly JourneyStop[] {
+  return chapters.flatMap((chapter) => chapter.marks)
 }
 
 /** The stage of where Continue goes, else of the last mission completed, else the first stage with missions. */

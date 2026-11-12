@@ -1,4 +1,4 @@
-import type { FlagBounds, MarkPoint, RoadPoint, RoadShape } from '@features/map/types'
+import type { FlagBounds, MarkPoint, RoadShape } from '@features/map/types'
 import { HERE_FLAG, HERE_RING } from './here-flag.constants'
 
 export interface HereFlagShape {
@@ -31,23 +31,10 @@ export function pathOf(points: readonly MarkPoint[]): string {
   return points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ')
 }
 
-/**
- * The road through `points`, split at point index `split` (the last one reached; 0 when none).
- * A stretch that arrives at a pencil point is never inked: nobody has travelled a stage with no missions.
- */
-export function roadOf(points: readonly RoadPoint[], split: number): RoadShape {
-  const paths = { reached: [] as string[], ahead: [] as string[] }
-  let last: keyof typeof paths | null = null
-  for (let index = 1; index < points.length; index += 1) {
-    const from = points[index - 1]
-    const to = points[index]
-    if (!from || !to) {
-      continue
-    }
-    const kind = index <= split && !to.pencil ? 'reached' : 'ahead'
-    // A new sub-path wherever the pen changes, so each run keeps its mitred corners.
-    paths[kind].push(kind === last ? `L${to.x} ${to.y}` : `M${from.x} ${from.y} L${to.x} ${to.y}`)
-    last = kind
+/** The road through `points`, split at point index `split` (the last one reached; 0 when none). */
+export function roadOf(points: readonly MarkPoint[], split: number): RoadShape {
+  return {
+    reached: split > 0 ? pathOf(points.slice(0, split + 1)) : '',
+    ahead: pathOf(points.slice(split)),
   }
-  return { reached: paths.reached.join(' '), ahead: paths.ahead.join(' ') }
 }

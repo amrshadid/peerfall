@@ -3,20 +3,19 @@ import type {
   JourneyStop,
   MapScene,
   MapVariant,
-  RoadPoint,
   SceneChapter,
-  SceneOrigin,
+  ScenePoint,
   SceneRect,
   SceneStop,
-  SceneStretch,
   SceneTerminus,
   SceneText,
   TextStyle,
 } from '@features/map/types'
-import { isReached } from '@features/map/utils/journey'
+import { isReached, PLANNED_STOP } from '@features/map/utils/journey'
 import { roadOf } from '@features/map/utils/marks'
+import { partsLine } from '@features/map/utils/parts'
 import { cellsOf, perRowAt, rowsOf } from './map-grid.util'
-import { EDGE, LINE, NUM_DROP, ORIGIN, PAD, PLANNED_DROP, STOP_DROP, TERMINUS, TOP } from './map-layout.constants'
+import { EDGE, LINE, NUM_DROP, PAD, STOP_DROP, TERMINUS, TOP } from './map-layout.constants'
 import { END_WORDS, GLYPH } from './map-text.constants'
 import { charsIn, stopLines, textWidth, wrapWords } from './map-text.util'
 
@@ -33,8 +32,9 @@ function text(
 
 function stopTexts(stop: JourneyStop, x: number, y: number, maxChars: number): SceneText[] {
   const dim = !isReached(stop)
+  const tag = stop.planned ? ` · ${PLANNED_STOP.tag}` : ''
   return [
-    text(x, y + NUM_DROP, stop.number, 'num', 'middle', dim),
+    text(x, y + NUM_DROP, `${stop.number}${tag}`, 'num', 'middle', dim),
     ...stopLines(stop.title, maxChars).map((line, index) =>
       text(x, y + NUM_DROP + LINE * (index + 1), line, 'label', 'middle', dim)
     ),
@@ -45,10 +45,9 @@ class Builder {
   y = TOP
   /** +1: the next row runs left to right. */
   dir = 1
-  readonly points: RoadPoint[] = []
+  readonly points: ScenePoint[] = []
   readonly stopPoint = new Map<string, number>()
   readonly stops: SceneStop[] = []
-  origin: SceneOrigin | null = null
   terminus: SceneTerminus | null = null
 
   constructor(
@@ -69,36 +68,9 @@ class Builder {
     return dir > 0 ? EDGE : this.width - EDGE
   }
 
-  point(x: number, y: number, pencil = false): void {
-    this.points.push({ x, y, pencil })
-  }
-
   /** The road comes down the side it left the last row on, then turns along this row. */
-  enterAt(y: number, pencil = false): void {
-    this.point(this.edge(this.dir), y, pencil)
-  }
-
-  /** The journey starts at one router: the road leaves its box and turns down into the first stage. */
-  originRow(): void {
-    const box = { x: PAD, y: this.y + ORIGIN.drop, width: ORIGIN.width, height: ORIGIN.height }
-    const middle = box.y + box.height / 2
-    const wordsX = box.x + box.width + ORIGIN.gap
-    const texts = [
-      text(wordsX, box.y + 10, END_WORDS.originKicker.toUpperCase(), 'kicker'),
-      text(wordsX, box.y + 30, END_WORDS.originName, 'region'),
-    ]
-    if (this.full) {
-      const nameEnd = wordsX + textWidth(END_WORDS.originName, GLYPH.region) + 14
-      const room = this.width - PAD - nameEnd
-      // Beside the name where it fits on one line; a narrow sheet goes without.
-      if (textWidth(END_WORDS.originCaption, GLYPH.meta) <= room) {
-        texts.push(text(nameEnd, box.y + 30, END_WORDS.originCaption, 'meta'))
-      }
-    }
-    this.origin = { box, texts }
-    this.point(box.x, middle)
-    this.point(this.edge(this.dir), middle)
-    this.y = box.y + box.height + ORIGIN.below
+  enterAt(y: number): void {
+    this.points.push({ x: this.edge(this.dir), y })
   }
 
   header(chapter: JourneyChapter): { texts: SceneText[]; panel: SceneRect } {
@@ -110,7 +82,7 @@ class Builder {
       texts.push(text(PAD, y, line, 'kicker'))
     }
     y += 30
-    texts.push(text(PAD, y, chapter.name, 'zone', 'start', chapter.planned))
+    texts.push(text(PAD, y, chapter.name, 'zone'))
     const progress = chapter.planned ? 'planned' : chapter.progress
     const fits = PAD + textWidth(chapter.name, GLYPH.zone) + 24 + textWidth(progress, GLYPH.caption) <= this.width - PAD
     if (!fits) {
@@ -122,6 +94,14 @@ class Builder {
       for (const line of wrapWords(chapter.caption, charsIn(this.contentWidth, GLYPH.caption))) {
         y += 20
         texts.push(text(PAD, y, line, 'caption'))
+      }
+      const parts = partsLine(chapter.parts)
+      if (parts !== null) {
+        y += 4
+        for (const line of wrapWords(parts, charsIn(this.contentWidth, GLYPH.mono))) {
+          y += 17
+          texts.push(text(PAD, y, line, 'mono'))
+        }
       }
     }
     const bottom = y + 14
@@ -140,29 +120,16 @@ class Builder {
       const x = ordered[index] ?? xs[0] ?? PAD
       const texts = stopTexts(stop, x, y, maxChars)
       this.stopPoint.set(stop.key, this.points.length)
-      this.point(x, y)
+      this.points.push({ x, y })
       this.stops.push({ key: stop.key, stop, chapterId: stop.chapterId, x, y, texts })
       bottom = Math.max(bottom, (texts[texts.length - 1]?.y ?? y) + 14)
     })
-    this.point(this.edge(-this.dir), y)
+    this.points.push({ x: this.edge(-this.dir), y })
     this.dir = -this.dir
     this.y = bottom
   }
 
-  /** A stage with no missions yet: the road crosses it in pencil, past one pencil mark that says so. */
-  plannedRow(chapter: JourneyChapter): SceneStretch {
-    const y = this.y + PLANNED_DROP
-    const x = Math.round(this.width / 2)
-    this.enterAt(y, true)
-    this.point(x, y, true)
-    this.point(this.edge(-this.dir), y, true)
-    this.dir = -this.dir
-    const texts = [text(x, y + NUM_DROP, chapter.progress, 'label', 'middle', true)]
-    this.y = y + NUM_DROP + 14
-    return { x, y, texts }
-  }
-
-  /** Where the road ends: the operated network, a router for each family of protocols on one backbone. */
+  /** Under the last stage: the operated network, a router for each family of protocols on one backbone. */
   terminusRow(): void {
     const top = this.y
     let y = top + 28
@@ -187,10 +154,6 @@ class Builder {
         texts.push(text(PAD, y, line, 'meta'))
       }
     }
-    // The road comes down the side it left the last row on and joins the backbone at that end.
-    const side = this.edge(this.dir)
-    this.point(side, busY)
-    this.point(this.dir > 0 ? PAD : this.width - PAD, busY)
     this.y = y + below
     this.terminus = { top, bottom: this.y, boxes, busY, busLeft: PAD, busRight: this.width - PAD, texts }
   }
@@ -202,20 +165,12 @@ export function layoutMap(chapters: readonly JourneyChapter[], width: number, va
   const sceneChapters: SceneChapter[] = []
   const perRow = perRowAt(width)
 
-  chapters.forEach((chapter, index) => {
-    // The first stage's band starts at the sheet's top, so the router it starts from stands in it.
-    const top = index === 0 ? 0 : b.y
-    if (index === 0) {
-      b.originRow()
-    }
+  for (const chapter of chapters) {
+    const top = b.y
     const head = b.header(chapter)
-    let stretch: SceneStretch | null = null
-    if (chapter.planned) {
-      stretch = b.plannedRow(chapter)
-    } else {
-      for (const row of rowsOf(chapter.stops, perRow)) {
-        b.row(row)
-      }
+    // A stage with no missions yet keeps its place on the road: one planned stop.
+    for (const row of rowsOf(chapter.marks, perRow)) {
+      b.row(row)
     }
     b.y += 22
     sceneChapters.push({
@@ -226,20 +181,19 @@ export function layoutMap(chapters: readonly JourneyChapter[], width: number, va
       tone: chapter.tone,
       panel: head.panel,
       texts: head.texts,
-      stretch,
       name: `Stage ${chapter.stage}: ${chapter.name}`,
       summary: chapter.summary,
     })
-  })
+  }
 
   if (chapters.length > 0) {
     b.terminusRow()
   }
 
+  // The road ends at the last stop, not at the sheet's edge.
+  const points = b.points.slice(0, -1)
   const reachedStop = [...b.stops].reverse().find((stop) => isReached(stop.stop))
-  const finished = chapters.length > 0 && chapters.every((chapter) => chapter.tone === 'passed')
-  // With every stage passed the road is inked all the way into the network it ends at.
-  const split = finished ? b.points.length - 1 : reachedStop ? (b.stopPoint.get(reachedStop.key) ?? 0) : 0
+  const split = reachedStop ? (b.stopPoint.get(reachedStop.key) ?? 0) : 0
   const hereStop = b.stops.find((stop) => stop.stop.here)
 
   return {
@@ -248,8 +202,8 @@ export function layoutMap(chapters: readonly JourneyChapter[], width: number, va
     height: b.y + TOP,
     chapters: sceneChapters,
     stops: b.stops,
-    road: roadOf(b.points, split),
-    origin: b.origin,
+    road: roadOf(points, split),
+    start: points[0] ?? null,
     terminus: b.terminus,
     here: hereStop ? { key: hereStop.key, x: hereStop.x, y: hereStop.y } : null,
   }

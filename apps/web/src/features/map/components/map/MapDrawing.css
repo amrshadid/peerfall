@@ -12,6 +12,7 @@
 .map-fig__num,
 .map-fig__label,
 .map-fig__meta,
+.map-fig__mono,
 .map-fig__tone-passed,
 .map-fig__tone-progress,
 .map-fig__tone-ahead,
@@ -43,6 +44,12 @@
 
 .map-fig__caption {
   font-size: 14px;
+}
+
+.map-fig .map-fig__mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  fill: var(--ink-2);
 }
 
 .map-fig__meta {
@@ -116,11 +123,8 @@
   stroke-width: 2;
 }
 
-/* A stage with no missions yet is pencilled in, like the stretch of road through it. */
-.map-fig__panel--planned {
-  stroke: var(--ink-2);
-  stroke-width: 1.25;
-  stroke-dasharray: 5 4;
+.map-fig__start {
+  fill: var(--ink);
 }
 
 .map-fig__router {

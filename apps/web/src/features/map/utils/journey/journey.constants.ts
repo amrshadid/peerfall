@@ -1,20 +1,16 @@
 import type { StopState } from '@features/map/types'
-import type { MissionStatus } from '@peerfall/game/types'
 
-/** The shape each mission status is drawn in. */
-export const STOP_STATES: Readonly<Record<MissionStatus, StopState>> = {
-  locked: 'locked',
-  available: 'available',
-  in_progress: 'progress',
-  completed: 'done',
-}
+/** The states of a mission whose checks have passed. */
+export const DONE_STATES: ReadonlySet<StopState> = new Set(['done', 'clean', 'helped'])
 
 /** How a stop's state is spoken and printed. */
 export const STATUS_WORDS: Readonly<Record<StopState, string>> = {
   locked: 'locked',
   available: 'available',
   progress: 'in progress',
-  done: 'completed',
+  done: 'done',
+  clean: 'done, first try',
+  helped: 'done with help',
 }
 
 /** Added to the status of the stop Continue goes to. */
@@ -22,3 +18,11 @@ export const HERE_WORDS = 'you are here'
 
 /** What a stage without missions says where the others say "1 of 1 passed". */
 export const PLANNED_PROGRESS = 'Planned: no missions yet'
+
+/** The one stop of a stage with no missions yet: what it says where a mission has its status and title. */
+export const PLANNED_STOP = {
+  status: 'not built yet',
+  title: 'Missions to come',
+  /** After the stage's number: "1 · planned", as a boss stop reads "1.B · boss" in Kernelfall. */
+  tag: 'planned',
+} as const

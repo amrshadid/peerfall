@@ -19,6 +19,7 @@ export type TextStyle =
   | 'kicker'
   | 'zone'
   | 'caption'
+  | 'mono'
   | 'meta'
   | 'region'
   | 'num'
@@ -56,14 +57,6 @@ export interface SceneStop {
   readonly texts: readonly SceneText[]
 }
 
-/** The pencilled stretch of road through a stage with no missions yet. */
-export interface SceneStretch {
-  /** Where its pencil mark sits on the road. */
-  readonly x: number
-  readonly y: number
-  readonly texts: readonly SceneText[]
-}
-
 export interface SceneChapter {
   readonly id: ChapterId
   readonly stage: number
@@ -73,20 +66,15 @@ export interface SceneChapter {
   /** The sheet the header is printed on, over the hatching. */
   readonly panel: SceneRect
   readonly texts: readonly SceneText[]
-  /** null for a stage that has missions. */
-  readonly stretch: SceneStretch | null
   /** The group's accessible name; its printed words follow as the summary. */
   readonly name: string
   readonly summary: string
 }
 
-/** Where the journey starts: one router, above the first stage. */
-export interface SceneOrigin {
-  readonly box: SceneRect
-  readonly texts: readonly SceneText[]
-}
-
-/** Where the journey ends: an operated network, its routers on one backbone, under the last stage. */
+/**
+ * Where the journey ends: an operated network, a router for each family of protocols on one
+ * backbone, under the last stage as the hardware lies under the last layer of Kernelfall's map.
+ */
 export interface SceneTerminus {
   readonly top: number
   readonly bottom: number
@@ -106,7 +94,8 @@ export interface MapScene {
   readonly stops: readonly SceneStop[]
   /** SVG path data: the road up to the farthest stop in reach, and the road ahead. */
   readonly road: RoadShape
-  readonly origin: SceneOrigin | null
+  /** Where the road starts: the first stage's row, at the sheet's edge. */
+  readonly start: ScenePoint | null
   readonly terminus: SceneTerminus | null
   readonly here: (ScenePoint & { readonly key: string }) | null
 }

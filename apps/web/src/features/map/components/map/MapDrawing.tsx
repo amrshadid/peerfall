@@ -4,7 +4,7 @@ import { EDGE, NODE_SIZE, walkTarget } from '@features/map/utils/layout'
 import { targetAt } from '@features/map/utils/note'
 import { type KeyboardEvent, type MouseEvent, memo, useId, useMemo, useRef } from 'react'
 import './MapDrawing.css'
-import { MapOrigin, MapTerminus } from './MapEnds'
+import { MapTerminus } from './MapEnds'
 import { MapTexts } from './MapTexts'
 
 interface DrawingBase {
@@ -13,7 +13,7 @@ interface DrawingBase {
   pulse: boolean
 }
 
-/** The map: every stop a button. */
+/** The Peer Map: every stop a button. */
 interface MapDrawingInteractive extends DrawingBase {
   variant: 'map'
   selectedKey: string | null
@@ -39,7 +39,13 @@ function StopMark({ stop, pulse }: { stop: SceneStop; pulse: boolean }) {
   return (
     <>
       <g transform={`translate(${stop.x} ${stop.y})`}>
-        <NodeMark size={NODE_SIZE} state={stop.stop.state} here={stop.stop.here} pulse={pulse && stop.stop.here} />
+        <NodeMark
+          size={NODE_SIZE}
+          state={stop.stop.state}
+          planned={stop.stop.planned}
+          here={stop.stop.here}
+          pulse={pulse && stop.stop.here}
+        />
         <rect className="map-node__ring" x="-21" y="-21" width="42" height="42" />
       </g>
       <MapTexts texts={stop.texts} />
@@ -109,7 +115,7 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
       <title id={`${id}-t`}>
         {props.variant === 'overview'
           ? props.description
-          : 'Map of the journey, drawn top to bottom from one router down to an operated network. Each stage lists its missions in play order.'}
+          : 'Peer Map, drawn as the journey from one router down to an operated network. Each stage lists its missions in play order.'}
       </title>
       <defs>
         <pattern id={hatch} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -142,7 +148,7 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
             y={chapter.panel.y}
             width={chapter.panel.width}
             height={chapter.panel.height}
-            className={`map-fig__panel${chapter.tone === 'planned' ? ' map-fig__panel--planned' : ''}`}
+            className="map-fig__panel"
           />
         </g>
       ))}
@@ -161,24 +167,18 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
         </g>
       )}
 
-      <RoadPath road={scene.road} />
-      {scene.origin && <MapOrigin origin={scene.origin} />}
       {scene.terminus && <MapTerminus terminus={scene.terminus} />}
 
-      {scene.chapters.map((chapter) => {
-        const pencil = chapter.stretch && (
-          <>
-            <g transform={`translate(${chapter.stretch.x} ${chapter.stretch.y})`}>
-              <NodeMark size={NODE_SIZE} state="locked" planned />
-            </g>
-            <MapTexts texts={chapter.stretch.texts} />
-          </>
-        )
-        return map ? (
+      <g>
+        <RoadPath road={scene.road} />
+        {scene.start && <circle cx={scene.start.x} cy={scene.start.y} r="6" className="map-fig__start" />}
+      </g>
+
+      {scene.chapters.map((chapter) =>
+        map ? (
           // biome-ignore lint/a11y: an SVG <g> is neither interactive nor a fieldset; its printed words (stage, name, progress, what it covers) are the stage's summary
           <g key={chapter.id} role="group" aria-label={chapter.name}>
             <MapTexts texts={chapter.texts} />
-            {pencil}
             {stops.map((stop, index) =>
               stop.chapterId !== chapter.id ? null : (
                 // biome-ignore lint/a11y/useSemanticElements: an SVG stop can't be a <button>; it is one by role, focus and keys
@@ -193,7 +193,11 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
                   }}
                   role="button"
                   tabIndex={stop.key === tabKey ? 0 : -1}
-                  aria-label={`${stop.stop.number} ${stop.stop.title}, ${stop.stop.status}`}
+                  aria-label={
+                    stop.stop.planned
+                      ? `${stop.stop.title} in stage ${stop.stop.number}, ${stop.stop.status}`
+                      : `${stop.stop.number} ${stop.stop.title}, ${stop.stop.status}`
+                  }
                   aria-describedby={`${id}-d${index}`}
                   aria-pressed={stop.key === map.selectedKey}
                   data-stop={stop.key}
@@ -217,13 +221,12 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
         ) : (
           <g key={chapter.id}>
             <MapTexts texts={chapter.texts} />
-            {pencil}
             {stops.map((stop) =>
               stop.chapterId !== chapter.id ? null : <StopMark key={stop.key} stop={stop} pulse={pulse} />
             )}
           </g>
         )
-      })}
+      )}
 
       {scene.here && (
         <HereFlag stop={scene.here} nodeSize={NODE_SIZE} bounds={{ left: EDGE, right: width - EDGE, top: 0 }} />

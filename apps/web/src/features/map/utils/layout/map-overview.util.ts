@@ -12,15 +12,15 @@ export function overviewWindow(scene: MapScene, view: number): OverviewWindow {
   return { top, height: view, fadeTop: top > 0, fadeBottom: top + view < scene.height }
 }
 
-/** "You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure; next: 4.2 … Open the map." */
+/** "You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure; next: 4.2 … Open the Peer Map." */
 export function overviewDescription(chapters: readonly JourneyChapter[]): string {
   const stops = journeyStops(chapters)
   const at = stops.findIndex((stop) => stop.here)
   const here = stops[at]
   if (!here) {
     return stops.length === 0
-      ? 'The map of the journey: its stages are planned and no mission is written yet. Open the map.'
-      : 'Every mission written so far is completed. Open the map to replay one.'
+      ? 'The Peer Map: the stages of the journey are planned and no mission is built yet. Open the Peer Map.'
+      : 'Every mission built so far is done. Open the Peer Map to replay one.'
   }
   const chapter = chapters.find((candidate) => candidate.id === here.chapterId)
   const next = stops[at + 1]
@@ -28,6 +28,6 @@ export function overviewDescription(chapters: readonly JourneyChapter[]): string
     `You are at ${here.number} ${here.title}, in stage ${here.stage}`,
     chapter ? `, ${chapter.name}` : '',
     next ? `; next: ${next.number} ${next.title}.` : '.',
-    ' Open the map.',
+    ' Open the Peer Map.',
   ].join('')
 }

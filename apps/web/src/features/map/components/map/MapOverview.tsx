@@ -7,7 +7,7 @@ import './MapOverview.css'
 export interface MapOverviewProps {
   /** The journey as the map draws it: `journeyChapters(chapters, next)`. */
   chapters: readonly JourneyChapter[]
-  /** The map, which opens scrolled to "you"; null where the drawing is only a figure. */
+  /** The Peer Map, which opens scrolled to "you"; null where the drawing is only a figure. */
   href: string | null
   /** One gentle pulse on the "you are here" ring; pass false under reduced motion. */
   pulse?: boolean
@@ -15,7 +15,7 @@ export interface MapOverviewProps {
   description?: string
 }
 
-/** The map's own drawing, windowed around "you": one link to the full map, or a plain figure. */
+/** The Peer Map's own drawing, windowed around "you": one link to the full map, or a plain figure. */
 export function MapOverview({ chapters, href, pulse = false, description }: MapOverviewProps) {
   const { frameRef, scene, shown } = useMapOverview(chapters)
   const words = description ?? overviewDescription(chapters)

@@ -1,7 +1,15 @@
 import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
 import { describe, expect, it } from 'vitest'
 import { PLANNED_PROGRESS } from './journey.constants'
-import { currentChapter, journeyChapters, journeyStops, journeySummary, toneOf } from './journey.util'
+import {
+  currentChapter,
+  journeyChapters,
+  journeyMarks,
+  journeyStops,
+  journeySummary,
+  markStateOf,
+  toneOf,
+} from './journey.util'
 
 describe('journeyChapters', () => {
   it('keeps all eleven stages in play order, the ones with no missions as planned', () => {
@@ -37,7 +45,51 @@ describe('journeyChapters', () => {
     expect(stop('locked')).toMatchObject({ state: 'locked', status: 'locked', playable: false })
     expect(stop('available')).toMatchObject({ state: 'available', status: 'available', playable: true })
     expect(stop('in_progress')).toMatchObject({ state: 'progress', status: 'in progress', playable: true })
-    expect(stop('completed')).toMatchObject({ state: 'done', status: 'completed', playable: true })
+    expect(stop('completed')).toMatchObject({ state: 'clean', status: 'done, first try', playable: true })
+  })
+
+  it('tells a mission done with hints, or after more than one judged run, from one done first try', () => {
+    expect(markStateOf('completed', 1, 0)).toBe('clean')
+    expect(markStateOf('completed', 3, 0)).toBe('done')
+    expect(markStateOf('completed', 1, 2)).toBe('helped')
+    expect(markStateOf('in_progress', 3, 2)).toBe('progress')
+  })
+
+  it('gives a stage with no missions one planned stop that keeps its place on the road', () => {
+    const chapters = journeyChapters(journeyFixture(), FIRST_MISSION)
+    expect(chapters[0]?.marks).toEqual([
+      expect.objectContaining({
+        key: 'planned:first-router',
+        planned: true,
+        number: '1',
+        state: 'locked',
+        status: 'not built yet',
+        playable: false,
+        here: false,
+      }),
+    ])
+    expect(chapters[3]?.marks).toBe(chapters[3]?.stops)
+    expect(journeyMarks(chapters).map((stop) => stop.number)).toEqual([
+      '1',
+      '2',
+      '3',
+      '4.1',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+    ])
+    expect(journeyStops(chapters).map((stop) => stop.number)).toEqual(['4.1'])
+  })
+
+  it('lists the FRR parts of each stage, as the README does', () => {
+    const chapters = journeyChapters(journeyFixture(), FIRST_MISSION)
+    expect(chapters.every((chapter) => chapter.parts.length > 0)).toBe(true)
+    expect(chapters[1]?.parts).toEqual(['zebra', 'staticd'])
+    expect(chapters[5]?.parts).toEqual(['bgpd'])
   })
 
   it('flags the mission Continue goes to, and only that one', () => {

@@ -32,20 +32,20 @@ describe('overviewWindow', () => {
 describe('overviewDescription', () => {
   it('says where the player stands, in which stage, and what comes next', () => {
     expect(overviewDescription(journeyChapters(journeyFixture(), FIRST_MISSION))).toBe(
-      'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure. Open the map.'
+      'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure. Open the Peer Map.'
     )
     expect(overviewDescription(journeyChapters(longerJourneyFixture(false), FIRST_MISSION))).toBe(
-      'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure; next: 4.2 A Restart Nobody Noticed. Open the map.'
+      'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure; next: 4.2 A Restart Nobody Noticed. Open the Peer Map.'
     )
     expect(overviewDescription(journeyChapters(longerJourneyFixture(true), SECOND_MISSION))).toBe(
-      'You are at 4.2 A Restart Nobody Noticed, in stage 4, Recover from failure. Open the map.'
+      'You are at 4.2 A Restart Nobody Noticed, in stage 4, Recover from failure. Open the Peer Map.'
     )
   })
 
-  it('says so when everything written is completed, and when nothing is written', () => {
+  it('says so when everything built is done, and when nothing is built', () => {
     expect(overviewDescription(journeyChapters(journeyFixture('completed'), null))).toBe(
-      'Every mission written so far is completed. Open the map to replay one.'
+      'Every mission built so far is done. Open the Peer Map to replay one.'
     )
-    expect(overviewDescription([])).toContain('no mission is written yet')
+    expect(overviewDescription([])).toContain('no mission is built yet')
   })
 })

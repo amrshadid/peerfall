@@ -1,23 +1,28 @@
 import type { MapDetail } from '@features/map/types'
 
 export const PLAN_NOTES = {
+  planned: "This stage's missions are still being built. Its place on the map is already drawn.",
   locked: 'Locked until the missions it needs are completed.',
-  empty: 'No mission is written yet. Every stage of the journey is drawn as planned.',
 } as const
 
-/** The panel with no stop selected: a map with no missions at all. */
+/** The row that says what a stop is about: a mission has an objective, a planned stage a subject. */
+export const ABOUT_TERMS = { mission: 'Objective', planned: 'Covers' } as const
+
+/** The panel with no stop selected: a map with no stops at all. */
 export const EMPTY_DETAIL: MapDetail = {
   place: '',
-  title: 'Map',
+  title: 'Peer Map',
   state: 'locked',
+  planned: false,
   status: '',
-  objective: null,
-  needs: [],
-  attempts: '',
-  hints: '',
+  about: null,
+  parts: [],
+  needs: null,
+  attempts: null,
+  hints: null,
   recovery: null,
   play: null,
-  note: PLAN_NOTES.empty,
+  note: null,
 }
 
 export const MS_PER_SECOND = 1000

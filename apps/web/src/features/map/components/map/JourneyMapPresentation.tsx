@@ -20,7 +20,7 @@ export interface JourneyMapPresentationProps {
   onShortcuts: () => void
 }
 
-/** The map of the journey: its stages top to bottom, with a detail panel for the selected mission. */
+/** The Peer Map: the journey's stages top to bottom, with a detail panel for the selected stop. */
 export function JourneyMapPresentation({
   chrome,
   titleHref,
@@ -33,17 +33,17 @@ export function JourneyMapPresentation({
 }: JourneyMapPresentationProps) {
   return (
     <ScreenFrame
-      page="Peerfall-map(7)"
+      page="Peer-map(7)"
       volume={`${APP_MANUAL} · General drawing of the journey`}
       chrome={chrome}
       topbar={
-        <nav className="screen__topbar map-topbar" aria-label="Map">
+        <nav className="screen__topbar map-topbar" aria-label="Peer Map">
           <ButtonLink href={titleHref} variant="quiet">
             <Icon name="back" />
             Title
           </ButtonLink>
           <h1 tabIndex={-1} className="map-topbar__title">
-            Map
+            Peer Map
           </h1>
           {recommended && (
             <p className="map-topbar__next">

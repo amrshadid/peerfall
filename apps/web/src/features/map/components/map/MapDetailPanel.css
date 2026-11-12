@@ -36,11 +36,12 @@
   color: var(--red);
 }
 
-.map-detail__state--done {
+.map-detail__state--clean {
   color: var(--green);
 }
 
-.map-detail__state--locked {
+.map-detail__state--locked,
+.map-detail__state--planned {
   color: var(--ink-2);
 }
 
@@ -72,15 +73,17 @@
   font-weight: 700;
 }
 
+.map-detail dd code {
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
 .map-detail__need {
   display: block;
 }
 
-/* The legend's two kinds of road, drawn with the road's own strokes at a mark's size. */
-.map-detail__road {
-  width: 1.5rem;
-  height: 1.5rem;
-  flex: none;
+.map-detail__parts {
+  line-height: 1.6;
 }
 
 .map-detail__ok {

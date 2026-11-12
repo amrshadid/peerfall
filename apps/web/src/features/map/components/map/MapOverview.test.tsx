@@ -5,7 +5,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MapOverview } from './MapOverview'
 
-const DESCRIPTION = 'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure. Open the map.'
+const DESCRIPTION = 'You are at 4.1 The Link That Never Went Down, in stage 4, Recover from failure. Open the Peer Map.'
 
 function stubSize(width: number, height: number) {
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(width)

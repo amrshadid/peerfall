@@ -7,7 +7,7 @@ export interface NodeMarkProps {
   size?: number
   /** One gentle pulse on the "you are here" ring (removed under reduced motion). */
   pulse?: boolean
-  /** A stage with no missions yet: a pencilled outline, no padlock. */
+  /** Planned but not built yet: a pencilled outline, no padlock. */
   planned?: boolean
   /** The signal-red ring of "you are here", whatever the state. */
   here?: boolean
@@ -41,6 +41,22 @@ export function NodeMark({ state, size = 22, pulse = false, planned = false, her
         <>
           {ring}
           <rect {...square} className="pf-node__solid" />
+        </>
+      )
+    case 'clean':
+      return (
+        <>
+          {ring}
+          <rect {...square} className="pf-node__solid" />
+          <path d={`M${h + 2} ${-h - 9} l6 6 -6 6 -6 -6z`} className="pf-node__clean" />
+        </>
+      )
+    case 'helped':
+      return (
+        <>
+          {ring}
+          <rect {...square} className="pf-node__open" />
+          <rect x={-h + 4} y={-h + 4} width={size - 8} height={size - 8} className="pf-node__solid" />
         </>
       )
     case 'progress':

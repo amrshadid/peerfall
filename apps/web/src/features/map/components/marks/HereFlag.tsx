@@ -10,7 +10,7 @@ export interface HereFlagProps {
   className?: string
 }
 
-/** "You are here" over a stop of the map. */
+/** "You are here" over a stop of the Peer Map. */
 export function HereFlag({ stop, nodeSize, bounds, className }: HereFlagProps) {
   const { pin, box, label } = hereFlag(stop, nodeSize, bounds)
   return (

@@ -36,8 +36,18 @@ describe('MapDrawing', () => {
     const found = buttons(html)
     expect(found).toHaveLength(scene.stops.length)
     expect(found.map((match) => match[2])).toEqual([
+      'Missions to come in stage 1, not built yet',
+      'Missions to come in stage 2, not built yet',
+      'Missions to come in stage 3, not built yet',
       '4.1 The Link That Never Went Down, in progress, you are here',
       '4.2 A Restart Nobody Noticed, locked',
+      'Missions to come in stage 5, not built yet',
+      'Missions to come in stage 6, not built yet',
+      'Missions to come in stage 7, not built yet',
+      'Missions to come in stage 8, not built yet',
+      'Missions to come in stage 9, not built yet',
+      'Missions to come in stage 10, not built yet',
+      'Missions to come in stage 11, not built yet',
     ])
   })
 
@@ -68,12 +78,36 @@ describe('MapDrawing', () => {
     expect(groups[10]).toBe('Stage 11: Operate a network')
   })
 
-  it('draws a stage with no missions in pencil and says it is planned in words', () => {
+  it('draws a stage with no missions as a pencilled stop on a hatched band, and says it is planned in words', () => {
     const { html } = render()
-    expect(html.match(/Planned: no missions yet/g)).toHaveLength(10)
+    expect(html.match(/>Missions to come<\/text>/g)).toHaveLength(10)
+    expect(html.match(/ · planned<\/text>/g)).toHaveLength(10)
     expect(html.match(/class="pf-node__planned"/g)).toHaveLength(10)
-    expect(html.match(/map-fig__panel--planned/g)).toHaveLength(10)
     expect(html.match(/map-fig__band--planned/g)).toHaveLength(10)
+    expect(html.match(/class="map-fig__tone-planned"/g)).toHaveLength(10)
+  })
+
+  it('prints the FRR parts of every stage in mono', () => {
+    const { html } = render()
+    expect(html.match(/class="map-fig__mono"/g)).toHaveLength(11)
+    expect(html).toContain('>FRR parts: zebra, staticd</text>')
+  })
+
+  it('draws the road in two strokes from one start mark: travelled up to "you", dashed ahead', () => {
+    const { scene, html } = render()
+    expect(html).toContain(`<path d="${scene.road.reached}" class="pf-road"`)
+    expect(html).toContain(`<path d="${scene.road.ahead}" class="pf-road pf-road--ahead"`)
+    expect(html.match(/class="map-fig__start"/g)).toHaveLength(1)
+    expect(html).toContain(`<circle cx="${scene.start?.x}" cy="${scene.start?.y}" r="6" class="map-fig__start"`)
+  })
+
+  it('draws each done state in its own shape', () => {
+    const marks = (attempts: number, hints: number) =>
+      render(journeyChapters(journeyFixture('completed', attempts, hints), null)).html
+    expect(marks(1, 0)).toContain('class="pf-node__clean"')
+    expect(marks(3, 0)).not.toContain('class="pf-node__clean"')
+    expect(marks(3, 0)).toContain('class="pf-node__solid"')
+    expect(marks(1, 2)).toMatch(/class="pf-node__open"><\/rect><rect x="-7" y="-7" width="14" height="14"/)
   })
 
   it('flags "You are here" once, from the flag model, and not at all with nowhere to stand', () => {
@@ -88,11 +122,10 @@ describe('MapDrawing', () => {
     expect(render(journeyChapters(journeyFixture('completed'), null)).html).not.toContain('You are here')
   })
 
-  it('draws the one router the road starts from and the operated network it ends at', () => {
+  it('draws the operated network the road leads to, its routers on one backbone', () => {
     const { html } = render()
-    expect(html).toContain('>One router</text>')
     expect(html).toContain('>An operated network</text>')
-    expect(html.match(/class="map-fig__router"/g)).toHaveLength(6)
+    expect(html.match(/class="map-fig__router"/g)).toHaveLength(5)
     expect(html).toContain('class="map-fig__bus"')
   })
 

@@ -1,5 +1,5 @@
 import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
-import { journeyChapters, journeyStops } from '@features/map/utils/journey'
+import { journeyChapters, journeyStops, plannedKeyOf, plannedStopOf } from '@features/map/utils/journey'
 import { layoutMap } from '@features/map/utils/layout'
 import { describe, expect, it } from 'vitest'
 import { NOTE_STATES, PLANNED_NOTE } from './map-note.constants'
@@ -13,7 +13,15 @@ describe('mapNotesOf', () => {
     expect(notes.stops.get(FIRST_MISSION.id)).toEqual({
       title: '4.1 · The Link That Never Went Down',
       text: FIRST_MISSION.objective,
-      facts: ['Next up', 'Traffic back within 2 s'],
+      facts: ['Next up', 'Traffic back within 2 s', 'FRR parts: bfdd, graceful restart, fast reroute, vrrpd'],
+    })
+  })
+
+  it('explains the planned stop of a stage with no missions by the stage itself', () => {
+    expect(notes.stops.get(plannedKeyOf('exchange-routes'))).toEqual({
+      title: 'Stage 6 · Exchange routes',
+      text: `BGP sessions, best-path selection and route reflectors. ${PLANNED_NOTE}`,
+      facts: ['Not built yet', 'FRR parts: bgpd'],
     })
   })
 
@@ -22,11 +30,11 @@ describe('mapNotesOf', () => {
     expect(notes.chapters.get('recover-from-failure')).toEqual({
       title: 'What this stage covers · Recover from failure',
       text: 'Measure an outage and make the network notice it sooner.',
-      facts: ['Stage 4 of 11', '0 of 1 passed'],
+      facts: ['Stage 4 of 11', '0 of 1 passed', 'FRR parts: bfdd, graceful restart, fast reroute, vrrpd'],
     })
     const planned = notes.chapters.get('exchange-routes')
     expect(planned?.text.endsWith(PLANNED_NOTE)).toBe(true)
-    expect(planned?.facts).toEqual(['Stage 6 of 11', 'Planned: no missions yet'])
+    expect(planned?.facts).toEqual(['Stage 6 of 11', 'Planned: no missions yet', 'FRR parts: bgpd'])
   })
 })
 
@@ -39,7 +47,13 @@ describe('stopStateOf', () => {
     expect(stopStateOf(first)).toBe(NOTE_STATES.progress)
     expect(stopStateOf(second)).toBe('Locked: finish The Link That Never Went Down first')
     const [done, open] = journeyStops(journeyChapters(longerJourneyFixture(true), null))
-    expect(done && stopStateOf(done)).toBe(NOTE_STATES.done)
+    // The fixture's first mission took hints.
+    expect(done && stopStateOf(done)).toBe(NOTE_STATES.helped)
+    expect(done && stopStateOf({ ...done, state: 'clean' })).toBe(NOTE_STATES.clean)
+    expect(done && stopStateOf({ ...done, state: 'done' })).toBe(NOTE_STATES.done)
+    expect(stopStateOf(plannedStopOf({ id: 'first-router', stage: 1, title: 'First router', summary: '' }))).toBe(
+      NOTE_STATES.planned
+    )
     expect(open && stopStateOf(open)).toBe(NOTE_STATES.available)
     expect(open && stopStateOf({ ...open, here: true })).toBe(NOTE_STATES.next)
     expect(stopStateOf({ ...second, needs: [] })).toBe(NOTE_STATES.lockedUnknown)

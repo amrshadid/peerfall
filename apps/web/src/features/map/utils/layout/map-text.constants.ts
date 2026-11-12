@@ -6,6 +6,8 @@ export const GLYPH = {
   zone: 17,
   /** 14px Archivo. */
   caption: 7.6,
+  /** 12px IBM Plex Mono. */
+  mono: 7.3,
   /** 16px Archivo, semi-wide, bold. */
   region: 10,
   /** 12px Archivo. */
@@ -14,11 +16,8 @@ export const GLYPH = {
   label: 6.4,
 } as const
 
-/** The words printed at the two ends of the road. */
+/** The words printed under the last stage, where the road has led. */
 export const END_WORDS = {
-  originKicker: 'Start',
-  originName: 'One router',
-  originCaption: 'FRR on one Linux machine, nothing configured yet.',
   terminusKicker: 'End of the road',
   terminusName: 'An operated network',
   terminusCaption: 'One backbone: every protocol of the journey running together, watched and automated.',
