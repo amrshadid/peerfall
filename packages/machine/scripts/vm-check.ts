@@ -5,6 +5,7 @@
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { applyRouterConfig, readRouterConfig } from '#services/vm/vm-config.service'
 import { createVmSession } from '#services/vm/vm-session.service'
 import { TRIANGLE, TRIANGLE_DIRECT_LINK } from '#test/triangle'
 import type { StampedMachineEvent } from '#types/definitions/event'
@@ -173,9 +174,40 @@ async function main() {
   const stillB = await type('echo $PF_ROUTER', 'b:~#')
   check('the terminal stays in router b across the restore', stillB.includes('\nb\n'), stillB)
 
-  // The first mission's repaired run: BFD on both ends of the direct link, a probe, then the fault.
-  await root("vtysh -N a -c 'configure terminal' -c 'interface a-c' -c 'ip ospf bfd'")
-  await root("vtysh -N c -c 'configure terminal' -c 'interface c-a' -c 'ip ospf bfd'")
+  // The editor's way: the running configuration as text, edited, and only the difference applied.
+  const edit = async (router: string, change: (text: string) => string) => {
+    const control = (line: string) => session.control(line)
+    const applied = await applyRouterConfig(control, router, change((await readRouterConfig(control, router)) ?? ''))
+    return { errors: applied.ok ? [] : applied.errors }
+  }
+  const costly = await edit('b', (text) => text.replace('interface b-a\n', 'interface b-a\n description to a\n'))
+  const described = await root("vtysh -N b -c 'show running-config'")
+  check(
+    'an edited configuration is applied as its difference',
+    costly.errors.length === 0 && described.includes(' description to a'),
+    `${JSON.stringify(costly)}\n${described}`
+  )
+  const undone = await edit('b', (text) => text.replace(' description to a\n', ''))
+  check(
+    'a line taken out of the text is taken out of the router',
+    undone.errors.length === 0 && !(await root("vtysh -N b -c 'show running-config'")).includes('description to a'),
+    JSON.stringify(undone)
+  )
+  const refused = await edit('b', (text) => text.replace('interface b-a\n', 'interface b-a\n ip ospf bdf\n'))
+  check(
+    'a line FRR does not know comes back as FRR’s own message',
+    refused.errors.some((error) => error.startsWith('%')),
+    JSON.stringify(refused)
+  )
+
+  // The first mission's repaired run: BFD on both ends of the direct link, typed into the configuration text.
+  const onA = await edit('a', (text) => text.replace('interface a-c\n', 'interface a-c\n ip ospf bfd\n'))
+  const onC = await edit('c', (text) => text.replace('interface c-a\n', 'interface c-a\n ip ospf bfd\n'))
+  check(
+    'BFD is turned on from the configuration text on both ends',
+    onA.errors.length === 0 && onC.errors.length === 0,
+    JSON.stringify([onA, onC])
+  )
   await until(
     'BFD to come up on both ends',
     () =>

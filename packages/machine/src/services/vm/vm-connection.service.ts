@@ -1,9 +1,10 @@
 import type { Validated } from '@peerfall/core/types'
 import { proxy, type Remote, wrap } from 'comlink'
 import { getMachineConfig } from '#config'
+import { applyRouterConfig, readRouterConfig } from '#services/vm/vm-config.service'
 import type { MachineEndpoint } from '#types/definitions/endpoint'
 import type { ProbeDefinition } from '#types/definitions/event'
-import type { LinkDefinition, NetworkDefinition } from '#types/definitions/network'
+import { type LinkDefinition, type NetworkDefinition, ROUTER_NAME } from '#types/definitions/network'
 import type { ControlReply, VmEventUpdate, VmSession, VmStatus } from '#types/definitions/vm'
 
 interface VmConnection {
@@ -158,4 +159,26 @@ export async function selectVmRouter(router: string | null): Promise<boolean> {
   }
   await running.session.selectRouter(router)
   return true
+}
+
+/** A router's running configuration as text; null while no VM runs or the router does not answer. */
+export async function readVmRouterConfig(router: string): Promise<string | null> {
+  const running = connection
+  if (!running || !ROUTER_NAME.test(router)) {
+    return null
+  }
+  return readRouterConfig((line) => running.session.control(line), router)
+}
+
+/**
+ * Makes a router's configuration the edited text: only what differs from its running
+ * configuration is typed into its vtysh, as frr-reload does on a real router. Fails with
+ * FRR's own messages for the lines it refused; the lines it accepted stay applied.
+ */
+export async function applyVmRouterConfig(router: string, config: string): Promise<Validated<null>> {
+  const running = connection
+  if (!running || !ROUTER_NAME.test(router)) {
+    return NOT_RUNNING
+  }
+  return applyRouterConfig((line) => running.session.control(line), router, config)
 }

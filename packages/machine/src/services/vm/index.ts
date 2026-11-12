@@ -1,8 +1,10 @@
 // vm.worker.ts is the worker's entry point, not a module to import: it starts a VM when loaded.
 export {
+  applyVmRouterConfig,
   connectVm,
   disconnectVm,
   onVmOutput,
+  readVmRouterConfig,
   resizeVmTerminal,
   restoreVmHealthy,
   runVmControl,

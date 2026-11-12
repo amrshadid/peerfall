@@ -3,5 +3,6 @@ export { type UseMachineControlsResult, useMachineControls } from '#hooks/vm/use
 export { useMachineEvents } from '#hooks/vm/useMachineEvents.hook'
 export { useMachineStatus } from '#hooks/vm/useMachineStatus.hook'
 export { type UseNetworkResult, useNetwork } from '#hooks/vm/useNetwork.hook'
+export { type UseRouterConfigResult, useRouterConfig } from '#hooks/vm/useRouterConfig.hook'
 export { type UseRouterSelectionResult, useRouterSelection } from '#hooks/vm/useRouterSelection.hook'
 export { type UseTerminalSizeResult, useTerminalSize } from '#hooks/vm/useTerminalSize.hook'
