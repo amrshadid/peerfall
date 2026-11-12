@@ -1,0 +1,29 @@
+{
+  "name": "peerfall",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26"
+  },
+  "packageManager": "pnpm@10.29.2",
+  "scripts": {
+    "dev": "pnpm --filter @peerfall/web dev",
+    "vm:image": "node packages/machine/scripts/vm-image/build.ts",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --workspace-concurrency=1 --if-present test",
+    "type-check": "pnpm -r --if-present type-check",
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "verify": "pnpm check && pnpm type-check && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^26.6.6",
+    "jsdom": "^31.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "ignoreUnknown": false },
+  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120, "lineEnding": "lf" },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "asNeeded",
+      "trailingCommas": "es5",
+      "arrowParentheses": "always",
+      "bracketSpacing": true
+    }
+  },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": { "noExplicitAny": "error", "noConsole": "error" },
+      "style": {
+        "noDefaultExport": "error",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": { "filenameCases": ["kebab-case"], "requireAscii": true }
+        },
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["./*", "../*", "./**", "../**"],
+                "message": "Inside a package use its # imports; across packages use @peerfall/* (CONTRIBUTING.md)."
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/**/use*.hook.ts", "packages/**/use*.hook.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": { "filenameCases": ["camelCase"], "requireAscii": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": { "filenameCases": ["camelCase", "PascalCase", "kebab-case"], "requireAscii": true }
+            },
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@peerfall/*/services",
+                      "@peerfall/*/services/**",
+                      "@peerfall/*/store",
+                      "@peerfall/*/stores",
+                      "@peerfall/*/events",
+                      "@peerfall/*/api",
+                      "@peerfall/*/session"
+                    ],
+                    "message": "The app uses a package through its hooks, types and utils (CONTRIBUTING.md)."
+                  },
+                  {
+                    "group": ["../*", "../**", "./*/**", "#*", "#*/**"],
+                    "message": "Use the app's aliases (@/, @app/, @shared/, @features/, @pages/); ./x only for a file in the same folder."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/**/components/**", "apps/web/src/shared/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "zustand": "Presentations take props and call callbacks; data comes from a container.",
+                  "@app/store": "Presentations take props and call callbacks; data comes from a container."
+                },
+                "patterns": [
+                  {
+                    "group": [
+                      "**/containers",
+                      "**/containers/**",
+                      "@peerfall/*/hooks",
+                      "@peerfall/*/services",
+                      "@peerfall/*/services/**",
+                      "@peerfall/*/store",
+                      "@peerfall/*/events",
+                      "@peerfall/*/api"
+                    ],
+                    "message": "Presentations take props and call callbacks; package hooks run in containers."
+                  },
+                  {
+                    "group": ["../*", "../**", "./*/**", "#*", "#*/**"],
+                    "message": "Use the app's aliases (@/, @app/, @shared/, @features/, @pages/); ./x only for a file in the same folder."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/core/src/utils/logging/**", "packages/*/scripts/**"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+    },
+    {
+      "includes": ["packages/*/src/services/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["kebab-case"],
+                "requireAscii": true,
+                "match": "(index)[.](ts)|([^.]+)[.](api|service|worker)[.](ts)|([^.]+)[.](api|service|worker)[.](test)[.](ts)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/*/src/store/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["kebab-case"],
+                "requireAscii": true,
+                "match": "(index)[.](ts)|([^.]+)[.](store)[.](ts)|([^.]+)[.](store)[.](test)[.](ts)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/*/src/utils/**/*.ts", "apps/web/src/**/utils/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["kebab-case"],
+                "requireAscii": true,
+                "match": "(index)[.](ts)|([^.]+)[.](util|schema|constants)[.](ts)|([^.]+)[.](util|schema|constants)[.](test)[.](ts)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/*/src/hooks/**/*.ts", "apps/web/src/**/hooks/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["camelCase"],
+                "requireAscii": true,
+                "match": "(index)[.](ts)|(use[^.]+)[.](hook)[.](ts)|(use[^.]+)[.](hook)[.](test)[.](ts)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.config.ts"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off", "noRestrictedImports": "off" } } }
+    }
+  ]
+}
