@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "pnpm --filter @peerfall/web dev",
     "vm:image": "node packages/machine/scripts/vm-image/build.ts",
+    "vm:check": "node packages/machine/scripts/vm-check.ts",
     "build": "pnpm -r --if-present build",
     "test": "pnpm -r --workspace-concurrency=1 --if-present test",
     "type-check": "pnpm -r --if-present type-check",

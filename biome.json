@@ -128,7 +128,7 @@
       }
     },
     {
-      "includes": ["packages/core/src/utils/logging/**", "packages/*/scripts/**"],
+      "includes": ["packages/core/src/utils/logging/**", "packages/*/scripts/**", "lab/**"],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     },
     {
