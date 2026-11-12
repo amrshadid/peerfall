@@ -16,7 +16,8 @@ if (!loaded.ok) {
   throw new Error(loaded.errors.join('\n'))
 }
 const { game } = loaded.value
-const mission = game.missions[0] as MissionDefinition
+// A mission in the middle of the journey, so "the first with missions" is a different chapter.
+const mission = game.mission('the-link-that-never-went-down') as MissionDefinition
 
 /** The real curriculum, every mission with the given status. */
 const chaptersWith = (status: 'available' | 'in_progress' | 'completed'): ChapterEntry[] =>
@@ -47,7 +48,7 @@ describe('the stage the player is in', () => {
   it('is the chapter of the mission to continue, else the first with missions', () => {
     const chapters = chaptersWith('available')
     expect(currentChapter(chapters, mission)?.chapter.id).toBe('recover-from-failure')
-    expect(currentChapter(chapters, null)?.chapter.id).toBe('recover-from-failure')
+    expect(currentChapter(chapters, null)?.chapter.id).toBe('first-router')
     expect(volumeOf(currentChapter(chapters, mission))).toBe('Stage 4: Recover from failure')
     expect(volumeOf(undefined)).toBe('The journey')
   })
