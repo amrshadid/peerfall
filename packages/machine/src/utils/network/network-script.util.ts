@@ -2,6 +2,8 @@ import type { LinkName, ProbeDefinition } from '#types/definitions/event'
 import {
   FRR_BASE_DAEMONS,
   FRR_DAEMONS,
+  FRR_INIT,
+  FRR_STARTUPS,
   type FrrDaemon,
   IPV4,
   IPV4_WITH_PREFIX,
@@ -44,6 +46,9 @@ export function networkProblems(network: NetworkDefinition): string[] {
       if (!FRR_DAEMONS.includes(daemon)) {
         problems.push(`${where}.daemons: unknown daemon "${daemon}"`)
       }
+    }
+    if (router.startup !== undefined && !FRR_STARTUPS.includes(router.startup)) {
+      problems.push(`${where}.startup: expected one of ${FRR_STARTUPS.join(', ')}, got "${router.startup}"`)
     }
   })
   const pairs = new Set<string>()
@@ -103,11 +108,29 @@ function linkLine({ ends: [first, second] }: LinkDefinition): string {
   const far = interfaceName(second.router, first.router)
   return [
     `ip link add ${near} netns ${first.router} type veth peer name ${far} netns ${second.router}`,
-    `ip -n ${first.router} addr add ${first.address} dev ${near}`,
-    `ip -n ${second.router} addr add ${second.address} dev ${far}`,
+    ...(first.unaddressed ? [] : [`ip -n ${first.router} addr add ${first.address} dev ${near}`]),
+    ...(second.unaddressed ? [] : [`ip -n ${second.router} addr add ${second.address} dev ${far}`]),
     `ip -n ${first.router} link set ${near} up`,
     `ip -n ${second.router} link set ${far} up`,
   ].join(' && ')
+}
+
+const startupOf = (router: RouterDefinition) => router.startup ?? 'direct'
+
+/**
+ * A router's `daemons` file, which FRR's init script reads to know what to start: one line per
+ * daemon a mission may ask for. zebra, mgmtd and staticd are not in it: the script starts them
+ * whatever it says.
+ */
+// reads tools/frrcommon.sh.in: daemon_list()
+export function frrDaemonsFile(router: RouterDefinition): string {
+  return [
+    '# Which FRR daemons this router runs. zebra, mgmtd and staticd always start.',
+    ...FRR_DAEMONS.filter((daemon) => daemon !== 'staticd').map(
+      (daemon) => `${daemon}=${router.daemons.includes(daemon) ? 'yes' : 'no'}`
+    ),
+    '',
+  ].join('\n')
 }
 
 // FRR's -N keeps each router's sockets, state and configuration in a folder of its own name.
@@ -120,6 +143,7 @@ function filesLine(router: RouterDefinition): string {
     // vtysh shows its own hostname, which would be the Machine's: the routers share one. Without
     // the second line it would read and write one file per daemon instead of frr.conf.
     writeText(`/etc/frr/${name}/vtysh.conf`, `hostname ${name}\nservice integrated-vtysh-config\n`),
+    ...(startupOf(router) === 'direct' ? [] : [writeText(`/etc/frr/${name}/daemons`, frrDaemonsFile(router))]),
     `chown -R ${OWNER} ${dirs.join(' ')}`,
   ].join(' && ')
 }
@@ -139,17 +163,30 @@ function daemonsLine({ name, daemons }: RouterDefinition): string {
 }
 
 /**
+ * Root's line that starts a router's FRR the way an installed router does: FRR's init script
+ * starts watchfrr, which starts the daemons the router's `daemons` file names and hands them
+ * frr.conf. For a router whose `startup` is `watchfrr` or `none`: only those have that file.
+ */
+export const frrStartLine = (router: string): string => inRouter(router, `${FRR_INIT} start ${router}`)
+
+/** Root's line that stops a router's FRR and starts it again from its saved frr.conf. */
+export const frrRestartLine = (router: string): string => inRouter(router, `${FRR_INIT} restart ${router}`)
+
+/**
  * Root's lines that build the network on a clean Machine, in order: namespaces, cables, each
  * router's files, its daemons, then its configuration. Check `networkProblems` first.
  */
 export function networkSetupLines(network: NetworkDefinition): string[] {
+  const direct = network.routers.filter((router) => startupOf(router) === 'direct')
   return [
     ...network.routers.map(namespaceLine),
     ...network.links.map(linkLine),
     ...network.routers.map(filesLine),
-    ...network.routers.map(daemonsLine),
+    ...direct.map(daemonsLine),
     // vtysh -b sends frr.conf to the daemons, as FRR's own start script does.
-    ...network.routers.map(({ name }) => `vtysh -N ${name} -b`),
+    ...direct.map(({ name }) => `vtysh -N ${name} -b`),
+    // watchfrr's own start command sends frr.conf once its daemons are up.
+    ...network.routers.filter((router) => startupOf(router) === 'watchfrr').map(({ name }) => frrStartLine(name)),
   ]
 }
 
@@ -168,8 +205,10 @@ const DEBUGS: Partial<Record<FrrDaemon, readonly string[]>> = { ospfd: ['debug o
  * at the prompt, not in configure mode, so they never show in a router's running configuration.
  */
 export function networkWatchLines(network: NetworkDefinition): string[] {
-  return network.routers.flatMap(({ name, daemons }) => {
-    const debugs = daemons.flatMap((daemon) => DEBUGS[daemon] ?? [])
+  return network.routers.flatMap((router) => {
+    const { name, daemons } = router
+    // A router whose FRR is not running has no daemon to take a debug switch.
+    const debugs = startupOf(router) === 'none' ? [] : daemons.flatMap((daemon) => DEBUGS[daemon] ?? [])
     return [
       ...(debugs.length === 0 ? [] : [`vtysh -N ${name} ${debugs.map((debug) => `-c '${debug}'`).join(' ')}`]),
       `tail -n +1 -F ${routerLogPath(name)} 2>/dev/null | ${toEventPort('frr', name)} &`,

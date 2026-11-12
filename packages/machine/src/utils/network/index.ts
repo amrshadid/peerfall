@@ -1,5 +1,9 @@
 export {
   frrConfig,
+  frrDaemonsFile,
+  frrRestartLine,
+  frrStartLine,
+  inRouter,
   interfaceName,
   linkFaultLine,
   linkName,

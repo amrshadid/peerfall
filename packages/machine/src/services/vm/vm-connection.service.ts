@@ -2,9 +2,11 @@ import type { Validated } from '@peerfall/core/types'
 import { proxy, type Remote, wrap } from 'comlink'
 import { getMachineConfig } from '#config'
 import { applyRouterConfig, readRouterConfig } from '#services/vm/vm-config.service'
+import { readMachineState, restartRouterFrr } from '#services/vm/vm-inspect.service'
 import type { MachineEndpoint } from '#types/definitions/endpoint'
 import type { ProbeDefinition } from '#types/definitions/event'
 import { type LinkDefinition, type NetworkDefinition, ROUTER_NAME } from '#types/definitions/network'
+import type { MachineState, StateRequest } from '#types/definitions/state'
 import type { ControlReply, VmEventUpdate, VmSession, VmStatus } from '#types/definitions/vm'
 
 interface VmConnection {
@@ -168,6 +170,24 @@ export async function readVmRouterConfig(router: string): Promise<string | null>
     return null
   }
   return readRouterConfig((line) => running.session.control(line), router)
+}
+
+/** The Machine as it is now: the asked parts of each router and the pings, read as root. */
+export async function readVmMachineState(request: StateRequest): Promise<Validated<MachineState>> {
+  const running = connection
+  if (!running) {
+    return { ok: false, errors: ['The Machine is not running'] }
+  }
+  return readMachineState((line, timeoutMs) => running.session.control(line, timeoutMs), request)
+}
+
+/** Stops a router's FRR and starts it again from its saved frr.conf, with FRR's own init script. */
+export async function restartVmFrr(router: string): Promise<Validated<null>> {
+  const running = connection
+  if (!running) {
+    return NOT_RUNNING
+  }
+  return restartRouterFrr((line, timeoutMs) => running.session.control(line, timeoutMs), router)
 }
 
 /**

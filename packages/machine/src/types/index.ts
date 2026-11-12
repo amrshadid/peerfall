@@ -11,7 +11,11 @@ export type {
 export {
   FRR_BASE_DAEMONS,
   FRR_DAEMONS,
+  FRR_INIT,
+  FRR_INIT_DAEMONS,
+  FRR_STARTUPS,
   type FrrDaemon,
+  type FrrStartup,
   IPV4,
   IPV4_WITH_PREFIX,
   type LinkDefinition,
@@ -21,6 +25,17 @@ export {
   ROUTER_NAME,
   type RouterDefinition,
 } from '#types/definitions/network'
+export {
+  type KernelRoute,
+  type MachineState,
+  PING_MAX_COUNT,
+  type PingRequest,
+  type PingResult,
+  ROUTER_STATE_PARTS,
+  type RouterState,
+  type RouterStatePart,
+  type StateRequest,
+} from '#types/definitions/state'
 export {
   type ControlReply,
   VM_CMDLINE,

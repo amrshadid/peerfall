@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { NetworkDefinition } from '#types/definitions/network'
 import {
   frrConfig,
+  frrDaemonsFile,
+  frrRestartLine,
+  frrStartLine,
   interfaceName,
   linkFaultLine,
   networkProblems,
   networkSetupLines,
+  networkWatchLines,
 } from '#utils/network/network-script.util'
 
 const triangle: NetworkDefinition = {
@@ -96,6 +100,68 @@ describe('a network’s setup lines', () => {
       'tc -n a qdisc add dev a-c root netem loss 100% && tc -n c qdisc add dev c-a root netem loss 100%'
     )
     expect(linkFaultLine(link, false)).toBe('tc -n a qdisc del dev a-c root && tc -n c qdisc del dev c-a root')
+  })
+})
+
+describe('a router started another way', () => {
+  const network: NetworkDefinition = {
+    routers: [
+      { name: 'a', daemons: ['ospfd'], config: '', startup: 'none' },
+      { name: 'b', daemons: ['ospfd'], config: '', startup: 'watchfrr' },
+      { name: 'c', daemons: [], config: '' },
+    ],
+    links: [
+      {
+        ends: [
+          { router: 'a', address: '10.0.1.1/30', unaddressed: true },
+          { router: 'b', address: '10.0.1.2/30' },
+        ],
+      },
+    ],
+  }
+  const init = (action: string, router: string) =>
+    `ip netns exec ${router} unshare -u sh -c 'hostname ${router} && exec /usr/lib/frr/frrinit.sh ${action} ${router}'`
+
+  it('gets its daemons file, and is started by FRR’s init script or not at all', () => {
+    expect(networkProblems(network)).toEqual([])
+    const lines = networkSetupLines(network)
+    expect(decoded(lines[4] ?? '')[2]).toBe(
+      '# Which FRR daemons this router runs. zebra, mgmtd and staticd always start.\nospfd=yes\nospf6d=no\nisisd=no\nbgpd=no\nbfdd=no\n'
+    )
+    expect(decoded(lines[6] ?? '')).toHaveLength(2)
+    expect(lines.slice(7)).toEqual([
+      ['zebra', 'mgmtd']
+        .map((daemon) => `ip netns exec c unshare -u sh -c 'hostname c && exec /usr/lib/frr/${daemon} -d -N c'`)
+        .join(' && '),
+      'vtysh -N c -b',
+      init('start', 'b'),
+    ])
+    expect(frrDaemonsFile({ name: 'x', daemons: [], config: '' })).not.toContain('=yes')
+  })
+
+  it('leaves an unaddressed end of a link for the player', () => {
+    expect(networkSetupLines(network)[3]).toBe(
+      'ip link add a-b netns a type veth peer name b-a netns b && ip -n b addr add 10.0.1.2/30 dev b-a && ip -n a link set a-b up && ip -n b link set b-a up'
+    )
+  })
+
+  it('asks a stopped router for no debug lines, since no daemon would answer', () => {
+    const lines = networkWatchLines(network)
+    expect(lines.filter((line) => line.startsWith('vtysh'))).toEqual([
+      "vtysh -N b -c 'debug ospf nsm' -c 'debug ospf bfd'",
+    ])
+    expect(lines).toHaveLength(2 + 3 + 2)
+  })
+
+  it('is started and restarted with FRR’s own init script, in its namespace and under its hostname', () => {
+    expect(frrStartLine('a')).toBe(init('start', 'a'))
+    expect(frrRestartLine('a')).toBe(init('restart', 'a'))
+  })
+
+  it('refuses a startup the Machine does not know', () => {
+    expect(
+      networkProblems({ routers: [{ name: 'a', daemons: [], config: '', startup: 'systemd' as never }], links: [] })
+    ).toEqual(['routers[0].startup: expected one of direct, watchfrr, none, got "systemd"'])
   })
 })
 
