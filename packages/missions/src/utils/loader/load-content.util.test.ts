@@ -45,6 +45,10 @@ describe('the repository’s content', () => {
       ['the-silent-router', []],
       ['gone-after-the-restart', ['the-silent-router']],
     ])
+    expect(game.missionsIn('follow-a-packet').map((mission) => [mission.id, mission.prerequisites])).toEqual([
+      ['two-ends-of-one-cable', ['gone-after-the-restart']],
+      ['the-reply-that-never-came-back', ['two-ends-of-one-cable']],
+    ])
     // A mission that breaks nothing has no fault to run and no recovery target.
     expect(game.missions[0]).not.toHaveProperty('fault')
     expect(game.missions[0]).not.toHaveProperty('recoveryTargetMs')

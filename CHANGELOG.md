@@ -15,6 +15,11 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 - **Gone After the Restart** (stage 1): a change that worked until the router restarted.
   The running configuration against the saved `frr.conf`, `write memory`, and a restart of
   FRR before the work is judged.
+- **Two Ends of One Cable** (stage 2, Follow a packet): two routers on a link with no
+  addresses. Address both ends in FRR and follow the connected route from Zebra into the
+  Linux routing table.
+- **The Reply That Never Came Back** (stage 2): three routers in a line. A static route
+  and its next hop, and why the reply needs a route as well.
 - **Missions without a fault.** A mission's checks can read the network as it is: the FRR
   daemons that answer, a route in a router's kernel table, whether a router reaches an
   address, a line in the running or the saved configuration. "Check my work" reads it as

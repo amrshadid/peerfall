@@ -1,0 +1,36 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, `shell` lines at its shell.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # One end only: a has its route, and nobody answers at the other end.
+  - id: one-end
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip address 10.0.1.1/30]
+  # Both ends addressed, in two different networks.
+  - id: two-networks
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip address 10.0.1.1/30]
+      - router: b
+        lines: [configure terminal, interface b-a, ip address 10.0.2.2/30]
+  - id: both-ends
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip address 10.0.1.1/30]
+      - router: b
+        lines: [configure terminal, interface b-a, ip address 10.0.1.2/30]
+  # The same outcome reached from Linux instead of FRR: the mission is judged by what the
+  # kernel has, not by which command put it there.
+  - id: addressed-from-linux
+    passes: true
+    changes:
+      - router: a
+        shell: [ip addr add 10.0.1.1/30 dev a-b]
+      - router: b
+        shell: [ip addr add 10.0.1.2/30 dev b-a]
