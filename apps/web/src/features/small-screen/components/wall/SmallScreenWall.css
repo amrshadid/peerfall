@@ -1,7 +1,7 @@
-/* The sheet takes all the room under the running head, at any width below the game's own. */
 .small-screen {
   display: grid;
-  grid-template-rows: 2rem 1fr;
+  /* An empty row as tall as the running head, so the sheet centres on the screen. */
+  grid-template-rows: 2rem 1fr 2rem;
   min-height: 100dvh;
 }
 
@@ -16,22 +16,19 @@
   }
 }
 
+/* Centred both ways; a sheet taller than the screen starts at the top and scrolls. */
 .small-screen__sheet {
-  margin: 0 1rem 1rem;
+  place-self: safe center;
+  margin: 1rem;
   padding: 1.5rem 1.25rem 1.75rem;
   display: grid;
-  /* Its words sit in the middle of the sheet, in a column narrow enough to read. */
-  align-content: center;
-  justify-content: center;
-  grid-template-columns: minmax(0, 36rem);
+  align-content: start;
   gap: 1rem;
+  max-width: 44rem;
   min-width: 0;
-  text-align: center;
 }
 
 .small-screen__mark {
-  display: grid;
-  justify-items: center;
   padding-bottom: 1rem;
   border-bottom: var(--rule);
 }
@@ -63,7 +60,7 @@
 
 @media (min-width: 40rem) {
   .small-screen__sheet {
-    margin: 0 1.5rem 1.5rem;
+    margin: 1.5rem;
     padding: 2rem 2.25rem 2.25rem;
   }
 }
