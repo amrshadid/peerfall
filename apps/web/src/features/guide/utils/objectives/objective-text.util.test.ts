@@ -1,0 +1,180 @@
+import type { CheckDefinition, CheckResult, MissionVerdict, RouteHop } from '@peerfall/game/types'
+import { appContent } from '@peerfall/missions/utils'
+import { describe, expect, it } from 'vitest'
+import { evidenceText, failureText, guideObjectivesOf, probeNamesOf } from './objective-text.util'
+
+const NAMES = { from: 'a', destination: '10.255.0.3', target: 'c' }
+
+const hop = (name: string, via: string): RouteHop => ({
+  prefix: '10.255.0.3',
+  interface: name,
+  via,
+  nextHops: [{ via, interface: name }],
+  protocol: 'ospf',
+  atMs: 0,
+})
+const DIRECT = hop('a-c', '10.0.2.2')
+const THROUGH_B = hop('a-b', '10.0.1.2')
+const SHARED: RouteHop = {
+  ...DIRECT,
+  nextHops: [
+    { via: '10.0.2.2', interface: 'a-c' },
+    { via: '10.0.1.2', interface: 'a-b' },
+  ],
+}
+
+const REACHABLE: CheckDefinition = { kind: 'reachable', minReplies: 3 }
+const PATH: CheckDefinition = { kind: 'path', before: 'a-c' }
+const RECOVERY: CheckDefinition = { kind: 'recovery', via: 'a-b' }
+const DETECTED: CheckDefinition = { kind: 'detected-by', event: 'bfd_session_down' }
+
+describe('failureText', () => {
+  it('says a check that needs the fault has not been tested, and how to test it', () => {
+    const result: CheckResult = { kind: 'recovery', passed: false, failure: 'no_fault', recovery: null, limitMs: 2000 }
+    expect(failureText(RECOVERY, result, NAMES)).toBe(
+      'the link was not broken, and this is judged only when it breaks. Use **Break the link**.'
+    )
+  })
+
+  it('counts the replies that came back and says what a reply is', () => {
+    const none: CheckResult = { kind: 'reachable', passed: false, failure: 'unreachable', replies: 0 }
+    const one: CheckResult = { ...none, replies: 1 }
+    expect(failureText(REACHABLE, none, NAMES)).toBe(
+      'No reply came back from 10.255.0.3. It takes 3. A reply is one probe packet that reached the far router and came back.'
+    )
+    expect(failureText(REACHABLE, one, NAMES)).toContain('Only 1 reply came back from 10.255.0.3.')
+  })
+
+  it('explains what a route is when the router has none', () => {
+    const result: CheckResult = { kind: 'path', passed: false, failure: 'no_route', before: null, after: null }
+    const text = failureText(PATH, result, NAMES)
+    expect(text).toContain('a had no route to 10.255.0.3')
+    expect(text).toContain("A route is the entry in a router's table")
+  })
+
+  it('names the interface traffic really left through, and the one the objective asks for', () => {
+    const result: CheckResult = { kind: 'path', passed: false, failure: 'wrong_path', before: THROUGH_B, after: null }
+    expect(failureText(PATH, result, NAMES)).toContain(
+      'Before the link broke, a sent traffic for 10.255.0.3 out of `a-b`, not only `a-c`.'
+    )
+    const shared: CheckResult = { ...result, before: SHARED }
+    expect(failureText(PATH, shared, NAMES)).toContain('out of `a-c` and `a-b`, not only `a-c`')
+    const after: CheckResult = { kind: 'path', passed: false, failure: 'wrong_path', before: null, after: DIRECT }
+    expect(failureText({ kind: 'path', after: 'a-b' }, after, NAMES)).toBe(
+      'After the link broke, traffic came back out of `a-c`, not only `a-b`.'
+    )
+  })
+
+  it('says traffic stayed lost when it never came back the expected way', () => {
+    const result: CheckResult = {
+      kind: 'recovery',
+      passed: false,
+      failure: 'not_recovered',
+      recovery: null,
+      limitMs: 2000,
+    }
+    expect(failureText(RECOVERY, result, NAMES)).toBe(
+      'Replies never came back through `a-b` before the run ended: traffic to c stayed lost.'
+    )
+  })
+
+  it('gives the time it took beside the target when recovery was too slow', () => {
+    const result: CheckResult = {
+      kind: 'recovery',
+      passed: false,
+      failure: 'too_slow',
+      recovery: { sequence: 700, atMs: 34_940, afterFaultMs: 34_940, route: THROUGH_B },
+      limitMs: 2000,
+    }
+    expect(failureText(RECOVERY, result, NAMES)).toBe(
+      'Traffic was back after 34.9 s, over the 2.00 s target. Something has to notice the dead link sooner.'
+    )
+    const outage: CheckResult = {
+      kind: 'outage',
+      passed: false,
+      failure: 'too_slow',
+      outage: { fromMs: 0, toMs: 3100, durationMs: 3100 },
+      limitMs: 2000,
+    }
+    expect(failureText({ kind: 'outage' }, outage, NAMES)).toBe('Traffic was lost for 3.10 s, over the 2.00 s limit.')
+  })
+
+  it('says nothing noticed, or that the wrong thing did, and what the two detectors are', () => {
+    const missed: CheckResult = { kind: 'detected-by', passed: false, failure: 'not_detected', detection: null }
+    expect(failureText(DETECTED, missed, NAMES)).toContain('Nothing reported the dead link before the run ended.')
+    const wrong: CheckResult = {
+      kind: 'detected-by',
+      passed: false,
+      failure: 'wrong_detector',
+      detection: { event: 'ospf_dead_timer_expired', router: 'c', interface: 'c-a', atMs: 0, afterFaultMs: 31_210 },
+    }
+    const text = failureText(DETECTED, wrong, NAMES)
+    expect(text).toContain("OSPF's dead timer noticed the fault first, not BFD.")
+    expect(text).toContain('BFD is a small protocol')
+  })
+})
+
+describe('evidenceText', () => {
+  it('puts each term in plain words beside the evidence that shows it', () => {
+    expect(evidenceText({ kind: 'reachable', passed: true, failure: null, replies: 60 }, NAMES)).toBe(
+      '60 replies came back from 10.255.0.3. A reply is one probe packet that reached the far router and came back.'
+    )
+    const path = evidenceText({ kind: 'path', passed: true, failure: null, before: DIRECT, after: null }, NAMES)
+    expect(path).toContain('a sends traffic for 10.255.0.3 out of `a-c`.')
+    expect(path).toContain("An interface is a router's end of a link.")
+  })
+
+  it('gives the recovery time beside its target', () => {
+    const result: CheckResult = {
+      kind: 'recovery',
+      passed: true,
+      failure: null,
+      recovery: { sequence: 76, atMs: 796, afterFaultMs: 796, route: THROUGH_B },
+      limitMs: 2000,
+    }
+    expect(evidenceText(result, NAMES)).toBe(
+      'Traffic was back through `a-b` 0.80 s after the link broke, inside the 2.00 s target.'
+    )
+  })
+})
+
+describe('guideObjectivesOf', () => {
+  const content = appContent()
+  const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
+  if (!mission) {
+    throw new Error('the first mission is missing from the content')
+  }
+
+  it('knows whose address the probe is sent to', () => {
+    expect(probeNamesOf(mission)).toEqual(NAMES)
+  })
+
+  it('leaves every objective open, with nothing to say, before the first run', () => {
+    expect(guideObjectivesOf(mission, null)).toEqual(
+      mission.objectives.map(({ id, text }) => ({ id, text, passed: false, observed: null, evidence: null }))
+    )
+  })
+
+  it('ticks what a probe showed and says the fault has not been tried', () => {
+    const verdict: MissionVerdict = {
+      passed: false,
+      objectives: [
+        { objectiveId: 'reaches-c', result: { kind: 'reachable', passed: true, failure: null, replies: 60 } },
+        {
+          objectiveId: 'direct-while-healthy',
+          result: { kind: 'path', passed: true, failure: null, before: DIRECT, after: null },
+        },
+        {
+          objectiveId: 'recovers-through-b',
+          result: { kind: 'recovery', passed: false, failure: 'no_fault', recovery: null, limitMs: 2000 },
+        },
+      ],
+    }
+    const [reaches, direct, recovers] = guideObjectivesOf(mission, verdict)
+    expect(reaches).toMatchObject({ passed: true, observed: null })
+    expect(reaches?.evidence).toContain('60 replies')
+    expect(direct?.evidence).toContain('`a-c`')
+    expect(recovers).toMatchObject({ passed: false, evidence: null })
+    expect(recovers?.observed).toContain('the link was not broken')
+  })
+})
