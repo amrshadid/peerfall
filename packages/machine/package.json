@@ -1,0 +1,25 @@
+{
+  "name": "@peerfall/machine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The real network: a Linux VM (v86) running FRR in one network namespace per router, the image it boots, and the event stream read from FRR's own logs.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts"
+  },
+  "imports": {
+    "#config": "./src/config.ts",
+    "#types/*": "./src/types/*.ts",
+    "#vm-image/*": "./scripts/vm-image/*.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@peerfall/core": "workspace:*"
+  }
+}

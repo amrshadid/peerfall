@@ -1,0 +1,93 @@
+{
+  "minirootfs": "a73bd9ed20a5ed1503a0688957add539e10340c7ca1d9e8c06c34a76ddc5f715",
+  "bios": {
+    "seabios.bin": "73e3f359102e3a9982c35fce98eb7cd08f18303ac7f1ba6ebfbe6cdc1c244d98",
+    "vgabios.bin": "a4bc0d80cc3ca028c73dafa8fee396b8d054ce87ebd8abfbd31b06b437607880"
+  },
+  "packages": {
+    "busybox-static": {
+      "version": "1.37.0-r31",
+      "sha256": "26d45cc895b3fa99ba7500d0860c3934a363e74e464eeb5fc623f08147c33cfd"
+    },
+    "iputils-ping": {
+      "version": "20250605-r2",
+      "sha256": "f4fa883f5f48d4f532977c87fa0bcc8d1c8e64828258429b99b7518727613077"
+    },
+    "libcap2": {
+      "version": "2.78-r0",
+      "sha256": "aa62a597eea39d4b5b0b887c96c1d37506545e73a85cab31cbe69fe55db378f6"
+    },
+    "iproute2-tc": {
+      "version": "7.0.0-r0",
+      "sha256": "37df5405adc7726b3bae30f026f0d0ae74bebc802af98146e109ddbbe6d121ec"
+    },
+    "libxtables": {
+      "version": "1.8.13-r0",
+      "sha256": "076db55fe8c92c6e90d656e240d23918abb8bc3c19271e581da9b34d10f5902a"
+    },
+    "libmnl": {
+      "version": "1.0.5-r2",
+      "sha256": "79ab0820ec6ab1cd28fe2fe36808ec06d81d0d97591c92654802e585e271016c"
+    },
+    "libelf": {
+      "version": "0.195-r0",
+      "sha256": "1c33af51635927f3890aa8edd4fe996b35a9fc999800923d4526c788b6c571da"
+    },
+    "zstd-libs": {
+      "version": "1.5.7-r2",
+      "sha256": "3808b97766907956179fe94ce61ead63220e957dc7789f81eb961a6e94dd8f61"
+    },
+    "iproute2": {
+      "version": "7.0.0-r0",
+      "sha256": "572bfaf57a1726920d23b96523d7194053def1c78761557b8449f1b8de929206"
+    },
+    "iproute2-ss": {
+      "version": "7.0.0-r0",
+      "sha256": "81c855bd8246b38a19ded0c6ec4495fda884ed48e17f051af3e1915809a61cfb"
+    },
+    "iproute2-minimal": {
+      "version": "7.0.0-r0",
+      "sha256": "b789d3bc1c9d310684b1e068d808a2a94e4db6eafdd88ba24d40471711d8fca8"
+    },
+    "bash": {
+      "version": "5.3.9-r1",
+      "sha256": "f5f0956b8464729577b1021bb6301f23d9e7b010bf11aac3678409827484ee52"
+    },
+    "readline": {
+      "version": "8.3.3-r1",
+      "sha256": "1d2a80bdfc66bfef11a9ed9715fa0189d646e562d2bddda6a1fec6ea815b9285"
+    },
+    "libncursesw": {
+      "version": "6.6_p20260516-r0",
+      "sha256": "49a048c29a93046b3fc5e72a21bb55ef537558d026f1064a42d25f42f19a90e9"
+    },
+    "ncurses-terminfo-base": {
+      "version": "6.6_p20260516-r0",
+      "sha256": "dbb8268b7a8c9e98b109dc6bd1a989f846bd49b71a186308a2224f3195620501"
+    },
+    "frr": {
+      "version": "10.6.1-r0",
+      "sha256": "aca686d03068034b2fb7f475b62277414178c49fa8cf54d2306e09b968818280"
+    },
+    "libyang": {
+      "version": "3.13.6-r1",
+      "sha256": "998f9bba7e29f49761dd3dfaf6e1eefa7660751830b41e3a242c5389383c7b0a"
+    },
+    "pcre2": {
+      "version": "10.49-r0",
+      "sha256": "1b5ba9a5570d267b57ff81805887cc7eca915bda4a4be16acc597a5ea4183590"
+    },
+    "json-c": {
+      "version": "0.18-r1",
+      "sha256": "0f00295eff0625bfb43ba746a3c10cd7ca1a50b1203d10541204ceb1810547f3"
+    },
+    "c-ares": {
+      "version": "1.34.9-r0",
+      "sha256": "50e6cdf8a90dcfe63104e4cd1b74edff6497cb6396d7d77406a519c1eda476e0"
+    },
+    "linux-virt": {
+      "version": "6.18.63-r0",
+      "sha256": "18093d5e08232dde7a77837f4074c02a2ec4c8d4d59da2107daeb59f3d3f1f7c"
+    }
+  }
+}
