@@ -7,6 +7,10 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-11-12
+
+The game now starts from the beginning: stages 1 and 2 each have two missions.
+
 ### Added
 
 - **The Silent Router** (stage 1, First router): FRR is installed on a router and not
@@ -29,8 +33,14 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ### Fixed
 
-- The "needs a bigger screen" page fills the window and centres its words at every width,
-  instead of sitting in a narrow column at the left on a window just under the limit.
+- The "needs a bigger screen" box sits in the middle of the screen, as Kernelfall's does.
+
+### Known gaps
+
+- The four new missions pass their golden runs on the real image, but only the first has
+  been played in the app, and none has been fact-checked by a second person yet.
+- Stage 3 has no mission, so the journey jumps from stage 2 to stage 4.
+- The gaps listed under 0.1.0-alpha.1 still stand.
 
 ## [0.1.0-alpha.1] - 2026-11-12
 
@@ -70,5 +80,6 @@ The first public pre-release.
 - The first visit downloads the Linux image; its size has not been measured yet.
 - The game does not work offline yet beyond what the browser has already cached.
 
-[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.1...HEAD
+[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.2...HEAD
+[0.1.0-alpha.2]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.1
