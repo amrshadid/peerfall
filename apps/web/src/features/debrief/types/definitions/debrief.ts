@@ -1,3 +1,5 @@
+import type { MarkdownBlock } from '@features/guide/types'
+
 /** One measured number of the run, e.g. "Recovery" / "0.90 s". */
 export interface DebriefMeasure {
   readonly label: string
@@ -20,6 +22,8 @@ export interface DebriefPresentationProps {
   measures: readonly DebriefMeasure[]
   /** Why it worked: one paragraph per entry. Text may set real terms in `code`, **strong** or _emphasis_. */
   explanation: readonly string[]
+  /** The mission's own debrief as its file wrote it, with its headings and the commands to repeat; printed after the measurements. */
+  text?: readonly MarkdownBlock[]
   /** The terms this mission taught, as the player met them. */
   learned: readonly string[]
   commands: readonly DebriefCommand[]

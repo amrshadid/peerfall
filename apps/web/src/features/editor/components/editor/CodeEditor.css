@@ -54,6 +54,41 @@
   overflow: hidden;
 }
 
+/* Over the editor, not instead of it: CodeMirror stays mounted and keeps each router's undo history. */
+.config-editor__notice {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1rem;
+  background: var(--sheet);
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+/* FRR's own words, in the code face, between the bar and the text they are about. */
+.config-editor__errors {
+  flex: none;
+  max-height: 8rem;
+  overflow: auto;
+  padding: 0.5rem 0.75rem;
+  border-bottom: var(--rule);
+  border-left: 4px solid var(--red);
+  font-size: 0.8125rem;
+}
+
+.config-editor__errors p {
+  font-weight: 700;
+  color: var(--red);
+}
+
+.config-editor__errors ul {
+  margin-top: 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .config-editor__loading {
   padding: 1rem;
   font-size: 0.875rem;

@@ -9,7 +9,12 @@ type EventOf<Type extends StampedMachineEvent['type']> = Extract<StampedMachineE
  * recovery passes after it. Null when the events hold no fault. A moment that hasn't happened yet is
  * left out, and the outage is unknown until a probe gets through again.
  */
-export function timelineRunOf(label: string, events: readonly StampedMachineEvent[]): TimelineRun | null {
+export function timelineRunOf(
+  label: string,
+  events: readonly StampedMachineEvent[],
+  /** Whose route to where counts as the route update; any router's first new route when left out. */
+  traffic?: { readonly from: string; readonly destination: string }
+): TimelineRun | null {
   const fault = events
     .filter((event): event is EventOf<'fault_injected'> => event.type === 'fault_injected')
     .reduce<EventOf<'fault_injected'> | null>(
@@ -72,7 +77,17 @@ export function timelineRunOf(label: string, events: readonly StampedMachineEven
     })
   }
 
-  const route = first('fib_install')
+  const route = first(
+    'fib_install',
+    traffic
+      ? after.filter(
+          (event) =>
+            event.type === 'fib_install' &&
+            event.router === traffic.from &&
+            (event.prefix === traffic.destination || event.prefix === `${traffic.destination}/32`)
+        )
+      : after
+  )
   if (route) {
     marks.push({
       kind: 'route',

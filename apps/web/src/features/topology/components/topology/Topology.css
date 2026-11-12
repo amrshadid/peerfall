@@ -74,6 +74,37 @@
   white-space: nowrap;
 }
 
+/* Two lines when the link has an adjacency to report: what the cable does, then what OSPF makes of it. */
+.topology__link-label:has(.topology__adjacency) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.topology__link-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.topology__adjacency {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+/* The word says it; the weight and colour only repeat it. */
+.topology__adjacency--open {
+  font-weight: 700;
+  color: var(--red);
+}
+
+.topology__legend {
+  padding: 0 0.75rem 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
 .topology__link-label--dropping {
   border: 2px solid var(--red);
   background: var(--red-wash);

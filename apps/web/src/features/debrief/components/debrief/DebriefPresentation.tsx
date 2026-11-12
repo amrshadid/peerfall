@@ -1,4 +1,5 @@
 import type { DebriefPresentationProps } from '@features/debrief/types'
+import { MarkdownText } from '@features/guide/components/markdown'
 import { Button, ButtonLink, InlineText, SectionHead, StatusMark, TitleBlock } from '@shared/components/ui'
 import './Debrief.css'
 
@@ -8,6 +9,7 @@ export function DebriefPresentation({
   verdict,
   measures,
   explanation,
+  text,
   learned,
   commands,
   labNote,
@@ -52,6 +54,12 @@ export function DebriefPresentation({
               What was measured
             </SectionHead>
             <TitleBlock entries={measures} label="Measurements" />
+          </section>
+        )}
+
+        {text !== undefined && text.length > 0 && (
+          <section aria-label="What happened and why" className="debrief__text">
+            <MarkdownText blocks={text} topLevel={2} />
           </section>
         )}
 

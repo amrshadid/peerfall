@@ -1,1 +1,1 @@
-export { MissionContainer, type MissionContainerProps } from './MissionContainer'
+export { MissionContainer, type MissionContainerProps, type MissionView } from './MissionContainer'

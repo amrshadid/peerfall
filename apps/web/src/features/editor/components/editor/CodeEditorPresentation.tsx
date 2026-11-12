@@ -21,13 +21,17 @@ export interface CodeEditorPresentationProps {
   onApply: () => void
   /** After the player confirms: every configuration back to what the mission started with. */
   onReset: () => void
+  /** Laid over the editor while there is nothing to edit, e.g. "Select a router on the map."; null or left out otherwise. */
+  notice?: string | null
+  /** What the router answered to the lines it refused, in FRR's own words; empty or left out when it took them all. */
+  errors?: readonly string[]
 }
 
 const APPLY_SHORTCUT = shortcutLabel(APPLY_BINDING)
 
 /** An FRR configuration per router, in CodeMirror. Nothing reaches a router until Apply. */
 export function CodeEditorPresentation(props: CodeEditorPresentationProps) {
-  const { files, activePath, apply, status } = props
+  const { files, activePath, apply, status, notice = null, errors = [] } = props
   const surface = useRef<HTMLDivElement>(null)
   const applyReasonId = useId()
   const [confirmingReset, setConfirmingReset] = useState(false)
@@ -91,12 +95,23 @@ export function CodeEditorPresentation(props: CodeEditorPresentationProps) {
           )}
         </div>
       </div>
+      {errors.length > 0 && (
+        <div className="config-editor__errors" role="alert">
+          <p>The router refused part of this configuration. What it accepted stays applied.</p>
+          <ul>
+            {errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div ref={surface} className="config-editor__surface">
         {!loaded && (
           <p className="config-editor__loading">
             {failed ? "The editor didn't load. Check your connection and reload the page." : 'Loading the editor…'}
           </p>
         )}
+        {loaded && notice !== null && <p className="config-editor__notice">{notice}</p>}
       </div>
     </section>
   )

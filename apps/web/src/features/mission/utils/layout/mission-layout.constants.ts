@@ -1,8 +1,9 @@
+import type { MissionStepId } from '@features/mission/types'
 import type { VmPhase } from '@peerfall/machine/types'
 import type { RailStep } from '@shared/types'
 
 /** The mission loop, in order: look, say what a change will do, make it, check it. */
-export const MISSION_STEPS: readonly RailStep[] = [
+export const MISSION_STEPS: readonly (RailStep & { readonly id: MissionStepId })[] = [
   { id: 'inspect', label: 'Inspect' },
   { id: 'predict', label: 'Predict' },
   { id: 'apply', label: 'Apply' },

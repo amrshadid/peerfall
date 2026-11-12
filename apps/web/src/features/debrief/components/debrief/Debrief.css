@@ -99,6 +99,22 @@
   line-height: 1.55;
 }
 
+/* The mission's own text: its `##` headings are the debrief's sections. */
+.debrief__text .guide-md {
+  gap: 0.75rem;
+}
+
+.debrief__text .guide-md__heading {
+  margin-top: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: var(--rule);
+  font-size: 1.0625rem;
+}
+
+.debrief__text .guide-md__heading:first-child {
+  margin-top: 0;
+}
+
 .debrief__commands dl {
   display: grid;
   gap: 0.5rem;

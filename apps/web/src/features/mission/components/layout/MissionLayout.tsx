@@ -179,16 +179,23 @@ export function MissionLayout({
             <Button variant="quiet" onClick={restart.onCancel}>
               Keep going
             </Button>
-            <Button variant="primary" onClick={restart.onConfirm}>
-              Start again
-            </Button>
+            {!restart.unavailable && (
+              <Button variant="primary" onClick={restart.onConfirm}>
+                Start again
+              </Button>
+            )}
           </>
         }
       >
-        <p>
-          The network goes back to how the mission found it: healthy, with its first configuration. The steps you did
-          and the hints you asked for are dropped. Retrying is free, and nothing is timed.
-        </p>
+        {restart.unavailable ? (
+          <p>{restart.unavailable} Try again when the network is yours to use.</p>
+        ) : (
+          <p>
+            The network goes back to how the mission found it: healthy, with its first configuration. Every change you
+            made to the routers is undone. The runs you recorded and the hints you asked for are kept. Retrying is free,
+            and nothing is timed.
+          </p>
+        )}
       </Dialog>
     </ScreenFrame>
   )

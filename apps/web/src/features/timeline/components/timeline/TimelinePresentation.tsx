@@ -1,9 +1,12 @@
-import type { TimelinePresentationProps } from '@features/timeline/types'
+import { TIMELINE_MARK_KINDS, type TimelinePresentationProps } from '@features/timeline/types'
 import {
   axisPercent,
   comparisonSentence,
   formatAxisSeconds,
   formatSeconds,
+  MARK_EXPLANATIONS,
+  MARK_LETTERS,
+  MARK_MEANINGS,
   outageSentence,
   RUN_LABELS,
   timelineAxisOf,
@@ -20,6 +23,8 @@ export function TimelinePresentation({ baseline, repaired, targetSeconds = null 
   const runs = [baseline, repaired].filter((run) => run !== null)
   const axis = timelineAxisOf([baseline, repaired], targetSeconds)
   const comparison = comparisonSentence(baseline, repaired)
+  // Only the moments a run has reached are explained: a term is met beside its evidence.
+  const kinds = TIMELINE_MARK_KINDS.filter((kind) => runs.some((run) => run.marks.some((mark) => mark.kind === kind)))
   // The chart is a picture of what the tables say: one sentence stands in for it.
   const summary =
     runs.length === 0
@@ -74,6 +79,25 @@ export function TimelinePresentation({ baseline, repaired, targetSeconds = null 
           <>Target: traffic back in under {formatSeconds(targetSeconds)}.</>
         )}
       </p>
+
+      {kinds.length > 0 && (
+        <details className="timeline__legend">
+          <summary>What each moment means</summary>
+          <dl>
+            {kinds.map((kind) => (
+              <div key={kind}>
+                <dt>
+                  <span className={`timeline__letter timeline__letter--${kind}`} aria-hidden="true">
+                    {MARK_LETTERS[kind]}
+                  </span>
+                  {MARK_MEANINGS[kind]}
+                </dt>
+                <dd>{MARK_EXPLANATIONS[kind]}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
     </section>
   )
 }

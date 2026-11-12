@@ -21,3 +21,9 @@ export const LINK_STATE_TEXT: Readonly<
 
 export const DEFAULT_PATH_LABEL = 'Path'
 export const PATH_ARROW = ' → '
+/** Between two paths that share the traffic. */
+export const PATH_ALSO = ' and '
+
+/** The drawing's OSPF words, said once in plain language under it. */
+export const ADJACENCY_LEGEND =
+  'OSPF Full: the two routers on a link are neighbors and have told each other every route they know. OSPF lost: one of them has given up on the other.'

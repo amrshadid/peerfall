@@ -14,10 +14,16 @@ export function TopologyPresentation({
   linkStates,
   activePath,
   pathLabel = DEFAULT_PATH_LABEL,
+  otherPaths,
+  adjacencies,
+  legend = null,
   selectedRouter,
   onSelectRouter,
 }: TopologyPresentationProps) {
-  const view = useMemo(() => topologyViewOf(network, linkStates, activePath), [network, linkStates, activePath])
+  const view = useMemo(
+    () => topologyViewOf(network, linkStates, activePath, { otherPaths, adjacencies }),
+    [network, linkStates, activePath, otherPaths, adjacencies]
+  )
   const names = useMemo(() => view.routers.map((router) => router.name), [view.routers])
   const focus = useRouterFocus(names)
 
@@ -56,11 +62,13 @@ export function TopologyPresentation({
           <>
             <span className="topology__path-swatch" aria-hidden="true" />
             <span className="topology__path-label">{pathLabel}</span> <b>{view.pathText}</b>
+            {view.shared && <span className="topology__path-label">(traffic is shared over these)</span>}
           </>
         ) : (
           <span className="topology__path-label">{pathLabel}: no path</span>
         )}
       </p>
+      {legend !== null && <p className="topology__legend">{legend}</p>}
     </section>
   )
 }

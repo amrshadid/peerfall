@@ -1,13 +1,17 @@
 import type {
+  AdjacencyEnd,
+  AdjacencyText,
+  LinkAdjacency,
   LinkState,
   LinkStatus,
   TopologyLinkView,
+  TopologyLive,
   TopologyPoint,
   TopologyRouterView,
   TopologyView,
 } from '@features/topology/types'
 import type { LinkName, NetworkDefinition, StampedMachineEvent } from '@peerfall/machine/types'
-import { PATH_ARROW, RING, STAGE, TURN } from './topology-layout.constants'
+import { PATH_ALSO, PATH_ARROW, RING, STAGE, TURN } from './topology-layout.constants'
 
 /** One key for a link whichever end is named first. */
 export function linkKeyOf(first: string, second: string): string {
@@ -61,24 +65,48 @@ export function pathTextOf(path: readonly string[] | null): string | null {
 
 const withoutPrefix = (address: string | undefined): string | null => address?.split('/')[0] ?? null
 
+/** FRR's neighbor states that mean the neighbor is gone, not on its way up. */
+const LOST_STATES: readonly string[] = ['Deleted', 'Down']
+
+/** An adjacency in words; null when neither end has said anything yet. */
+export function adjacencyTextOf(adjacency: LinkAdjacency | undefined): AdjacencyText | null {
+  if (!adjacency || adjacency.ends.every((end) => end.state === null)) {
+    return null
+  }
+  const [first, second] = adjacency.ends
+  const sees = (end: AdjacencyEnd, peer: AdjacencyEnd) =>
+    `${end.router} sees ${peer.router} as ${end.state ?? 'nothing yet'}`
+  const full = adjacency.ends.every((end) => end.state === 'Full')
+  const lost = adjacency.ends.some((end) => end.state !== null && LOST_STATES.includes(end.state))
+  return {
+    label: full ? 'OSPF Full' : lost ? 'OSPF lost' : 'OSPF forming',
+    detail: `${sees(first, second)}, ${sees(second, first)}`,
+    full,
+  }
+}
+
 /** Everything the drawing shows, from the network and what is known about it now. */
 export function topologyViewOf(
   network: NetworkDefinition,
   linkStates: readonly LinkStatus[],
-  activePath: readonly string[] | null
+  activePath: readonly string[] | null,
+  { otherPaths = [], adjacencies = [] }: TopologyLive = {}
 ): TopologyView {
   const positions = routerPositions(network.routers.map((router) => router.name))
   const states = new Map<string, LinkState>(
     linkStates.map(({ link, state }) => [linkKeyOf(link[0], link[1]), state] as const)
   )
-  const onPath = pathLinkKeys(activePath)
+  const paths = [...(activePath ? [activePath] : []), ...otherPaths]
+  const onPath = new Set(paths.flatMap((path) => [...pathLinkKeys(path)]))
+  const pathTexts = paths.map(pathTextOf).filter((text) => text !== null)
   const center = { x: STAGE.centerX, y: STAGE.centerY }
+  const adjacencyOf = new Map(adjacencies.map((each) => [linkKeyOf(each.link[0], each.link[1]), each] as const))
 
   const routers: TopologyRouterView[] = network.routers.map((router) => ({
     name: router.name,
     loopback: withoutPrefix(router.loopback),
     at: positions.get(router.name) ?? center,
-    onPath: activePath?.includes(router.name) ?? false,
+    onPath: paths.some((path) => path.includes(router.name)),
   }))
 
   const links: TopologyLinkView[] = network.links.map(({ ends }) => {
@@ -91,10 +119,16 @@ export function topologyViewOf(
       to: positions.get(second.router) ?? center,
       state: states.get(key) ?? 'up',
       onPath: onPath.has(key),
+      adjacency: adjacencyTextOf(adjacencyOf.get(key)),
     }
   })
 
-  return { routers, links, pathText: pathTextOf(activePath) }
+  return {
+    routers,
+    links,
+    pathText: pathTexts.length > 0 ? pathTexts.join(PATH_ALSO) : null,
+    shared: pathTexts.length > 1,
+  }
 }
 
 /** Which links the Machine's events say are losing packets: a fault starts it, clearing the fault ends it. */

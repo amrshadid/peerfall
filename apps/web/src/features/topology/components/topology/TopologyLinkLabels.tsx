@@ -21,12 +21,23 @@ export function TopologyLinkLabels({ links }: TopologyLinkLabelsProps) {
             className={`topology__link-label topology__link-label--${link.state}`}
             style={{ left: percent(midpoint(link.from.x, link.to.x)), top: percent(midpoint(link.from.y, link.to.y)) }}
           >
-            <Icon name={text.icon} size={14} />
-            <span className="pf-visually-hidden">
-              Link {link.ends[0]} to {link.ends[1]}:{' '}
+            <span className="topology__link-state">
+              <Icon name={text.icon} size={14} />
+              <span className="pf-visually-hidden">
+                Link {link.ends[0]} to {link.ends[1]}:{' '}
+              </span>
+              {text.label}
+              {link.onPath && <span className="pf-visually-hidden">, on the path</span>}
             </span>
-            {text.label}
-            {link.onPath && <span className="pf-visually-hidden">, on the path</span>}
+            {link.adjacency && (
+              <span
+                className={`topology__adjacency${link.adjacency.full ? '' : ' topology__adjacency--open'}`}
+                title={link.adjacency.detail}
+              >
+                {link.adjacency.label}
+                <span className="pf-visually-hidden">: {link.adjacency.detail}</span>
+              </span>
+            )}
           </li>
         )
       })}

@@ -1,5 +1,6 @@
-export { DEFAULT_PATH_LABEL, LINK_STATE_TEXT, STAGE } from './topology-layout.constants'
+export { ADJACENCY_LEGEND, DEFAULT_PATH_LABEL, LINK_STATE_TEXT, STAGE } from './topology-layout.constants'
 export {
+  adjacencyTextOf,
   linkKeyOf,
   linkStatesOf,
   pathLinkKeys,

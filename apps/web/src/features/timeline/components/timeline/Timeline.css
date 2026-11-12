@@ -265,6 +265,41 @@
   font-weight: 700;
 }
 
+/* The terms in plain words, one key away: closed, so the measurements stay in view. */
+.timeline__legend {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.timeline__legend summary {
+  width: fit-content;
+  font-weight: 700;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.timeline__legend summary:hover,
+.timeline__legend summary:focus-visible {
+  color: var(--ink);
+}
+
+.timeline__legend dl {
+  display: grid;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.timeline__legend dt {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 700;
+}
+
+.timeline__legend dd {
+  color: var(--ink-2);
+}
+
 .timeline__compare:empty {
   display: none;
 }

@@ -49,6 +49,8 @@ export interface PanelLayout {
 
 export interface ConfirmDialog {
   readonly open: boolean
+  /** Why it can't be done right now, said instead of the question; null or left out when it can. */
+  readonly unavailable?: string | null
   onConfirm(): void
   onCancel(): void
 }
@@ -82,6 +84,19 @@ export interface MissionLayoutModel {
   readonly debrief: ReactNode | null
   readonly restart: ConfirmDialog
   readonly status: MissionStatusBar
+}
+
+/** The mission loop's steps, as docs/MISSIONS.md names them. */
+export type MissionStepId = 'inspect' | 'predict' | 'apply' | 'verify'
+
+/** What the mission's container hands to the slots that need its run. */
+export interface MissionRunView<Run> {
+  /** The mission's run on the Machine: its phase, its last verdict, and how to start one. */
+  readonly run: Run
+  readonly step: MissionStepId
+  readonly stepLabel: string
+  /** Asks before the network goes back to how the mission found it. */
+  readonly onStartOver: () => void
 }
 
 export interface MissionUnavailable {
