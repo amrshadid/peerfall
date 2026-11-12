@@ -1,0 +1,46 @@
+id: two-ends-of-one-cable
+version: 1
+title: Two Ends of One Cable
+chapter: follow-a-packet
+objective: Routers a and b each have an address on their link, each has the connected route in its kernel, and a reaches b.
+prerequisites: [gone-after-the-restart]
+
+# Two routers and one cable. The interfaces are up and have no IPv4 address: the addresses
+# below are the plan, and giving them, in FRR, is the player's.
+network:
+  routers:
+    - name: a
+      daemons: []
+      config: ""
+    - name: b
+      daemons: []
+      config: ""
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30, unaddressed: true }
+        - { router: b, address: 10.0.1.2/30, unaddressed: true }
+
+objectives:
+  - id: a-connected
+    text: Give a's interface a-b the address 10.0.1.1/30, and find the route to 10.0.1.0/30 that appears in a's kernel.
+    check: { kind: route, router: a, prefix: 10.0.1.0/30, protocol: kernel, interface: a-b }
+    hints:
+      - text: Select router a. In vtysh, show interface brief lists a's interfaces and their addresses, and show ip route lists its routes. Look at both before you change anything.
+      - text: An interface gets its address in its own block of the configuration. In vtysh enter configure terminal, then interface a-b, then this line, then end.
+        command: ip address 10.0.1.1/30
+      - text: Zebra hands the address to Linux, and Linux adds a route for the network the address is in. Leave vtysh and ask the kernel for its routing table.
+        command: ip route
+  - id: b-connected
+    text: Give b's interface b-a the address 10.0.1.2/30, so that b's kernel has the route too.
+    check: { kind: route, router: b, prefix: 10.0.1.0/30, protocol: kernel, interface: b-a }
+    hints:
+      - text: A cable has two ends, and each router knows only its own. Select router b and look at its interfaces and its routes.
+      - text: On b the interface that faces a is b-a. In b's vtysh enter configure terminal, then interface b-a, then this line, then end.
+        command: ip address 10.0.1.2/30
+  - id: a-reaches-b
+    text: Send packets from a to b's address and see the replies come back.
+    check: { kind: reaches, from: a, to: 10.0.1.2 }
+    hints:
+      - text: Both ends have to be in the same network, 10.0.1.0/30, for either to reach the other. Check each router's address with show interface brief.
+      - text: In a's terminal, outside vtysh, send three packets to b's address.
+        command: ping -c 3 10.0.1.2

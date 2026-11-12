@@ -28,8 +28,8 @@ asks first, and only if you allow it records how you play with Microsoft Clarity
 including what you type in the terminal and the editor; Settings → Privacy changes your
 answer.
 
-Peerfall is in development. The first mission, **The Link That Never Went Down**, is
-playable; the first two stages are being written ([roadmap](docs/ROADMAP.md)).
+Peerfall is in development. Five missions are playable: two in stage 1, two in stage 2
+and one in stage 4 ([roadmap](docs/ROADMAP.md)).
 
 ## What you'll learn
 
@@ -50,7 +50,7 @@ daemons you work with.
 | 10  | Deliver multicast            | Follow a multicast stream from its source to its receivers: group membership, the distribution tree, the rendezvous point, and sources in another domain.                                | `pimd`, `pim6d`, IGMP, MLD, MSDP                              |
 | 11  | Operate a network            | Diagnose a fault across protocol state and forwarding, read debugs without drowning in them, monitor and automate with JSON output, verify recovery and isolation, and roll back.        | debugs, JSON output, BMP, SNMP, the northbound API            |
 
-The first mission, The Link That Never Went Down, belongs to stage 4.
+Stages 1, 2 and 4 have missions today; the rest are planned.
 
 ## Run it
 

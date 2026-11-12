@@ -1,7 +1,7 @@
 # @peerfall/game
 
 The game's rules, with no mission built in: mission definitions and their schema, checks that
-judge a run from the Machine's events, the run summary and comparison behind the timeline and the
+judge a run from the Machine's events or the player's work from the Machine's state, the run summary and comparison behind the timeline and the
 debrief, staged hints, and the player's progress saved in the browser. The missions themselves
 come from `@peerfall/missions`.
 
@@ -40,10 +40,12 @@ src/
 │   ├── validate/             → validateMission (mission.yaml), validateChapters (chapters.yaml), readNetwork,
 │   │                           readCheck
 │   ├── content/              → createGameContent: ids, chapters and prerequisites checked together
-│   ├── checks/               → judgeMission, evaluateCheck, and one file per check: reachability, path,
-│   │                           recovery, outage, detection
+│   ├── checks/               → judgeMission, evaluateCheck, one file per run check (reachability, path,
+│   │                           recovery, outage, detection), and state-checks: stateRequestOf,
+│   │                           hasStateChecks, hasRunChecks, evaluateStateCheck
 │   ├── runs/                 → summariseRun, compareRuns
-│   ├── routes/               → routeChanges, routeAt: the kernel's route to a destination over a run
+│   ├── routes/               → routeChanges, routeAt: the kernel's route to a destination over a run;
+│   │                           longestPrefixMatch, samePrefix
 │   ├── events/               → inTimeOrder, faultWindow, probeReplies
 │   ├── hints/                → revealedHints, nextHint, hintsUsed
 │   ├── progress/             → missionStatus, missionList, startMission, recordRun, savedComparison…
@@ -58,8 +60,16 @@ src/
 - **A pure engine:** no mission is known by id. Content is validated file by file
   (`validateMission`, `validateChapters`) and bundled by `createGameContent({ chapters, missions })`;
   every problem comes back with the path of its field.
-- **Judged by outcome:** a mission's `check:` blocks (`reachable`, `path`, `recovery`, `outage`,
-  `detected-by`) read the Machine's events and nothing else. No check can see which command was typed.
+- **Judged by outcome:** a mission's `check:` blocks read outcomes and nothing else. Run checks
+  (`reachable`, `path`, `recovery`, `outage`, `detected-by`) read the events of a probe and a fault.
+  State checks (`daemons`, `route`, `reaches`, `config`) read the Machine as root found it: the
+  daemons that answer, the kernel's routes, a ping, the running and the saved configuration. No check
+  can see which command was typed.
+- **Missions without a fault:** `fault`, `probe` and `recoveryTargetMs` are optional; the schema asks
+  for them only where a check reads them. `stateRequestOf(mission)` says what a mission's state checks
+  need read, the flow in `@peerfall/missions` reads it, and `judgeMission(mission, events, state)`
+  stays pure. A state check is `not_checked` until then. `restartOnCheck` names routers whose FRR is
+  restarted before the reading.
 - **By time, not arrival:** FRR's log lines reach the game later than route and probe lines, so
   everything sorts events by `timeMs` first. Runs differ by milliseconds, so limits are "under the
   recovery target", never exact times.
