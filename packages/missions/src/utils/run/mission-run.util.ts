@@ -1,6 +1,14 @@
 import type { Validated } from '@peerfall/core/types'
 import type { MissionDefinition } from '@peerfall/game/types'
-import type { LinkDefinition, NetworkDefinition, ProbeDefinition, StampedMachineEvent } from '@peerfall/machine/types'
+import { stateRequestOf } from '@peerfall/game/utils'
+import type {
+  LinkDefinition,
+  MachineState,
+  NetworkDefinition,
+  ProbeDefinition,
+  StampedMachineEvent,
+  StateRequest,
+} from '@peerfall/machine/types'
 import { interfaceName } from '@peerfall/machine/utils'
 
 /** What a mission's flow does to the Machine: the browser's connection, or a session in Node. */
@@ -13,6 +21,10 @@ export interface MissionMachine {
   readonly saveHealthy: (slot: string) => Promise<boolean>
   readonly restoreHealthy: (slot: string) => Promise<boolean>
   readonly wait: (ms: number) => Promise<void>
+  /** The Machine as it is now, read as root: the parts of each router and the pings a mission's checks need. */
+  readonly readState: (request: StateRequest) => Promise<Validated<MachineState>>
+  /** Stops a router's FRR and starts it again from its saved frr.conf. */
+  readonly restartFrr: (router: string) => Promise<Validated<null>>
 }
 
 /** The network as it was first built and converged: where "start over" goes back to. */
@@ -51,11 +63,12 @@ const runsOspf = (network: NetworkDefinition, router: string): boolean =>
 /**
  * Whether the network has converged, as far as its events tell: every link between two OSPF
  * routers has a Full adjacency on both ends, and the probe's router has a route to the probe's
- * destination when that is a router's loopback.
+ * destination when that is a router's loopback. A network with no OSPF and no probe has nothing
+ * to converge: it only has to stay unchanged.
  */
 export function networkConverged(
   network: NetworkDefinition,
-  probe: ProbeDefinition,
+  probe: ProbeDefinition | undefined,
   events: readonly StampedMachineEvent[]
 ): boolean {
   for (const { ends } of network.links) {
@@ -76,8 +89,8 @@ export function networkConverged(
       }
     }
   }
-  const isLoopback = network.routers.some(({ loopback }) => loopback === `${probe.destination}/32`)
-  if (!isLoopback) {
+  // A route the player is asked to add (a static route to a link's address) is not waited for.
+  if (!probe || !network.routers.some(({ loopback }) => loopback === `${probe.destination}/32`)) {
     return true
   }
   const route = events.findLast(
@@ -120,8 +133,11 @@ export async function waitUntilSettled(
   return false
 }
 
-/** The network's link that a fault names by its two routers. */
+/** The network's link that a fault names by its two routers; none for a mission that breaks nothing. */
 export function faultLink(mission: Pick<MissionDefinition, 'network' | 'fault'>): LinkDefinition | undefined {
+  if (!mission.fault) {
+    return undefined
+  }
   const [first, second] = mission.fault.link
   return mission.network.links.find(({ ends }) => ends[0].router === first && ends[1].router === second)
 }
@@ -150,18 +166,26 @@ export type RunOutcome =
   | { readonly ok: true; readonly events: readonly StampedMachineEvent[] }
   | { readonly ok: false; readonly errors: readonly string[] }
 
+// A mission may have no probe, no fault or nothing to read: asking for one is answered, not thrown.
+const NO_PROBE: RunOutcome = { ok: false, errors: ['This mission has no probe to send.'] }
+const NO_FAULT: RunOutcome = { ok: false, errors: ['This mission has no fault to run.'] }
+
 /** A probe on the network as it is, with no fault: evidence for "a reaches c" and "which way". */
 export async function probeRun(
   machine: MissionMachine,
   mission: Pick<MissionDefinition, 'probe'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<RunOutcome> {
-  const started = await machine.startProbe(mission.probe)
+  const { probe } = mission
+  if (!probe) {
+    return NO_PROBE
+  }
+  const started = await machine.startProbe(probe)
   if (!started.ok) {
     return started
   }
   await machine.wait(timings.beforeFaultMs)
-  await machine.stopProbe(mission.probe.id)
+  await machine.stopProbe(probe.id)
   await machine.wait(timings.pollMs)
   return { ok: true, events: [...machine.events()] }
 }
@@ -177,30 +201,96 @@ export async function faultRun(
   mission: Pick<MissionDefinition, 'network' | 'fault' | 'probe'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<RunOutcome> {
+  const { fault, probe } = mission
+  if (!fault) {
+    return NO_FAULT
+  }
+  if (!probe) {
+    return NO_PROBE
+  }
   const link = faultLink(mission)
   if (!link) {
-    return { ok: false, errors: [`The network has no link ${mission.fault.link.join('–')}`] }
+    return { ok: false, errors: [`The network has no link ${fault.link.join('–')}`] }
   }
   if (!(await machine.saveHealthy(RUN_SLOT))) {
     return { ok: false, errors: ['The Machine could not be saved before the fault'] }
   }
-  const started = await machine.startProbe(mission.probe)
+  const started = await machine.startProbe(probe)
   if (!started.ok) {
     return started
   }
   await machine.wait(timings.beforeFaultMs)
   if (!(await machine.setFault(link, true))) {
-    await machine.stopProbe(mission.probe.id)
+    await machine.stopProbe(probe.id)
     return { ok: false, errors: ['The fault could not be injected'] }
   }
   let waited = 0
-  while (waited < timings.giveUpAfterMs && !recovered(machine.events(), mission.probe.id, timings.recoveredForMs)) {
+  while (waited < timings.giveUpAfterMs && !recovered(machine.events(), probe.id, timings.recoveredForMs)) {
     await machine.wait(timings.pollMs)
     waited += timings.pollMs
   }
-  await machine.stopProbe(mission.probe.id)
+  await machine.stopProbe(probe.id)
   await machine.wait(timings.logLagMs)
   const events = [...machine.events()]
   await machine.restoreHealthy(RUN_SLOT)
   return { ok: true, events }
+}
+
+export type CheckOutcome =
+  | {
+      readonly ok: true
+      readonly events: readonly StampedMachineEvent[]
+      /** The Machine as the checks found it. */
+      readonly state: MachineState
+    }
+  | { readonly ok: false; readonly errors: readonly string[] }
+
+/** Waits until nothing about routing has changed for a while; false when it never stopped changing. */
+async function waitUntilQuiet(machine: MissionMachine, timings: RunTimings): Promise<boolean> {
+  let waited = 0
+  let quietFor = 0
+  let seen = routingChanges(machine.events())
+  while (waited < timings.settleTimeoutMs) {
+    await machine.wait(timings.pollMs)
+    waited += timings.pollMs
+    const changes = routingChanges(machine.events())
+    quietFor = changes === seen ? quietFor + timings.pollMs : 0
+    seen = changes
+    if (quietFor >= timings.settleMs) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Checks the player's work on a mission whose checks read the Machine's state: FRR is restarted
+ * on the routers the mission says survive one, the network is left to settle, and the state the
+ * checks need is read as root. Nothing is undone afterwards: what the player configured stays, and
+ * what a restart lost stays lost. Judging is the caller's, with `judgeMission(mission, events, state)`.
+ */
+export async function checkRun(
+  machine: MissionMachine,
+  mission: Pick<MissionDefinition, 'objectives' | 'restartOnCheck'>,
+  timings: RunTimings = DEFAULT_RUN_TIMINGS
+): Promise<CheckOutcome> {
+  const request = stateRequestOf(mission)
+  if (!request) {
+    return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
+  }
+  for (const router of mission.restartOnCheck ?? []) {
+    const restarted = await machine.restartFrr(router)
+    if (!restarted.ok) {
+      return restarted
+    }
+  }
+  // A router that was just configured or restarted is still handing its routes to the kernel.
+  if (!(await waitUntilQuiet(machine, timings))) {
+    return { ok: false, errors: ['The network did not settle. Try again.'] }
+  }
+  const state = await machine.readState(request)
+  if (!state.ok) {
+    return state
+  }
+  return { ok: true, events: [...machine.events()], state: state.value }
 }

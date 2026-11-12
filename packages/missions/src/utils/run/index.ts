@@ -1,4 +1,6 @@
 export {
+  type CheckOutcome,
+  checkRun,
   DEFAULT_RUN_TIMINGS,
   faultLink,
   faultRun,

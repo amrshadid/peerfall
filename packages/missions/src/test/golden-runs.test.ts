@@ -73,7 +73,7 @@ describe('The Link That Never Went Down, on the Machine', () => {
       expect(summary.pathBefore?.interface).toBe('a-c')
       expect(summary.detection?.event).toBe('bfd_session_down')
       expect(summary.routeUpdate).not.toBeNull()
-      expect(summary.outage?.durationMs).toBeLessThan(mission().recoveryTargetMs)
+      expect(summary.outage?.durationMs).toBeLessThan(mission().recoveryTargetMs ?? 0)
       expect(objectives(id)).toEqual({ 'reaches-c': true, 'direct-while-healthy': true, 'recovers-through-b': true })
     }
   })
