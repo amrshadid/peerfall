@@ -5,6 +5,7 @@ import { titledMarkdown } from '@features/guide/utils/markdown'
 import { guideObjectivesOf, probeNamesOf } from '@features/guide/utils/objectives'
 import {
   type GuideStep,
+  hasStateChecks,
   hintsLeftOf,
   hintTargetOf,
   revealedHintsOf,
@@ -20,7 +21,7 @@ import { useMemo } from 'react'
 
 export interface GuideContainerProps {
   /** The mission's run on the Machine: where it is, what the last one showed, and how to start one. */
-  run: Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>
+  run: Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'checkWork' | 'sendProbe' | 'runFault'>
   /** Where the player is in the mission loop. */
   step: GuideStep
   stepLabel: string
@@ -82,6 +83,18 @@ export function GuideContainer({ run, step, stepLabel, onStartOver }: GuideConta
   const wait = waitReasonOf(run.phase)
   const firstRun = verdict === null
   const playing = phase === 'play'
+  const checked = hasStateChecks(mission)
+  // One red action, the next thing to do: the debrief once passed, the check where the routers are
+  // read as they are, else the probe before anything has run and the fault after.
+  const lead = isCompleted
+    ? 'debrief'
+    : checked
+      ? 'check'
+      : mission.probe && (firstRun || !mission.fault)
+        ? 'probe'
+        : 'fault'
+  const kindOf = (id: string) => (id === lead ? 'primary' : 'default')
+  // A mission offers only what it has: no probe to send without traffic, no link to break without a fault.
   const actions: readonly GuideAction[] = playing
     ? [
         ...(isCompleted
@@ -95,13 +108,23 @@ export function GuideContainer({ run, step, stepLabel, onStartOver }: GuideConta
               } as const,
             ]
           : []),
-        // A mission with no traffic to watch has no probe to send; one that breaks nothing has no link to break.
+        ...(checked
+          ? [
+              {
+                id: 'check',
+                label: 'Check my work',
+                kind: kindOf('check'),
+                unavailable: wait,
+                onSelect: () => void run.checkWork(),
+              } as const,
+            ]
+          : []),
         ...(mission.probe
           ? [
               {
                 id: 'probe',
                 label: 'Send probe',
-                kind: !isCompleted && (firstRun || !mission.fault) ? 'primary' : 'default',
+                kind: kindOf('probe'),
                 unavailable: wait,
                 onSelect: () => void run.sendProbe(),
               } as const,
@@ -112,7 +135,7 @@ export function GuideContainer({ run, step, stepLabel, onStartOver }: GuideConta
               {
                 id: 'fault',
                 label: 'Break the link',
-                kind: !isCompleted && !firstRun ? 'primary' : 'default',
+                kind: kindOf('fault'),
                 unavailable: wait,
                 onSelect: () => void run.runFault(),
               } as const,

@@ -106,7 +106,8 @@ export function journeyChapters(
         needs: mission.prerequisites.map(needOf),
         attempts,
         hintsUsed,
-        recoveryTargetMs: mission.recoveryTargetMs,
+        // Zero stands for "none", as on a planned stop: a mission that breaks nothing has no target.
+        recoveryTargetMs: mission.recoveryTargetMs ?? 0,
       }
     })
     const done = stops.filter(isDone).length

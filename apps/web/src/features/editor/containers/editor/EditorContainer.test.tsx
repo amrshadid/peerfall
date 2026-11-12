@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { CodeEditorPresentationProps } from '@features/editor/components/editor'
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { VmStatus } from '@peerfall/machine/types'
-import { appContent } from '@peerfall/missions/utils'
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EditorContainer } from './EditorContainer'
@@ -30,8 +30,7 @@ vi.mock('@features/editor/components/editor', () => ({
   },
 }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
+const mission = MISSION_FIXTURE
 
 const RUNNING_A = 'interface a-c\n ip ospf area 0\n'
 const EDITED_A = `${RUNNING_A} ip ospf bfd\n`

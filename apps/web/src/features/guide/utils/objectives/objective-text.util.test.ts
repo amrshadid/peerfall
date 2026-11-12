@@ -1,5 +1,5 @@
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { CheckDefinition, CheckResult, MissionVerdict, RouteHop } from '@peerfall/game/types'
-import { appContent } from '@peerfall/missions/utils'
 import { describe, expect, it } from 'vitest'
 import { evidenceText, failureText, guideObjectivesOf, probeNamesOf } from './objective-text.util'
 
@@ -214,11 +214,7 @@ describe('evidenceText', () => {
 })
 
 describe('guideObjectivesOf', () => {
-  const content = appContent()
-  const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
-  if (!mission) {
-    throw new Error('the first mission is missing from the content')
-  }
+  const mission = MISSION_FIXTURE
 
   it('knows whose address the probe is sent to', () => {
     expect(probeNamesOf(mission)).toEqual(NAMES)

@@ -1,7 +1,7 @@
 import type { GuideHint, GuideStatus } from '@features/guide/types'
 import type { ProbeNames } from '@features/guide/utils/objectives'
 import type { ObjectiveHints } from '@peerfall/game/hooks'
-import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
+import { type MissionDefinition, type MissionVerdict, STATE_CHECK_KINDS } from '@peerfall/game/types'
 import type { MissionRunPhase } from '@peerfall/missions/hooks'
 
 /** The mission loop's steps, as docs/MISSIONS.md names them. */
@@ -21,7 +21,7 @@ const runsOspf = (mission: Pick<MissionDefinition, 'network'>): boolean =>
 export function runStatusOf(
   phase: MissionRunPhase,
   errors: readonly string[],
-  mission: Pick<MissionDefinition, 'fault' | 'probe' | 'network'>,
+  mission: Pick<MissionDefinition, 'fault' | 'probe' | 'network' | 'restartOnCheck'>,
   names: ProbeNames
 ): GuideStatus | null {
   const every = mission.probe ? ` every ${mission.probe.intervalMs} ms` : ''
@@ -56,6 +56,19 @@ export function runStatusOf(
         failed: false,
         details: [],
       }
+    case 'checking': {
+      const restarted = mission.restartOnCheck ?? []
+      const restart =
+        restarted.length > 0
+          ? `FRR is restarted on ${restarted.length === 1 ? 'router' : 'routers'} ${restarted.join(' and ')} from the saved configuration, so only what survives a restart counts. Then `
+          : ''
+      return {
+        text: `Checking your work. ${restart === '' ? 'The' : `${restart}the`} routers are read as they are: their daemons, their routes, their configuration. Nothing is undone afterwards.`,
+        busy: true,
+        failed: false,
+        details: [],
+      }
+    }
     case 'failed':
       return {
         text: 'The network could not be started. Reload the page to try again.',
@@ -80,6 +93,8 @@ export function waitReasonOf(phase: MissionRunPhase): string | null {
       return 'A probe is being sent.'
     case 'faulted':
       return 'A run is being measured.'
+    case 'checking':
+      return 'Your work is being checked.'
     case 'failed':
       return 'The network could not be started.'
     case 'ready':
@@ -98,6 +113,7 @@ export function taskOf(
   if (!mission.fault) {
     return [
       'Select a router on the map to put the terminal in it, then work through the objectives below. Each is judged by what the routers do, never by what you typed.',
+      '**Check my work** reads the routers as they are and ticks what is met. Use it as often as you like.',
     ]
   }
   switch (step) {
@@ -120,6 +136,12 @@ export function taskOf(
         'The last run met every objective. Compare the two runs on the timeline, then read the debrief for why it worked. You can keep experimenting.',
       ]
   }
+}
+
+/** Whether an objective is judged from the routers as they are, so the player has to ask for the check. */
+export function hasStateChecks(mission: Pick<MissionDefinition, 'objectives'>): boolean {
+  const kinds: readonly string[] = STATE_CHECK_KINDS
+  return mission.objectives.some((objective) => kinds.includes(objective.check.kind))
 }
 
 /** The objective a hint is for now: the first one still open with a hint left, else any with one left. */

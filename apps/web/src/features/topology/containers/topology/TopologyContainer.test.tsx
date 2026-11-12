@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { MachineEvent, StampedMachineEvent } from '@peerfall/machine/types'
-import { appContent } from '@peerfall/missions/utils'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TopologyContainer } from './TopologyContainer'
@@ -18,8 +18,7 @@ vi.mock('@peerfall/machine/hooks', () => ({
   useRouterSelection: () => ({ router: mocks.router, select: mocks.select }),
 }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
+const mission = MISSION_FIXTURE
 
 const stamped = (events: readonly MachineEvent[]): StampedMachineEvent[] =>
   events.map((event, seq) => ({ ...event, seq, timeMs: 1_760_000_000_000 + seq }) as StampedMachineEvent)

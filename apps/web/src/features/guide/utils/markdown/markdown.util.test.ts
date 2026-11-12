@@ -1,4 +1,4 @@
-import { appContent } from '@peerfall/missions/utils'
+import { DEBRIEF_FIXTURE, INCIDENT_FIXTURE } from '@features/mission/utils/fixtures'
 import { describe, expect, it } from 'vitest'
 import { parseMarkdown, titledMarkdown } from './markdown.util'
 
@@ -63,14 +63,13 @@ describe('titledMarkdown', () => {
     expect(titledMarkdown('Body only.').title).toBeNull()
   })
 
-  it('reads the first mission, whose debrief ends in the commands to repeat', () => {
-    const content = appContent()
-    const texts = content.ok ? content.value.textsOf('the-link-that-never-went-down') : undefined
-    const incident = titledMarkdown(texts?.incident ?? '')
-    const debrief = titledMarkdown(texts?.debrief ?? '')
+  it('reads a mission’s texts: an incident of paragraphs, a debrief that ends in the commands to repeat', () => {
+    const incident = titledMarkdown(INCIDENT_FIXTURE)
+    const debrief = titledMarkdown(DEBRIEF_FIXTURE)
     expect(incident.title).toBe('Incident: traffic to c stopped for half a minute')
     expect(incident.blocks.every((block) => block.kind === 'paragraph')).toBe(true)
-    expect(debrief.blocks.filter((block) => block.kind === 'heading')).toHaveLength(5)
+    expect(debrief.title).toBe('Debrief: the link that never went down')
+    expect(debrief.blocks.filter((block) => block.kind === 'heading')).toHaveLength(3)
     const code = debrief.blocks.find((block) => block.kind === 'code')
     expect(code?.text).toContain(' interface a-c\n  ip ospf bfd')
   })

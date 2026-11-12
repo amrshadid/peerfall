@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { appContent } from '@peerfall/missions/utils'
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DebriefContainer } from './DebriefContainer'
@@ -16,8 +16,13 @@ vi.mock('@peerfall/game/hooks', () => ({
   useMissionActions: () => ({ begin: mocks.begin }),
 }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
+// The content on disk changes as missions are written: the screen is tested on a fixed one.
+vi.mock('@features/content/hooks/content', async () => {
+  const { CONTENT_FIXTURE } = await import('@features/mission/utils/fixtures')
+  return { useContent: () => CONTENT_FIXTURE }
+})
+
+const mission = MISSION_FIXTURE
 
 const REPAIRED = {
   role: 'attempt',

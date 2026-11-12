@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { ObjectiveHints, UseActiveMissionResult } from '@peerfall/game/hooks'
-import type { MissionVerdict } from '@peerfall/game/types'
+import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
 import type { UseMissionRunResult } from '@peerfall/missions/hooks'
-import { appContent } from '@peerfall/missions/utils'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GuideContainer } from './GuideContainer'
@@ -21,11 +21,13 @@ vi.mock('@peerfall/game/hooks', () => ({
   useMissionActions: () => ({ begin: mocks.begin, showDebrief: mocks.showDebrief }),
 }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
-if (!mission) {
-  throw new Error('the first mission is missing from the content')
-}
+// The content on disk changes as missions are written: the Guide is tested on a fixed one.
+vi.mock('@features/content/hooks/content', async () => {
+  const { CONTENT_FIXTURE } = await import('@features/mission/utils/fixtures')
+  return { useContent: () => CONTENT_FIXTURE }
+})
+
+const mission = MISSION_FIXTURE
 
 const hintsOf = (shown: readonly number[]): readonly ObjectiveHints[] =>
   mission.objectives.map((objective, index) => ({
@@ -59,7 +61,15 @@ const PROBED: MissionVerdict = {
 
 function mount(run: Partial<UseMissionRunResult> = {}) {
   const props = {
-    run: { phase: 'ready', errors: [], verdict: null, sendProbe: vi.fn(), runFault: vi.fn(), ...run } as const,
+    run: {
+      phase: 'ready',
+      errors: [],
+      verdict: null,
+      checkWork: vi.fn(),
+      sendProbe: vi.fn(),
+      runFault: vi.fn(),
+      ...run,
+    } as const,
     onStartOver: vi.fn(),
   }
   render(<GuideContainer run={props.run} step="inspect" stepLabel="Inspect" onStartOver={props.onStartOver} />)
@@ -176,11 +186,57 @@ describe('GuideContainer', () => {
     expect(alert.textContent).toContain('ip link add: exit 2')
   })
 
+  it('does not offer a check on a mission that is judged by its fault run', () => {
+    mount()
+    expect(screen.queryByRole('button', { name: /Check my work/ })).toBeNull()
+  })
+
+  it('offers Check my work, and nothing to send or break, where the routers are read as they are', () => {
+    // The first mission without its traffic and its fault, asked for a route instead.
+    const { fault: _fault, probe: _probe, recoveryTargetMs: _target, ...rest } = mission
+    const quiet: MissionDefinition = {
+      ...rest,
+      restartOnCheck: ['a'],
+      objectives: [
+        {
+          id: 'route-to-c',
+          text: 'Give a a route to c.',
+          check: { kind: 'route', router: 'a', to: '10.255.0.3' },
+          hints: [
+            { text: 'Look at the routing table.' },
+            { text: 'Add it.', command: 'ip route 10.255.0.3/32 10.0.2.2' },
+          ],
+        },
+      ],
+    }
+    mocks.active = { ...activeAt('play'), mission: quiet }
+    mocks.hints = []
+    const { run } = mount()
+    expect(screen.queryByRole('button', { name: /Send probe/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Break the link/ })).toBeNull()
+    expect(screen.getByText(/reads the routers as they are and ticks what is met/)).toBeTruthy()
+    fireEvent.click(button('Check my work'))
+    expect(run.checkWork).toHaveBeenCalledTimes(1)
+    cleanup()
+
+    mount({ phase: 'checking' })
+    expect(button(/^Check my work/).getAttribute('title')).toBe('Your work is being checked.')
+    const status = screen.getAllByRole('status').find((each) => each.getAttribute('aria-busy') === 'true')
+    expect(status?.textContent).toContain('FRR is restarted on router a from the saved configuration')
+  })
+
   it('draws nothing when no mission is being played', () => {
     mocks.active = { mission: null, phase: null, verdict: null, record: null, isCompleted: false }
     const { container } = render(
       <GuideContainer
-        run={{ phase: 'building', errors: [], verdict: null, sendProbe: vi.fn(), runFault: vi.fn() }}
+        run={{
+          phase: 'building',
+          errors: [],
+          verdict: null,
+          checkWork: vi.fn(),
+          sendProbe: vi.fn(),
+          runFault: vi.fn(),
+        }}
         step="inspect"
         stepLabel="Inspect"
         onStartOver={vi.fn()}

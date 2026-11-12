@@ -1,5 +1,6 @@
 export {
   type GuideStep,
+  hasStateChecks,
   hintsLeftOf,
   hintTargetOf,
   revealedHintsOf,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { RunSummary, SavedRun } from '@peerfall/game/types'
-import { appContent } from '@peerfall/missions/utils'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HEALTHY_EVENTS, ONGOING_EVENTS } from '@/test/fixtures/machine-events.fixture'
@@ -19,8 +19,7 @@ vi.mock('@peerfall/game/hooks', () => ({
 }))
 vi.mock('@peerfall/machine/hooks', () => ({ useMachineEvents: () => mocks.events }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission('the-link-that-never-went-down') : undefined
+const mission = MISSION_FIXTURE
 
 const HOP = {
   prefix: '10.255.0.3',

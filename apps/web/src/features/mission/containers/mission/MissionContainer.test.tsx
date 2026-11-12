@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
+import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { UseActiveMissionResult } from '@peerfall/game/hooks'
 import type { UseMissionRunResult } from '@peerfall/missions/hooks'
-import { appContent } from '@peerfall/missions/utils'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MissionContainer, type MissionView } from './MissionContainer'
 
-const MISSION_ID = 'the-link-that-never-went-down'
+const MISSION_ID = MISSION_FIXTURE.id
 
 const mocks = vi.hoisted(() => ({
   active: null as unknown,
@@ -50,8 +50,13 @@ vi.mock('@features/chrome/hooks/save', () => ({
 }))
 vi.mock('@features/tour/hooks/tour', () => ({ useTourScreen: () => {} }))
 
-const content = appContent()
-const mission = content.ok ? content.value.game.mission(MISSION_ID) : undefined
+// The content on disk changes as missions are written: the screen is tested on a fixed one.
+vi.mock('@features/content/hooks/content', async () => {
+  const { CONTENT_FIXTURE } = await import('@features/mission/utils/fixtures')
+  return { useContent: () => CONTENT_FIXTURE }
+})
+
+const mission = MISSION_FIXTURE
 
 const NONE: UseActiveMissionResult = { mission: null, phase: null, verdict: null, record: null, isCompleted: false }
 
@@ -60,7 +65,15 @@ function activeAt(phase: UseActiveMissionResult['phase'], isCompleted = false): 
 }
 
 function runAt(phase: UseMissionRunResult['phase']): UseMissionRunResult {
-  return { phase, errors: [], verdict: null, sendProbe: vi.fn(), runFault: vi.fn(), startOver: mocks.startOver }
+  return {
+    phase,
+    errors: [],
+    verdict: null,
+    checkWork: vi.fn(),
+    sendProbe: vi.fn(),
+    runFault: vi.fn(),
+    startOver: mocks.startOver,
+  }
 }
 
 function mount(missionId = MISSION_ID) {
