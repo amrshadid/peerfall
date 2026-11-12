@@ -1,6 +1,7 @@
+/* The sheet takes all the room under the running head, at any width below the game's own. */
 .small-screen {
   display: grid;
-  grid-template-rows: 2rem auto;
+  grid-template-rows: 2rem 1fr;
   min-height: 100dvh;
 }
 
@@ -19,13 +20,18 @@
   margin: 0 1rem 1rem;
   padding: 1.5rem 1.25rem 1.75rem;
   display: grid;
-  align-content: start;
+  /* Its words sit in the middle of the sheet, in a column narrow enough to read. */
+  align-content: center;
+  justify-content: center;
+  grid-template-columns: minmax(0, 36rem);
   gap: 1rem;
-  max-width: 44rem;
   min-width: 0;
+  text-align: center;
 }
 
 .small-screen__mark {
+  display: grid;
+  justify-items: center;
   padding-bottom: 1rem;
   border-bottom: var(--rule);
 }

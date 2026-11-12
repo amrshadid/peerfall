@@ -7,6 +7,11 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- The "needs a bigger screen" page fills the window and centres its words at every width,
+  instead of sitting in a narrow column at the left on a window just under the limit.
+
 ## [0.1.0-alpha.1] - 2026-11-12
 
 The first public pre-release.
