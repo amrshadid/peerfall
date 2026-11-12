@@ -5,18 +5,19 @@
 // the game's "check my work" reads it, which is recorded beside the events.
 // Usage: pnpm --filter @peerfall/missions vm:golden [mission-id …]
 //        (after pnpm vm:image; several minutes for every mission)
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Validated } from '@peerfall/core/types'
 import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
-import { judgeMission, summariseRun } from '@peerfall/game/utils'
+import { judgeMission, summariseRun, validateMission } from '@peerfall/game/utils'
 import { createVmSession, readMachineState, restartRouterFrr } from '@peerfall/machine/services'
 import type { MachineState, StampedMachineEvent, VmPhase } from '@peerfall/machine/types'
 import { applyEventUpdate, EMPTY_EVENT_LOG } from '@peerfall/machine/utils'
-import { parse } from 'yaml'
-import type { ContentFiles } from '#types/definitions/content'
+import { type ContentFiles, MISSION_FILE, SOLUTION_FILE } from '#types/definitions/content'
 import { loadContent } from '#utils/loader/load-content.util'
+import { readYaml } from '#utils/loader/read-yaml.util'
 import { changeLines, type GoldenRun, validateSolution } from '#utils/run/golden-run.util'
 import {
   checkRun,
@@ -43,7 +44,8 @@ const log = (text: string) => console.log(`[${((Date.now() - started) / 1000).to
 
 // The content from disk: the game reads it through Vite's glob, which Node does not have.
 function contentFiles(): ContentFiles {
-  const read = (path: string) => readFileSync(join(content, path), 'utf8')
+  // A file that is not there yet reads as empty, and the loader says which one is missing.
+  const read = (path: string) => (existsSync(join(content, path)) ? readFileSync(join(content, path), 'utf8') : '')
   const missions: Record<string, string> = {}
   const incidents: Record<string, string> = {}
   const debriefs: Record<string, string> = {}
@@ -137,9 +139,16 @@ function describeObjective({ result }: MissionVerdict['objectives'][number]): st
 
 async function playMission(mission: MissionDefinition, folder: string): Promise<string[]> {
   const failures: string[] = []
-  const solution = validateSolution(parse(readFileSync(join(content, folder, 'solution.yaml'), 'utf8')))
-  if (!solution.ok) {
-    return solution.errors.map((error) => `${folder}/solution.yaml: ${error}`)
+  const solutionErrors: string[] = []
+  const solutionPath = join(content, folder, SOLUTION_FILE)
+  const solution = readYaml(
+    existsSync(solutionPath) ? readFileSync(solutionPath, 'utf8') : '',
+    `${folder}/${SOLUTION_FILE}`,
+    validateSolution,
+    solutionErrors
+  )
+  if (!solution) {
+    return solutionErrors
   }
   const built = await session.setupNetwork(mission.network)
   if (!built.ok) {
@@ -151,7 +160,7 @@ async function playMission(mission: MissionDefinition, folder: string): Promise<
   await session.saveHealthy(START_SLOT)
   log(`${mission.id}: network built and settled`)
 
-  for (const run of solution.value) {
+  for (const run of solution) {
     await session.restoreHealthy(START_SLOT)
     for (const change of run.changes) {
       for (const line of changeLines(change)) {
@@ -191,18 +200,50 @@ async function playMission(mission: MissionDefinition, folder: string): Promise<
   return failures
 }
 
+interface MissionToPlay {
+  readonly mission: MissionDefinition
+  readonly folder: string
+}
+
+/**
+ * The missions to play. With no ids, all of them, from content that loads as a whole. With ids
+ * on the command line, only those, each validated by itself: a mission can be recorded while
+ * another one in the repository is half written, and the other missions' runs stay as recorded.
+ */
+function missionsToPlay(ids: readonly string[]): Validated<readonly MissionToPlay[]> {
+  const files = contentFiles()
+  if (ids.length === 0) {
+    const loaded = loadContent(files)
+    return loaded.ok
+      ? {
+          ok: true,
+          value: loaded.value.game.missions.map((mission) => ({
+            mission,
+            folder: loaded.value.folderOf(mission.id) ?? '',
+          })),
+        }
+      : loaded
+  }
+  const errors: string[] = []
+  const missions: MissionToPlay[] = []
+  for (const id of ids) {
+    const path = Object.keys(files.missions).find((file) => file.endsWith(`-${id}/${MISSION_FILE}`))
+    const mission = path === undefined ? null : readYaml(files.missions[path] ?? '', path, validateMission, errors)
+    if (path === undefined) {
+      errors.push(`no mission folder named <number>-${id}`)
+    } else if (mission) {
+      missions.push({ mission, folder: path.slice(0, path.lastIndexOf('/')) })
+    }
+  }
+  return errors.length === 0 ? { ok: true, value: missions } : { ok: false, errors }
+}
+
 async function main(): Promise<string[]> {
-  const loaded = loadContent(contentFiles())
-  if (!loaded.ok) {
-    return [...loaded.errors]
+  // pnpm hands a `--` through when the ids are given after one.
+  const wanted = missionsToPlay(process.argv.slice(2).filter((argument) => argument !== '--'))
+  if (!wanted.ok) {
+    return [...wanted.errors]
   }
-  // With ids on the command line, only those missions are played: the others' runs stay as recorded.
-  const ids = process.argv.slice(2)
-  const unknown = ids.filter((id) => !loaded.value.game.mission(id))
-  if (unknown.length > 0) {
-    return unknown.map((id) => `no mission with id "${id}"`)
-  }
-  const wanted = loaded.value.game.missions.filter((mission) => ids.length === 0 || ids.includes(mission.id))
   await session.start(
     { baseUrl: `${vm}/`, wasmUrl: join(repo, 'packages/machine/node_modules/v86/build/v86.wasm'), fresh: true },
     () => {},
@@ -221,8 +262,8 @@ async function main(): Promise<string[]> {
   }
   log('the Machine is up')
   const failures: string[] = []
-  for (const mission of wanted) {
-    failures.push(...(await playMission(mission, loaded.value.folderOf(mission.id) ?? '')))
+  for (const { mission, folder } of wanted.value) {
+    failures.push(...(await playMission(mission, folder)))
   }
   return failures
 }

@@ -4,6 +4,8 @@ export const CHAPTERS_FILE = 'chapters.yaml'
 export const MISSION_FILE = 'mission.yaml'
 export const INCIDENT_FILE = 'incident.md'
 export const DEBRIEF_FILE = 'debrief.md'
+/** The golden runs. Read by the recorder only: the game never bundles it. */
+export const SOLUTION_FILE = 'solution.yaml'
 
 /** Every content file's text, keyed by its path in `content/`. */
 export interface ContentFiles {
