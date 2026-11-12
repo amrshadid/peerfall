@@ -1,0 +1,32 @@
+{
+  "name": "@peerfall/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Peerfall game.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p . && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@peerfall/core": "workspace:*",
+    "@peerfall/game": "workspace:*",
+    "@peerfall/machine": "workspace:*",
+    "@peerfall/missions": "workspace:*",
+    "@peerfall/theme": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
+  }
+}
