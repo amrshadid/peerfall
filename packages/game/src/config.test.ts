@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { configureGame, getGameConfig, resetGameConfig } from '#config'
+import { configureGame, getGameConfig, getGameNow, resetGameConfig } from '#config'
+import { exampleContent } from '#test/index'
 
 describe('game config', () => {
   afterEach(() => resetGameConfig())
@@ -18,5 +19,14 @@ describe('game config', () => {
     expect(getGameConfig().storage).toBe(storage)
     resetGameConfig()
     expect(getGameConfig().storage).toBeNull()
+  })
+
+  it('keeps the content and the clock the app passes, and defaults for the rest', () => {
+    const content = exampleContent()
+    configureGame({ content, clock: { now: () => 42 } })
+    expect(getGameConfig()).toMatchObject({ content, storage: null, slot: 'main', autosave: true })
+    expect(getGameNow()).toBe(42)
+    resetGameConfig()
+    expect(getGameConfig().content).toBeNull()
   })
 })

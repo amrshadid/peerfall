@@ -1,0 +1,145 @@
+import { eventBus } from '@peerfall/core/services'
+import type { ServiceResponse } from '@peerfall/core/types'
+import type { StampedMachineEvent } from '@peerfall/machine/types'
+import { useMemo } from 'react'
+import { getGameConfig, getGameNow } from '#config'
+import type { MissionCompletedPayload, MissionStartedPayload, RunRecordedPayload } from '#events/types'
+import { GAME_EVENTS } from '#events/types'
+import { announceProgress } from '#services/utils/announce-progress.service'
+import {
+  lockedMissionError,
+  noActiveMissionError,
+  noContentError,
+  notCompletedError,
+  unknownMissionError,
+} from '#services/utils/error-handling.service'
+import { useProgressStore } from '#store/progress.store'
+import type { MissionVerdict } from '#types/definitions/checks'
+import type { MissionId } from '#types/definitions/mission'
+import type { RunRole, RunSummary } from '#types/definitions/runs'
+import type { ActiveMission } from '#types/definitions/store'
+import { judgeMission } from '#utils/checks/index'
+import { hintsUsed } from '#utils/hints/index'
+import { findMissionProgress, isCompleted, missionStatus, recordRun, startMission } from '#utils/progress/index'
+import { summariseRun } from '#utils/runs/index'
+
+const SOURCE = 'game/mission'
+
+export interface UseMissionActionsResult {
+  /** Opens a mission at its incident. Fails for unknown and locked missions. */
+  start: (missionId: MissionId) => Promise<ServiceResponse<ActiveMission>>
+  /** Incident read: on to the network. */
+  begin: () => ServiceResponse<ActiveMission>
+  /** How the events so far would be judged, without keeping anything: for ticking objectives live. */
+  judge: (events: readonly StampedMachineEvent[]) => ServiceResponse<MissionVerdict>
+  /** Keeps a run of the fault on the network as it was given, to compare the repaired run with. Not judged. */
+  saveBaseline: (events: readonly StampedMachineEvent[]) => Promise<ServiceResponse<RunSummary>>
+  /** Judges a run, keeps it, and completes the mission the first time it passes. Retries are free. */
+  submitRun: (events: readonly StampedMachineEvent[]) => Promise<ServiceResponse<MissionVerdict>>
+  /** Only once the mission has passed. */
+  showDebrief: () => ServiceResponse<ActiveMission>
+  leave: () => void
+}
+
+/** The mission loop's flows. Each one updates the store, emits game events and autosaves. */
+export function createMissionActions(): UseMissionActionsResult {
+  const store = useProgressStore.getState
+
+  const start = async (missionId: MissionId): Promise<ServiceResponse<ActiveMission>> => {
+    const { content } = getGameConfig()
+    if (!content) return noContentError()
+    const mission = content.mission(missionId)
+    if (!mission) return unknownMissionError(missionId)
+    if (missionStatus(store().progress, mission) === 'locked') return lockedMissionError(missionId)
+    const at = getGameNow()
+    const resumed = findMissionProgress(store().progress, missionId) !== undefined
+    const active: ActiveMission = { mission, phase: 'incident', verdict: null }
+    store().setProgress(startMission(store().progress, missionId, at))
+    store().setActive(active)
+    eventBus.emit<MissionStartedPayload>(GAME_EVENTS.MISSION_STARTED, { missionId, resumed, at }, { source: SOURCE })
+    await announceProgress(SOURCE)
+    return { success: true, data: active }
+  }
+
+  const moveTo = (phase: ActiveMission['phase']): ServiceResponse<ActiveMission> => {
+    const { active } = store()
+    if (!active) return noActiveMissionError()
+    if (phase === 'debrief' && !isCompleted(store().progress, active.mission.id)) {
+      return notCompletedError(active.mission.id)
+    }
+    const moved = { ...active, phase }
+    store().setActive(moved)
+    return { success: true, data: moved }
+  }
+
+  const judge = (events: readonly StampedMachineEvent[]): ServiceResponse<MissionVerdict> => {
+    const { active } = store()
+    return active ? { success: true, data: judgeMission(active.mission, events) } : noActiveMissionError()
+  }
+
+  /** Keeps the run in the progress; `null` when no mission is active. */
+  const keep = async (
+    events: readonly StampedMachineEvent[],
+    role: RunRole
+  ): Promise<{ summary: RunSummary; verdict: MissionVerdict } | null> => {
+    const { active, progress } = store()
+    if (!active) return null
+    const { mission } = active
+    const at = getGameNow()
+    const verdict = judgeMission(mission, events)
+    const summary = summariseRun(events, mission)
+    const passed = role === 'attempt' && verdict.passed
+    const recorded = recordRun(progress, mission.id, {
+      role,
+      missionVersion: mission.version,
+      savedAt: at,
+      passed,
+      summary,
+    })
+    if (!recorded) return null
+    store().setProgress(recorded)
+    if (role === 'attempt') {
+      store().setActive({ ...active, verdict })
+    }
+    eventBus.emit<RunRecordedPayload>(
+      GAME_EVENTS.RUN_RECORDED,
+      { missionId: mission.id, role, passed, at },
+      { source: SOURCE }
+    )
+    if (passed && !isCompleted(progress, mission.id)) {
+      const record = findMissionProgress(recorded, mission.id)
+      eventBus.emit<MissionCompletedPayload>(
+        GAME_EVENTS.MISSION_COMPLETED,
+        {
+          missionId: mission.id,
+          attempts: record?.attempts ?? 1,
+          hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? {}),
+          at,
+        },
+        { source: SOURCE }
+      )
+    }
+    await announceProgress(SOURCE)
+    return { summary, verdict }
+  }
+
+  return {
+    start,
+    begin: () => moveTo('play'),
+    judge,
+    saveBaseline: async (events) => {
+      const kept = await keep(events, 'baseline')
+      return kept ? { success: true, data: kept.summary } : noActiveMissionError()
+    },
+    submitRun: async (events) => {
+      const kept = await keep(events, 'attempt')
+      return kept ? { success: true, data: kept.verdict } : noActiveMissionError()
+    },
+    showDebrief: () => moveTo('debrief'),
+    leave: () => store().setActive(null),
+  }
+}
+
+export function useMissionActions(): UseMissionActionsResult {
+  return useMemo(createMissionActions, [])
+}

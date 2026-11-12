@@ -1,4 +1,5 @@
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '#types/definitions/config'
+import type { EpochMs } from '#types/definitions/progress'
 
 let _config: GameConfig = DEFAULT_GAME_CONFIG
 
@@ -9,6 +10,11 @@ export function configureGame(config: Partial<GameConfig> = {}): void {
 
 export function getGameConfig(): GameConfig {
   return _config
+}
+
+/** Timestamps come from the configured clock, so tests control them. */
+export function getGameNow(): EpochMs {
+  return _config.clock.now()
 }
 
 export function resetGameConfig(): void {
