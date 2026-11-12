@@ -51,7 +51,7 @@ export function runStatusOf(
       }
     case 'faulted':
       return {
-        text: `The link ${linkText(mission)} is dropping every packet and the outage is being measured. This takes about 4 to 6 seconds when BFD runs on both ends of the link, and up to about a minute without it. The network then goes back to how you had configured it; what you change during the run is not kept.`,
+        text: `The probe runs for about three seconds, then the link ${linkText(mission)} starts dropping every packet and the outage is measured. This takes about 4 to 6 seconds when BFD runs on both ends of the link, and up to about a minute without it. The network then goes back to how you had configured it; what you change during the run is not kept.`,
         busy: true,
         failed: false,
         details: [],

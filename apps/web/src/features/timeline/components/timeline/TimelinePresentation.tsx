@@ -17,6 +17,7 @@ import { TimelineRunTable } from './TimelineRunTable'
 import './Timeline.css'
 
 const percent = (value: number) => `${value}%`
+const HALF = 50
 
 /** The outage, measured: a baseline run and a repaired run on one axis that starts at the fault. */
 export function TimelinePresentation({ baseline, repaired, targetSeconds = null }: TimelinePresentationProps) {
@@ -51,7 +52,11 @@ export function TimelinePresentation({ baseline, repaired, targetSeconds = null 
             {targetSeconds !== null && (
               <>
                 <span className="timeline__target-line" style={{ left: percent(axisPercent(targetSeconds, axis)) }} />
-                <span className="timeline__target" style={{ left: percent(axisPercent(targetSeconds, axis)) }}>
+                <span
+                  // Past the middle the name is set to the line's left, so it never runs off the axis's end.
+                  className={`timeline__target${axisPercent(targetSeconds, axis) > HALF ? ' timeline__target--end' : ''}`}
+                  style={{ left: percent(axisPercent(targetSeconds, axis)) }}
+                >
                   target {formatSeconds(targetSeconds)}
                 </span>
               </>

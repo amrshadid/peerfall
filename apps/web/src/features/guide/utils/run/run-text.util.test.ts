@@ -57,7 +57,7 @@ describe('runStatusOf', () => {
 
   it('says plainly how long a fault run takes with BFD and without it', () => {
     const status = runStatusOf('faulted', [], MISSION, NAMES)
-    expect(status?.text).toContain('The link a–c is dropping every packet')
+    expect(status?.text).toContain('then the link a–c starts dropping every packet')
     expect(status?.text).toContain('about 4 to 6 seconds when BFD runs on both ends')
     expect(status?.text).toContain('up to about a minute without it')
     expect(status?.text).toContain('what you change during the run is not kept')

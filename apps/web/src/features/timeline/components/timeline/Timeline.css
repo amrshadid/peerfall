@@ -167,6 +167,10 @@
   white-space: nowrap;
 }
 
+.timeline__target--end {
+  transform: translateX(-100%);
+}
+
 .timeline__runs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));

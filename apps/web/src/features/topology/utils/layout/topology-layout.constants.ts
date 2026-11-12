@@ -26,4 +26,4 @@ export const PATH_ALSO = ' and '
 
 /** The drawing's OSPF words, said once in plain language under it. */
 export const ADJACENCY_LEGEND =
-  'OSPF Full: the two routers on a link are neighbors and have told each other every route they know. OSPF lost: one of them has given up on the other.'
+  'OSPF Full: the two routers on a link are neighbors and share every route they know. OSPF lost: one has given up on the other.'

@@ -74,11 +74,15 @@
   white-space: nowrap;
 }
 
-/* Two lines when the link has an adjacency to report: what the cable does, then what OSPF makes of it. */
+/*
+ * What the cable does, then what OSPF makes of it. One line while both are short, so the label
+ * fits between two routers on a low drawing; a long state ("dropping packets") takes a second.
+ */
 .topology__link-label:has(.topology__adjacency) {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 0.5rem;
+  max-width: 9.5rem;
 }
 
 .topology__link-state {
@@ -90,6 +94,7 @@
 .topology__adjacency {
   font-weight: 500;
   color: var(--ink-2);
+  white-space: nowrap;
 }
 
 /* The word says it; the weight and colour only repeat it. */

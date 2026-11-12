@@ -27,13 +27,14 @@
   color: var(--ink-2);
 }
 
-/* The Guide is never narrower than this group, so a capped title leaves the step rail its room. */
-@media (max-width: 85rem) {
-  .mission-topbar {
-    gap: 0.875rem;
-  }
+/*
+ * The Guide is never narrower than this group, so a capped title leaves the step rail its room.
+ * Mission names run long ("The Link That Never Went Down"): on anything short of a very wide
+ * screen a one-line name would push the Guide over the terminal's 80 columns.
+ */
+@media (max-width: 120rem) {
   .mission-topbar__name {
-    max-width: 14rem;
+    max-width: 16rem;
     white-space: normal;
   }
   .mission-topbar__name span {
@@ -46,6 +47,15 @@
     line-clamp: 2;
     overflow: hidden;
     font-size: 1.1875rem;
+  }
+}
+
+@media (max-width: 85rem) {
+  .mission-topbar {
+    gap: 0.875rem;
+  }
+  .mission-topbar__name {
+    max-width: 14rem;
   }
 }
 
