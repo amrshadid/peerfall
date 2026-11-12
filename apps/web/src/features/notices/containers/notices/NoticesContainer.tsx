@@ -1,11 +1,21 @@
 import { useNotices } from '@app/store'
 import { NoticeStackPresentation } from '@features/notices/components/notices'
+import { useGameNotices } from '@features/notices/hooks/game'
 import { NOTICE_MS, shownNotice } from '@features/notices/utils/notices'
+import type { MissionId } from '@peerfall/game/types'
+import { appContent } from '@peerfall/missions/utils'
 import { useEffect } from 'react'
+
+// Not useContent(): notices render beside the router, also when content failed its checks.
+function titleOf(missionId: MissionId): string {
+  const content = appContent()
+  return (content.ok ? content.value.game.mission(missionId)?.title : undefined) ?? missionId
+}
 
 /** One at a time; each fades a few seconds after it comes on show, a failed save stays until dismissed. */
 export function NoticesContainer() {
   const { notices, dismissNotice } = useNotices()
+  useGameNotices(titleOf)
   const notice = shownNotice(notices)
 
   // The timer starts when a notice comes on show, so one waiting its turn is still read.
