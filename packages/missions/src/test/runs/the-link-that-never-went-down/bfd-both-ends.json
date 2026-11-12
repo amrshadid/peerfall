@@ -1,0 +1,1275 @@
+{
+  "mission": "the-link-that-never-went-down",
+  "version": 1,
+  "run": "bfd-both-ends",
+  "passes": true,
+  "events": [
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.2.1",
+      "interface": "c-a",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 1,
+      "timeMs": 1794506910249
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.1.1",
+      "interface": "b-a",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 0,
+      "timeMs": 1794506910251
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.1.2",
+      "interface": "a-b",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 2,
+      "timeMs": 1794506912074
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.3.1",
+      "interface": "c-b",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 4,
+      "timeMs": 1794506912092
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.1.2",
+      "interface": "a-b",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 3,
+      "timeMs": 1794506912265
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.1.1",
+      "interface": "b-a",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 6,
+      "timeMs": 1794506912289
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.1.2",
+      "interface": "a-b",
+      "from": "Exchange",
+      "to": "Loading",
+      "reason": "ExchangeDone",
+      "seq": 5,
+      "timeMs": 1794506912474
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.1.1",
+      "interface": "b-a",
+      "from": "Exchange",
+      "to": "Loading",
+      "reason": "ExchangeDone",
+      "seq": 7,
+      "timeMs": 1794506912527
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.1.1",
+      "interface": "b-a",
+      "from": "Loading",
+      "to": "Full",
+      "reason": "LoadingDone",
+      "seq": 8,
+      "timeMs": 1794506913506
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.1.2",
+      "interface": "a-b",
+      "from": "Loading",
+      "to": "Full",
+      "reason": "LoadingDone",
+      "seq": 9,
+      "timeMs": 1794506913540
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.2.2",
+      "interface": "a-c",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 10,
+      "timeMs": 1794506914007
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.3.2",
+      "interface": "b-c",
+      "from": "Down",
+      "to": "Init",
+      "reason": "HelloReceived",
+      "seq": 11,
+      "timeMs": 1794506914013
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.2.2",
+      "interface": "a-c",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 21,
+      "timeMs": 1794506914738
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.3.2",
+      "interface": "b-c",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 17,
+      "timeMs": 1794506914741
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.3.1",
+      "interface": "c-b",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 16,
+      "timeMs": 1794506914784
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.2.1",
+      "interface": "c-a",
+      "from": "ExStart",
+      "to": "Exchange",
+      "reason": "NegotiationDone",
+      "seq": 18,
+      "timeMs": 1794506914860
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.3.2",
+      "interface": "b-c",
+      "from": "Exchange",
+      "to": "Loading",
+      "reason": "ExchangeDone",
+      "seq": 19,
+      "timeMs": 1794506914953
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.2.2",
+      "interface": "a-c",
+      "from": "Exchange",
+      "to": "Loading",
+      "reason": "ExchangeDone",
+      "seq": 24,
+      "timeMs": 1794506914963
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.2",
+      "address": "10.0.3.1",
+      "interface": "c-b",
+      "from": "Exchange",
+      "to": "Full",
+      "reason": "ExchangeDone",
+      "seq": 20,
+      "timeMs": 1794506915027
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.2.1",
+      "interface": "c-a",
+      "from": "Exchange",
+      "to": "Loading",
+      "reason": "ExchangeDone",
+      "seq": 22,
+      "timeMs": 1794506915034
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.2.2",
+      "interface": "a-c",
+      "from": "Loading",
+      "to": "Full",
+      "reason": "LoadingDone",
+      "seq": 25,
+      "timeMs": 1794506915058
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "b",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.3.2",
+      "interface": "b-c",
+      "from": "Loading",
+      "to": "Full",
+      "reason": "LoadingDone",
+      "seq": 23,
+      "timeMs": 1794506915064
+    },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.0.3.0/30",
+      "via": "10.0.1.2",
+      "interface": "a-b",
+      "nextHops": [{ "via": "10.0.1.2", "interface": "a-b" }],
+      "protocol": "ospf",
+      "seq": 12,
+      "timeMs": 1794506915148.198
+    },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.255.0.2",
+      "via": "10.0.1.2",
+      "interface": "a-b",
+      "nextHops": [{ "via": "10.0.1.2", "interface": "a-b" }],
+      "protocol": "ospf",
+      "seq": 13,
+      "timeMs": 1794506915179.848
+    },
+    {
+      "type": "fib_install",
+      "router": "b",
+      "prefix": "10.0.2.0/30",
+      "via": "10.0.1.1",
+      "interface": "b-a",
+      "nextHops": [{ "via": "10.0.1.1", "interface": "b-a" }],
+      "protocol": "ospf",
+      "seq": 14,
+      "timeMs": 1794506915261.871
+    },
+    {
+      "type": "fib_install",
+      "router": "b",
+      "prefix": "10.255.0.1",
+      "via": "10.0.1.1",
+      "interface": "b-a",
+      "nextHops": [{ "via": "10.0.1.1", "interface": "b-a" }],
+      "protocol": "ospf",
+      "seq": 15,
+      "timeMs": 1794506915267.902
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.2.1",
+      "interface": "c-a",
+      "from": "Loading",
+      "to": "Full",
+      "reason": "LoadingDone",
+      "seq": 35,
+      "timeMs": 1794506919900
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.0.1.0/30",
+      "via": "10.0.2.1",
+      "interface": "c-a",
+      "nextHops": [{ "via": "10.0.2.1", "interface": "c-a" }],
+      "protocol": "ospf",
+      "seq": 26,
+      "timeMs": 1794506919972.318
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.255.0.1",
+      "via": "10.0.2.1",
+      "interface": "c-a",
+      "nextHops": [{ "via": "10.0.2.1", "interface": "c-a" }],
+      "protocol": "ospf",
+      "seq": 27,
+      "timeMs": 1794506920003.592
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.255.0.2",
+      "via": "10.0.2.1",
+      "interface": "c-a",
+      "nextHops": [{ "via": "10.0.2.1", "interface": "c-a" }],
+      "protocol": "ospf",
+      "seq": 28,
+      "timeMs": 1794506920007.12
+    },
+    {
+      "type": "fib_install",
+      "router": "b",
+      "prefix": "10.0.2.0/30",
+      "via": "10.0.1.1",
+      "interface": "b-a",
+      "nextHops": [{ "via": "10.0.1.1", "interface": "b-a" }, { "via": "10.0.3.2", "interface": "b-c" }],
+      "protocol": "ospf",
+      "seq": 29,
+      "timeMs": 1794506920023.007
+    },
+    {
+      "type": "fib_install",
+      "router": "b",
+      "prefix": "10.255.0.3",
+      "via": "10.0.3.2",
+      "interface": "b-c",
+      "nextHops": [{ "via": "10.0.3.2", "interface": "b-c" }],
+      "protocol": "ospf",
+      "seq": 30,
+      "timeMs": 1794506920023.436
+    },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.0.3.0/30",
+      "via": "10.0.1.2",
+      "interface": "a-b",
+      "nextHops": [{ "via": "10.0.1.2", "interface": "a-b" }, { "via": "10.0.2.2", "interface": "a-c" }],
+      "protocol": "ospf",
+      "seq": 31,
+      "timeMs": 1794506920034.901
+    },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.255.0.3",
+      "via": "10.0.2.2",
+      "interface": "a-c",
+      "nextHops": [{ "via": "10.0.2.2", "interface": "a-c" }],
+      "protocol": "ospf",
+      "seq": 32,
+      "timeMs": 1794506920041.848
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.0.1.0/30",
+      "via": "10.0.2.1",
+      "interface": "c-a",
+      "nextHops": [{ "via": "10.0.2.1", "interface": "c-a" }, { "via": "10.0.3.1", "interface": "c-b" }],
+      "protocol": "ospf",
+      "seq": 33,
+      "timeMs": 1794506920210.778
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.255.0.2",
+      "via": "10.0.3.1",
+      "interface": "c-b",
+      "nextHops": [{ "via": "10.0.3.1", "interface": "c-b" }],
+      "protocol": "ospf",
+      "seq": 34,
+      "timeMs": 1794506920221.803
+    },
+    {
+      "type": "bfd_session_up",
+      "router": "a",
+      "peer": "10.0.2.2",
+      "interface": "a-c",
+      "seq": 36,
+      "timeMs": 1794506928375
+    },
+    {
+      "type": "bfd_session_up",
+      "router": "c",
+      "peer": "10.0.2.1",
+      "interface": "c-a",
+      "seq": 37,
+      "timeMs": 1794506928416
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 1,
+      "rttMs": 0.385,
+      "seq": 38,
+      "timeMs": 1794506937708.948
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 2,
+      "rttMs": 0.38,
+      "seq": 39,
+      "timeMs": 1794506937757.278
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 3,
+      "rttMs": 0.382,
+      "seq": 40,
+      "timeMs": 1794506937808.635
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 4,
+      "rttMs": 0.377,
+      "seq": 41,
+      "timeMs": 1794506937859.941
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 5,
+      "rttMs": 0.346,
+      "seq": 42,
+      "timeMs": 1794506937911.557
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 6,
+      "rttMs": 0.375,
+      "seq": 43,
+      "timeMs": 1794506937963.01
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 7,
+      "rttMs": 0.396,
+      "seq": 44,
+      "timeMs": 1794506938014.34
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 8,
+      "rttMs": 0.372,
+      "seq": 45,
+      "timeMs": 1794506938065.26
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 9,
+      "rttMs": 0.343,
+      "seq": 46,
+      "timeMs": 1794506938116.359
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 10,
+      "rttMs": 0.392,
+      "seq": 47,
+      "timeMs": 1794506938166.711
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 11,
+      "rttMs": 0.325,
+      "seq": 48,
+      "timeMs": 1794506938217.612
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 12,
+      "rttMs": 0.396,
+      "seq": 49,
+      "timeMs": 1794506938269.016
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 13,
+      "rttMs": 0.336,
+      "seq": 50,
+      "timeMs": 1794506938319.424
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 14,
+      "rttMs": 0.351,
+      "seq": 51,
+      "timeMs": 1794506938370.682
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 15,
+      "rttMs": 0.416,
+      "seq": 52,
+      "timeMs": 1794506938422.065
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 16,
+      "rttMs": 0.395,
+      "seq": 53,
+      "timeMs": 1794506938472.779
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 17,
+      "rttMs": 0.348,
+      "seq": 54,
+      "timeMs": 1794506938524.254
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 18,
+      "rttMs": 0.378,
+      "seq": 55,
+      "timeMs": 1794506938575.647
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 19,
+      "rttMs": 0.324,
+      "seq": 56,
+      "timeMs": 1794506938626.725
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 20,
+      "rttMs": 0.379,
+      "seq": 57,
+      "timeMs": 1794506938677.998
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 21,
+      "rttMs": 0.334,
+      "seq": 58,
+      "timeMs": 1794506938728.712
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 22,
+      "rttMs": 0.36,
+      "seq": 59,
+      "timeMs": 1794506938782.254
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 23,
+      "rttMs": 0.334,
+      "seq": 60,
+      "timeMs": 1794506938833.117
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 24,
+      "rttMs": 0.365,
+      "seq": 61,
+      "timeMs": 1794506938883.907
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 25,
+      "rttMs": 0.4,
+      "seq": 62,
+      "timeMs": 1794506938935.761
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 26,
+      "rttMs": 0.398,
+      "seq": 63,
+      "timeMs": 1794506938988.071
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 27,
+      "rttMs": 0.352,
+      "seq": 64,
+      "timeMs": 1794506939039.627
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 28,
+      "rttMs": 0.367,
+      "seq": 65,
+      "timeMs": 1794506939091.486
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 29,
+      "rttMs": 0.311,
+      "seq": 66,
+      "timeMs": 1794506939142.564
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 30,
+      "rttMs": 0.32,
+      "seq": 67,
+      "timeMs": 1794506939193.598
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 31,
+      "rttMs": 0.332,
+      "seq": 68,
+      "timeMs": 1794506939244.652
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 32,
+      "rttMs": 0.455,
+      "seq": 69,
+      "timeMs": 1794506939295.907
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 33,
+      "rttMs": 0.368,
+      "seq": 70,
+      "timeMs": 1794506939346.546
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 34,
+      "rttMs": 0.457,
+      "seq": 71,
+      "timeMs": 1794506939397.832
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 35,
+      "rttMs": 0.484,
+      "seq": 72,
+      "timeMs": 1794506939449.477
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 36,
+      "rttMs": 0.614,
+      "seq": 73,
+      "timeMs": 1794506939502.056
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 37,
+      "rttMs": 0.601,
+      "seq": 74,
+      "timeMs": 1794506939553.281
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 38,
+      "rttMs": 3.33,
+      "seq": 75,
+      "timeMs": 1794506939612.949
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 39,
+      "rttMs": 0.348,
+      "seq": 76,
+      "timeMs": 1794506939655.749
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 40,
+      "rttMs": 0.34,
+      "seq": 77,
+      "timeMs": 1794506939706.659
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 41,
+      "rttMs": 0.48,
+      "seq": 78,
+      "timeMs": 1794506939758.219
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 42,
+      "rttMs": 0.498,
+      "seq": 79,
+      "timeMs": 1794506939814.823
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 43,
+      "rttMs": 0.361,
+      "seq": 80,
+      "timeMs": 1794506939864.892
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 44,
+      "rttMs": 0.327,
+      "seq": 81,
+      "timeMs": 1794506939916.497
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 45,
+      "rttMs": 0.34,
+      "seq": 82,
+      "timeMs": 1794506939967.464
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 46,
+      "rttMs": 0.372,
+      "seq": 83,
+      "timeMs": 1794506940018.844
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 47,
+      "rttMs": 1.93,
+      "seq": 84,
+      "timeMs": 1794506940071.926
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 48,
+      "rttMs": 0.323,
+      "seq": 85,
+      "timeMs": 1794506940120.717
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 49,
+      "rttMs": 0.377,
+      "seq": 86,
+      "timeMs": 1794506940172.35
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 50,
+      "rttMs": 0.357,
+      "seq": 87,
+      "timeMs": 1794506940222.511
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 51,
+      "rttMs": 0.378,
+      "seq": 88,
+      "timeMs": 1794506940274.702
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 52,
+      "rttMs": 0.312,
+      "seq": 89,
+      "timeMs": 1794506940326.247
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 53,
+      "rttMs": 0.406,
+      "seq": 90,
+      "timeMs": 1794506940376.789
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 54,
+      "rttMs": 0.349,
+      "seq": 91,
+      "timeMs": 1794506940428.422
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 55,
+      "rttMs": 0.4,
+      "seq": 92,
+      "timeMs": 1794506940480.003
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 56,
+      "rttMs": 0.267,
+      "seq": 93,
+      "timeMs": 1794506940532.917
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 57,
+      "rttMs": 0.307,
+      "seq": 94,
+      "timeMs": 1794506940583.022
+    },
+    { "type": "fault_injected", "link": ["a", "c"], "seq": 95, "timeMs": 1794506940617.534 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 58, "seq": 96, "timeMs": 1794506940687.349 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 59, "seq": 97, "timeMs": 1794506940739.221 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 60, "seq": 98, "timeMs": 1794506940790.006 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 61, "seq": 99, "timeMs": 1794506940841.126 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 62, "seq": 100, "timeMs": 1794506940891.982 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 63, "seq": 101, "timeMs": 1794506940943.179 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 64, "seq": 102, "timeMs": 1794506940994.575 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 65, "seq": 103, "timeMs": 1794506941045.122 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 66, "seq": 104, "timeMs": 1794506941096.097 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 67, "seq": 105, "timeMs": 1794506941147.17 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 68, "seq": 106, "timeMs": 1794506941197.975 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 69, "seq": 107, "timeMs": 1794506941249.122 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 70, "seq": 108, "timeMs": 1794506941300.254 },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 71, "seq": 109, "timeMs": 1794506941352.153 },
+    {
+      "type": "bfd_session_down",
+      "router": "c",
+      "peer": "10.0.2.1",
+      "interface": "c-a",
+      "reason": "control-expired",
+      "seq": 131,
+      "timeMs": 1794506941400
+    },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 72, "seq": 110, "timeMs": 1794506941405.823 },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "c",
+      "neighbor": "10.255.0.1",
+      "address": "10.0.2.1",
+      "interface": "c-a",
+      "from": "Full",
+      "to": "Deleted",
+      "reason": "InactivityTimer",
+      "seq": 132,
+      "timeMs": 1794506941410
+    },
+    {
+      "type": "bfd_session_down",
+      "router": "a",
+      "peer": "10.0.2.2",
+      "interface": "a-c",
+      "reason": "control-expired",
+      "seq": 129,
+      "timeMs": 1794506941431
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.0.1.0/30",
+      "via": "10.0.3.1",
+      "interface": "c-b",
+      "nextHops": [{ "via": "10.0.3.1", "interface": "c-b" }],
+      "protocol": "ospf",
+      "seq": 111,
+      "timeMs": 1794506941448.086
+    },
+    {
+      "type": "ospf_adjacency_change",
+      "router": "a",
+      "neighbor": "10.255.0.3",
+      "address": "10.0.2.2",
+      "interface": "a-c",
+      "from": "Full",
+      "to": "Deleted",
+      "reason": "InactivityTimer",
+      "seq": 130,
+      "timeMs": 1794506941451
+    },
+    {
+      "type": "fib_install",
+      "router": "c",
+      "prefix": "10.255.0.1",
+      "via": "10.0.3.1",
+      "interface": "c-b",
+      "nextHops": [{ "via": "10.0.3.1", "interface": "c-b" }],
+      "protocol": "ospf",
+      "seq": 112,
+      "timeMs": 1794506941454.32
+    },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 73, "seq": 113, "timeMs": 1794506941457.225 },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.0.3.0/30",
+      "via": "10.0.1.2",
+      "interface": "a-b",
+      "nextHops": [{ "via": "10.0.1.2", "interface": "a-b" }],
+      "protocol": "ospf",
+      "seq": 114,
+      "timeMs": 1794506941484.164
+    },
+    {
+      "type": "fib_install",
+      "router": "a",
+      "prefix": "10.255.0.3",
+      "via": "10.0.1.2",
+      "interface": "a-b",
+      "nextHops": [{ "via": "10.0.1.2", "interface": "a-b" }],
+      "protocol": "ospf",
+      "seq": 115,
+      "timeMs": 1794506941484.511
+    },
+    { "type": "probe_lost", "probe": "a-to-c", "sequence": 74, "seq": 116, "timeMs": 1794506941507.485 },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 75,
+      "rttMs": 0.553,
+      "seq": 117,
+      "timeMs": 1794506941508.401
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 76,
+      "rttMs": 0.509,
+      "seq": 118,
+      "timeMs": 1794506941558.747
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 77,
+      "rttMs": 0.564,
+      "seq": 119,
+      "timeMs": 1794506941610.101
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 78,
+      "rttMs": 0.439,
+      "seq": 120,
+      "timeMs": 1794506941660.849
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 79,
+      "rttMs": 0.612,
+      "seq": 121,
+      "timeMs": 1794506941711.94
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 80,
+      "rttMs": 0.472,
+      "seq": 122,
+      "timeMs": 1794506941763.78
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 81,
+      "rttMs": 0.623,
+      "seq": 123,
+      "timeMs": 1794506941815.161
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 82,
+      "rttMs": 0.507,
+      "seq": 124,
+      "timeMs": 1794506941866.561
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 83,
+      "rttMs": 0.48,
+      "seq": 125,
+      "timeMs": 1794506941917.237
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 84,
+      "rttMs": 0.451,
+      "seq": 126,
+      "timeMs": 1794506941971.699
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 85,
+      "rttMs": 0.602,
+      "seq": 127,
+      "timeMs": 1794506942022.837
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 86,
+      "rttMs": 0.45,
+      "seq": 128,
+      "timeMs": 1794506942073.715
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 87,
+      "rttMs": 0.453,
+      "seq": 133,
+      "timeMs": 1794506942124.718
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 88,
+      "rttMs": 0.465,
+      "seq": 134,
+      "timeMs": 1794506942175.789
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 89,
+      "rttMs": 0.564,
+      "seq": 135,
+      "timeMs": 1794506942226.976
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 90,
+      "rttMs": 0.649,
+      "seq": 136,
+      "timeMs": 1794506942277.705
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 91,
+      "rttMs": 0.603,
+      "seq": 137,
+      "timeMs": 1794506942329.547
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 92,
+      "rttMs": 1.32,
+      "seq": 138,
+      "timeMs": 1794506942381.957
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 93,
+      "rttMs": 0.437,
+      "seq": 139,
+      "timeMs": 1794506942433.276
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 94,
+      "rttMs": 0.449,
+      "seq": 140,
+      "timeMs": 1794506942485.339
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 95,
+      "rttMs": 0.618,
+      "seq": 141,
+      "timeMs": 1794506942537.2
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 96,
+      "rttMs": 0.476,
+      "seq": 142,
+      "timeMs": 1794506942588.263
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 97,
+      "rttMs": 1.99,
+      "seq": 143,
+      "timeMs": 1794506942640.958
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 98,
+      "rttMs": 0.545,
+      "seq": 144,
+      "timeMs": 1794506942690.299
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 99,
+      "rttMs": 0.595,
+      "seq": 145,
+      "timeMs": 1794506942741.74
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 100,
+      "rttMs": 1.2,
+      "seq": 146,
+      "timeMs": 1794506942794.529
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 101,
+      "rttMs": 0.688,
+      "seq": 147,
+      "timeMs": 1794506942845.768
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 102,
+      "rttMs": 1.01,
+      "seq": 148,
+      "timeMs": 1794506942897.851
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 103,
+      "rttMs": 1.23,
+      "seq": 149,
+      "timeMs": 1794506942953.061
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 104,
+      "rttMs": 0.467,
+      "seq": 150,
+      "timeMs": 1794506943003.134
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 105,
+      "rttMs": 0.622,
+      "seq": 151,
+      "timeMs": 1794506943054.026
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 106,
+      "rttMs": 0.749,
+      "seq": 152,
+      "timeMs": 1794506943104.908
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 107,
+      "rttMs": 0.669,
+      "seq": 153,
+      "timeMs": 1794506943155.902
+    },
+    {
+      "type": "probe_received",
+      "probe": "a-to-c",
+      "sequence": 108,
+      "rttMs": 0.468,
+      "seq": 154,
+      "timeMs": 1794506943206.202
+    }
+  ]
+}
