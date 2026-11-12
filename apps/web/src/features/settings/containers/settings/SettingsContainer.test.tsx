@@ -73,9 +73,9 @@ describe('SettingsContainer', () => {
     expect(screen.getByText('Nothing: this copy of the game records nothing.')).toBeTruthy()
   })
 
-  it('links the source as "Show me the code", the contributing guide and the issues, with the version', () => {
+  it('links the source as "running code.", the contributing guide and the issues, with the version', () => {
     render(<SettingsContainer section="about" />)
-    expect(screen.getByRole('link', { name: 'Show me the code.' }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: 'running code.' }).getAttribute('href')).toBe(
       'https://github.com/amrshadid/peerfall'
     )
     expect(screen.getByRole('link', { name: 'CONTRIBUTING.md' }).getAttribute('href')).toBe(

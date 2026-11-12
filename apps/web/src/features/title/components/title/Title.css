@@ -22,6 +22,10 @@
 }
 
 .title__tagline blockquote {
+  /* The quote is two sentences: it wraps to two balanced lines beside the key. */
+  max-width: 44rem;
+  margin: 0;
+  text-wrap: balance;
   font-size: 1.625rem;
   font-variation-settings: "wdth" 112;
   font-weight: 600;

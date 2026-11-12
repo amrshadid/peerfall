@@ -106,9 +106,10 @@ describe('TitlePresentation', () => {
     ])
   })
 
-  it('links the source from the quote, as "Show me the code."', () => {
+  it('links the source from the quote, as "running code."', () => {
     title()
-    expect(screen.getByRole('link', { name: 'Show me the code.' }).getAttribute('href')).toBe(
+    expect(screen.getByText('David D. Clark, at the IETF, 1992')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'running code.' }).getAttribute('href')).toBe(
       'https://github.com/amrshadid/peerfall'
     )
   })

@@ -21,7 +21,7 @@ export function AboutSection({ version, storage, links }: AboutSectionProps) {
         <dt>Version</dt>
         <dd>{version}</dd>
         <dt>Your data</dt>
-        <dd>{storage}. No accounts: your progress never leaves this browser (see Privacy).</dd>
+        <dd>{storage}. No accounts: your progress and configuration never leave this browser (see Privacy).</dd>
         <dt>The Machine</dt>
         <dd>
           Real Linux on an emulated PC (v86), running in this browser. Each router is a network namespace with FRR's own
@@ -29,9 +29,9 @@ export function AboutSection({ version, storage, links }: AboutSectionProps) {
         </dd>
         <dt>Source</dt>
         <dd>
-          Talk is cheap.{' '}
+          We believe in: rough consensus and{' '}
           <a href={links.repository} target="_blank" rel="noreferrer">
-            Show me the code.
+            running code.
           </a>{' '}
           The whole game is open on GitHub.
         </dd>

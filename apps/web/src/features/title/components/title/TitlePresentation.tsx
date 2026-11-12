@@ -79,15 +79,15 @@ export function TitlePresentation({
           <Wordmark />
           <div className="title__tagline-row">
             <figure className="title__tagline">
-              <blockquote cite="https://lkml.org/lkml/2000/8/25/132">
+              <blockquote>
                 <p>
-                  Talk is cheap.{' '}
+                  We reject: kings, presidents and voting. We believe in: rough consensus and{' '}
                   <a href={APP_REPOSITORY_URL} target="_blank" rel="noreferrer">
-                    Show me the code.
+                    running code.
                   </a>
                 </p>
               </blockquote>
-              <figcaption>Linus Torvalds, on the linux-kernel list, 2000</figcaption>
+              <figcaption>David D. Clark, at the IETF, 1992</figcaption>
             </figure>
             <p className="title__key">
               Learn FRRouting on a real network.
