@@ -17,6 +17,9 @@ import { duringFault, type FaultWindow } from '#utils/events/index'
 const FULL = 'Full'
 
 function adjacencyChangeOf(reading: RunReading, fault: FaultWindow, context: RunContext): AdjacencyChange | null {
+  if (!context.fault) {
+    return null
+  }
   const [first, second] = context.fault.link
   const ends = new Set([`${first}/${interfaceName(first, second)}`, `${second}/${interfaceName(second, first)}`])
   for (const event of reading.events) {
@@ -85,10 +88,10 @@ export function summariseRun(events: readonly StampedMachineEvent[], context: Ru
     adjacencyChange: adjacencyChangeOf(reading, fault, context),
     routeUpdate,
     firstGoodProbe: firstGoodProbeOf(reading, fault, routeUpdate),
-    outage: outageOf(reading, context.probe.id),
+    outage: outageOf(reading, context.probe?.id),
     repliesBeforeFault: replies.filter((reply) => reply.timeMs <= fault.atMs).length,
     probesLost: reading.events.filter(
-      (event) => event.type === 'probe_lost' && event.probe === context.probe.id && duringFault(fault, event.timeMs)
+      (event) => event.type === 'probe_lost' && event.probe === context.probe?.id && duringFault(fault, event.timeMs)
     ).length,
   }
 }

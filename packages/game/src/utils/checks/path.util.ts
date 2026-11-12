@@ -18,7 +18,7 @@ export function pathBeforeFault(reading: RunReading): RouteHop | null {
 }
 
 /** The route the reply that ended the outage came back over, or `null` while traffic is down. */
-export function pathAfterRecovery(reading: RunReading, probeId: string): RouteHop | null {
+export function pathAfterRecovery(reading: RunReading, probeId: string | undefined): RouteHop | null {
   const backAtMs = outageOf(reading, probeId)?.toMs ?? null
   return backAtMs === null ? null : routeAt(reading.routes, backAtMs + ROUTE_STAMP_TOLERANCE_MS)
 }
@@ -28,7 +28,7 @@ export function pathTaken(
   context: RunContext
 ): { readonly before: RouteHop | null; readonly after: RouteHop | null } {
   const reading = readRun(events, context)
-  return { before: pathBeforeFault(reading), after: pathAfterRecovery(reading, context.probe.id) }
+  return { before: pathBeforeFault(reading), after: pathAfterRecovery(reading, context.probe?.id) }
 }
 
 function beforeFailure(expected: string | undefined, route: RouteHop | null): CheckFailure | null {
@@ -61,7 +61,7 @@ export function checkPath(
 ): Extract<CheckResult, { kind: 'path' }> {
   const reading = readRun(events, context)
   const before = pathBeforeFault(reading)
-  const after = pathAfterRecovery(reading, context.probe.id)
+  const after = pathAfterRecovery(reading, context.probe?.id)
   const failure = beforeFailure(check.before, before) ?? afterFailure(check.after, after, reading.fault !== null)
   return { kind: 'path', passed: failure === null, failure, before, after }
 }

@@ -5,15 +5,23 @@ export {
   type CheckFailure,
   type CheckKind,
   type CheckResult,
+  CONFIG_SOURCES,
+  type ConfigSource,
   DETECTION_EVENTS,
   type Detection,
   type DetectionEvent,
   type MissionVerdict,
+  NO_LIMIT_MS,
   type ObjectiveVerdict,
   type Outage,
+  REACH_PACKETS,
   type Recovery,
   ROUTE_STAMP_TOLERANCE_MS,
   type RouteHop,
+  RUN_CHECK_KINDS,
+  type RunCheckDefinition,
+  STATE_CHECK_KINDS,
+  type StateCheckKind,
 } from '#types/definitions/checks'
 export { DEFAULT_GAME_CONFIG, type GameConfig, type WallClock } from '#types/definitions/config'
 export type { GameContent, GameContentParts } from '#types/definitions/content'

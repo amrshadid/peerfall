@@ -11,7 +11,7 @@ import { duringFault } from '#utils/events/index'
  */
 export function detectionOf(reading: RunReading, context: RunContext): Detection | null {
   const { fault } = reading
-  if (!fault) {
+  if (!fault || !context.fault) {
     return null
   }
   const [first, second] = context.fault.link

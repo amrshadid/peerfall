@@ -11,7 +11,8 @@ import {
   type ObjectiveDefinition,
   PROBE_INTERVAL_MS,
 } from '#types/definitions/mission'
-import { checkInterfaces, readCheck } from '#utils/validate/check.schema'
+import { hasStateChecks, isStateCheck } from '#utils/checks/state-checks.util'
+import { checkInterfaces, checkRouter, readCheck } from '#utils/validate/check.schema'
 import { readNetwork } from '#utils/validate/network.schema'
 
 const MISSION_KEYS = [
@@ -25,6 +26,7 @@ const MISSION_KEYS = [
   'fault',
   'probe',
   'recoveryTargetMs',
+  'restartOnCheck',
   'objectives',
 ]
 
@@ -88,12 +90,18 @@ function readObjective(objective: ObjectReader): ObjectiveDefinition {
 
 const addressOf = (withPrefix: string): string => withPrefix.split('/')[0] ?? ''
 
-/** What the Machine can only do if the mission's parts agree with its network. */
-function reportMismatches(mission: MissionDefinition, issues: Issues): void {
-  const { network, fault, probe } = mission
+/** A router's interfaces: one per link, named after the router it faces, and its loopback. */
+function interfacesOf(network: NetworkDefinition, router: string): string[] {
+  return network.links.flatMap(({ ends: [near, far] }) => {
+    const peer = near.router === router ? far.router : far.router === router ? near.router : null
+    return peer === null ? [] : [interfaceName(router, peer)]
+  })
+}
+
+function reportFaultMismatches(mission: MissionDefinition, fault: FaultDefinition, issues: Issues): void {
   const [first, second] = fault.link
-  if (!network.links.some(({ ends }) => ends[0].router === first && ends[1].router === second)) {
-    const reversed = network.links.some(({ ends }) => ends[0].router === second && ends[1].router === first)
+  if (!mission.network.links.some(({ ends }) => ends[0].router === first && ends[1].router === second)) {
+    const reversed = mission.network.links.some(({ ends }) => ends[0].router === second && ends[1].router === first)
     issues.add(
       'fault.link',
       reversed
@@ -101,6 +109,13 @@ function reportMismatches(mission: MissionDefinition, issues: Issues): void {
         : `the network has no link between "${first}" and "${second}"`
     )
   }
+  if (!mission.probe) {
+    issues.add('fault', 'a fault is measured with a probe: add "probe"')
+  }
+}
+
+function reportProbeMismatches(mission: MissionDefinition, probe: ProbeDefinition, issues: Issues): void {
+  const { network } = mission
   const sender = network.routers.find((router) => router.name === probe.from)
   if (!sender) {
     issues.add('probe.from', `no router named "${probe.from}"`)
@@ -110,10 +125,7 @@ function reportMismatches(mission: MissionDefinition, issues: Issues): void {
   if (!addressesOf(network, sender.name).includes(probe.source)) {
     issues.add('probe.source', `"${probe.source}" is not an address of router "${sender.name}"`)
   }
-  const interfaces = network.links.flatMap(({ ends: [near, far] }) => {
-    const peer = near.router === probe.from ? far.router : far.router === probe.from ? near.router : null
-    return peer === null ? [] : [interfaceName(probe.from, peer)]
-  })
+  const interfaces = interfacesOf(network, probe.from)
   mission.objectives.forEach((objective, at) => {
     for (const { field, name } of checkInterfaces(objective.check)) {
       if (!interfaces.includes(name)) {
@@ -124,6 +136,81 @@ function reportMismatches(mission: MissionDefinition, issues: Issues): void {
       }
     }
   })
+}
+
+/** What a check reads that the mission must then have: a probe, a fault, a recovery target. */
+function reportMissingParts(mission: MissionDefinition, issues: Issues): void {
+  mission.objectives.forEach(({ check }, at) => {
+    const path = `objectives[${at}].check`
+    if (isStateCheck(check)) {
+      return
+    }
+    if (!mission.probe) {
+      issues.add(path, `a "${check.kind}" check reads the mission's probe: add "probe"`)
+    }
+    const afterFault = check.kind !== 'reachable' && (check.kind !== 'path' || check.after !== undefined)
+    if (afterFault && !mission.fault) {
+      issues.add(path, `a "${check.kind}" check reads what happens after the fault: add "fault"`)
+    }
+    const ownLimit = check.kind === 'recovery' ? check.withinMs : check.kind === 'outage' ? check.maxMs : 0
+    if (ownLimit === undefined && mission.recoveryTargetMs === undefined) {
+      issues.add(path, `a "${check.kind}" check with no limit of its own needs "recoveryTargetMs"`)
+    }
+  })
+  if (mission.recoveryTargetMs !== undefined && !mission.fault) {
+    issues.add('recoveryTargetMs', 'only a mission with a fault has a recovery target')
+  }
+}
+
+/** The routers and interfaces the state checks name, and the routers restarted before them. */
+function reportStateMismatches(mission: MissionDefinition, issues: Issues): void {
+  const { network } = mission
+  const exists = (router: string): boolean => network.routers.some(({ name }) => name === router)
+  mission.objectives.forEach(({ check }, at) => {
+    const named = checkRouter(check)
+    if (!named) {
+      return
+    }
+    const path = `objectives[${at}].check`
+    if (!exists(named.name)) {
+      issues.add(`${path}.${named.field}`, `no router named "${named.name}"`)
+      return
+    }
+    if (check.kind === 'route' && check.interface !== undefined) {
+      const interfaces = [...interfacesOf(network, check.router), 'lo']
+      if (!interfaces.includes(check.interface)) {
+        issues.add(
+          `${path}.interface`,
+          `"${check.interface}" is not an interface of router "${check.router}" (expected one of: ${interfaces.join(', ')})`
+        )
+      }
+    }
+  })
+  mission.restartOnCheck?.forEach((router, at) => {
+    const path = `restartOnCheck[${at}]`
+    const found = network.routers.find(({ name }) => name === router)
+    if (!found) {
+      issues.add(path, `no router named "${router}"`)
+    } else if (found.startup !== 'watchfrr' && found.startup !== 'none') {
+      // FRR's init script restarts a router from its `daemons` file, which only these have.
+      issues.add(path, `router "${router}" is restarted by FRR's init script: give it "startup: watchfrr"`)
+    }
+  })
+  if (mission.restartOnCheck !== undefined && !hasStateChecks(mission)) {
+    issues.add('restartOnCheck', 'nothing is checked after the restart: add a check that reads the Machine’s state')
+  }
+}
+
+/** What the Machine can only do if the mission's parts agree with its network. */
+function reportMismatches(mission: MissionDefinition, issues: Issues): void {
+  if (mission.fault) {
+    reportFaultMismatches(mission, mission.fault, issues)
+  }
+  if (mission.probe) {
+    reportProbeMismatches(mission, mission.probe, issues)
+  }
+  reportMissingParts(mission, issues)
+  reportStateMismatches(mission, issues)
 }
 
 function addressesOf(network: NetworkDefinition, router: string): string[] {
@@ -145,7 +232,8 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
   const issues = new Issues()
   const reader = new ObjectReader(raw, '', issues)
   reader.rejectUnknownKeys(MISSION_KEYS)
-  const mission: MissionDefinition = {
+  // Read in the file's order, so the problems are listed in it; a part left out stays out of the mission.
+  const required = {
     id: reader.string('id', KEBAB_ID),
     version: reader.integer('version', 1),
     title: reader.string('title'),
@@ -153,12 +241,21 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     objective: reader.string('objective'),
     prerequisites: reader.stringList('prerequisites', KEBAB_ID),
     network: readNetwork(reader.value('network'), 'network', issues),
-    fault: readFault(reader.object('fault')),
-    probe: readProbe(reader.object('probe')),
-    recoveryTargetMs: reader.integer('recoveryTargetMs', 1),
+  }
+  const fault = reader.optional('fault', (key) => readFault(reader.object(key)))
+  const probe = reader.optional('probe', (key) => readProbe(reader.object(key)))
+  const recoveryTargetMs = reader.optional('recoveryTargetMs', (key) => reader.integer(key, 1))
+  const restartOnCheck = reader.optional('restartOnCheck', (key) => reader.stringList(key))
+  const mission: MissionDefinition = {
+    ...required,
+    ...(fault !== undefined && { fault }),
+    ...(probe !== undefined && { probe }),
+    ...(recoveryTargetMs !== undefined && { recoveryTargetMs }),
+    ...(restartOnCheck !== undefined && { restartOnCheck }),
     objectives: reader.list('objectives', (value, path) => readObjective(new ObjectReader(value, path, issues))),
   }
   reportDuplicates(mission.prerequisites, 'prerequisites', issues)
+  reportDuplicates(mission.restartOnCheck ?? [], 'restartOnCheck', issues)
   reportDuplicates(
     mission.objectives.map((objective) => objective.id),
     'objectives',

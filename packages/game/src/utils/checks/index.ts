@@ -5,3 +5,10 @@ export { checkPath, pathAfterRecovery, pathBeforeFault, pathTaken } from '#utils
 export { checkReachable, repliesBeforeFault } from '#utils/checks/reachability.util'
 export { checkRecovery, recoveryOf, recoveryTimeMs } from '#utils/checks/recovery.util'
 export { type RunReading, readRun, repliesDuringFault } from '#utils/checks/run-reading.util'
+export {
+  evaluateStateCheck,
+  hasRunChecks,
+  hasStateChecks,
+  isStateCheck,
+  stateRequestOf,
+} from '#utils/checks/state-checks.util'

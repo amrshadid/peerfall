@@ -7,6 +7,8 @@ export {
   exampleContent,
   exampleMission,
   FOLLOW_UP_MISSION,
+  STATE_MISSION_YAML,
+  stateMission,
 } from '#test/example-mission'
 export { FakeClock } from '#test/fake-clock'
 export { installTestGame, type TestGame, type TestGameOptions, uninstallTestGame } from '#test/install'

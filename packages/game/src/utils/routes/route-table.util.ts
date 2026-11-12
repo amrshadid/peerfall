@@ -36,6 +36,12 @@ function parsePrefix(prefix: string): Prefix | null {
   return { network, length: bits }
 }
 
+/** Whether two prefixes are the same network, however they are written: `10.255.0.3` is `10.255.0.3/32`. */
+export function samePrefix(first: string, second: string): boolean {
+  const [one, other] = [parsePrefix(first), parsePrefix(second)]
+  return one !== null && other !== null && one.network === other.network && one.length === other.length
+}
+
 function covers(prefix: Prefix, address: number): boolean {
   if (prefix.length === 0) {
     return true
@@ -45,11 +51,14 @@ function covers(prefix: Prefix, address: number): boolean {
   return Math.floor(address / size) === Math.floor(prefix.network / size)
 }
 
-/** The route the kernel picks for `address`: the longest prefix that covers it. */
-function longestMatch(table: ReadonlyMap<string, RouteHop>, address: number): RouteHop | null {
-  let best: RouteHop | null = null
+/** The route the kernel picks for `address` (see `ipv4ToNumber`): the longest prefix that covers it. */
+export function longestPrefixMatch<Route extends { readonly prefix: string }>(
+  routes: Iterable<Route>,
+  address: number
+): Route | null {
+  let best: Route | null = null
   let bestLength = -1
-  for (const route of table.values()) {
+  for (const route of routes) {
     const prefix = parsePrefix(route.prefix)
     if (prefix && prefix.length > bestLength && covers(prefix, address)) {
       best = route
@@ -105,7 +114,7 @@ export function routeChanges(
     } else {
       table.delete(event.prefix)
     }
-    const next = longestMatch(table, address)
+    const next = longestPrefixMatch(table.values(), address)
     if (!sameHop(current, next)) {
       changes.push({ atMs: event.timeMs, route: next })
     }

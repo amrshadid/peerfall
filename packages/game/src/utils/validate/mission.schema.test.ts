@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXAMPLE_CHAPTERS_YAML, EXAMPLE_MISSION_YAML } from '#test/index'
+import { EXAMPLE_CHAPTERS_YAML, EXAMPLE_MISSION_YAML, STATE_MISSION_YAML } from '#test/index'
 import { validateChapters } from '#utils/validate/chapters.schema'
 import { validateMission } from '#utils/validate/mission.schema'
 
@@ -45,7 +45,7 @@ describe('validateMission', () => {
         dificulty: 'hard',
       })
     ).toEqual([
-      'dificulty: unknown field (expected one of: id, version, title, chapter, objective, prerequisites, network, fault, probe, recoveryTargetMs, objectives)',
+      'dificulty: unknown field (expected one of: id, version, title, chapter, objective, prerequisites, network, fault, probe, recoveryTargetMs, restartOnCheck, objectives)',
       'id: expected a kebab-case id like recover-from-failure, got "The Link"',
       'version: expected a number from 1 to 9007199254740991, got 0',
       'title: expected non-empty text, got empty text',
@@ -191,7 +191,7 @@ describe('validateMission', () => {
         ],
       })
       expect(errors).toEqual([
-        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, got "typed"',
+        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, reaches, config, got "typed"',
         'objectives[1].check: expected "before", "after" or both: the interface traffic must leave through',
         'objectives[2].check.within: unknown field (expected one of: kind, via, withinMs)',
         'objectives[2].check.withinMs: expected a number from 1 to 9007199254740991, got 0',
@@ -206,6 +206,135 @@ describe('validateMission', () => {
           'objectives[0].check.after: "a-z" is not an interface of router "a", where the probe starts (expected one of: a-b, a-c)',
         ]
       )
+    })
+  })
+
+  describe('a mission without a fault', () => {
+    const STATE = STATE_MISSION_YAML
+    const [FRR_RUNS, ROUTE_OUT] = STATE.objectives
+    const stateErrors = (fields: Readonly<Record<string, unknown>>): readonly string[] => {
+      const result = validateMission({ ...STATE, ...fields })
+      return result.ok ? [] : result.errors
+    }
+
+    it('needs no fault, probe or recovery target, and reads the state checks with their defaults', () => {
+      const result = validateMission(STATE)
+      expect(result.ok ? [] : result.errors).toEqual([])
+      const mission = result.ok ? result.value : null
+      expect(mission).not.toHaveProperty('fault')
+      expect(mission).not.toHaveProperty('probe')
+      expect(mission).not.toHaveProperty('recoveryTargetMs')
+      expect(mission?.restartOnCheck).toEqual(['a'])
+      expect(mission?.network.routers[0]?.startup).toBe('watchfrr')
+      expect(mission?.objectives.map((objective) => objective.check)).toEqual([
+        { kind: 'daemons', router: 'a', daemons: ['watchfrr', 'zebra', 'mgmtd', 'staticd'] },
+        { kind: 'route', router: 'a', to: '10.0.2.2', protocol: 'static', interface: 'a-b' },
+        { kind: 'route', router: 'c', prefix: '10.0.1.0/30', protocol: 'static' },
+        { kind: 'reaches', from: 'a', to: '10.0.2.2', minReplies: 2 },
+        { kind: 'config', router: 'a', source: 'saved', block: [], line: 'ip route 10.0.2.0/30' },
+      ])
+    })
+
+    it('may still send a probe, and leave a link’s end for the player to address', () => {
+      const [ab, bc] = STATE.network.links
+      const [a, b] = ab.ends
+      expect(
+        stateErrors({
+          probe: { id: 'a-to-c', from: 'a', source: '10.0.1.1', destination: '10.0.2.2', intervalMs: 200 },
+          network: { ...STATE.network, links: [{ ends: [{ ...a, unaddressed: true }, b] }, bc] },
+        })
+      ).toEqual([])
+    })
+
+    it('asks for the probe, the fault and the target a run check reads', () => {
+      const { restartOnCheck: _, ...unrestarted } = STATE
+      const runChecks = validateMission({
+        ...unrestarted,
+        objectives: [
+          { ...FRR_RUNS, check: { kind: 'reachable' } },
+          { ...ROUTE_OUT, check: { kind: 'recovery', via: 'a-b' } },
+        ],
+      })
+      expect(runChecks.ok ? [] : runChecks.errors).toEqual([
+        'objectives[0].check: a "reachable" check reads the mission\'s probe: add "probe"',
+        'objectives[1].check: a "recovery" check reads the mission\'s probe: add "probe"',
+        'objectives[1].check: a "recovery" check reads what happens after the fault: add "fault"',
+        'objectives[1].check: a "recovery" check with no limit of its own needs "recoveryTargetMs"',
+      ])
+      const { probe: __, ...unprobed } = YAML
+      expect(validateMission(unprobed)).toMatchObject({
+        ok: false,
+        errors: expect.arrayContaining(['fault: a fault is measured with a probe: add "probe"']),
+      })
+      expect(stateErrors({ recoveryTargetMs: 2000 })).toEqual([
+        'recoveryTargetMs: only a mission with a fault has a recovery target',
+      ])
+    })
+
+    it('reports a state check’s fields', () => {
+      const withChecks = (...checks: unknown[]) =>
+        stateErrors({ objectives: checks.map((check, at) => ({ ...FRR_RUNS, id: `check-${at}`, check })) })
+      expect(
+        withChecks(
+          { kind: 'daemons', router: 'a', daemons: ['zebra', 'ripd'] },
+          { kind: 'daemons', router: 'a', daemons: [] },
+          { kind: 'route', router: 'a' },
+          { kind: 'route', router: 'a', prefix: '10.0.2.0/30', to: '10.0.2.2' },
+          { kind: 'route', router: 'a', to: '10.0.2.0/30', protocol: 'Static', via: 'b' },
+          { kind: 'reaches', from: 'a', to: 'c', minReplies: 4 },
+          { kind: 'config', router: 'a', source: 'startup', block: 'interface lo', line: '' }
+        )
+      ).toEqual([
+        'objectives[0].check.daemons[1]: expected one of watchfrr, zebra, mgmtd, staticd, ospfd, ospf6d, isisd, bgpd, bfdd, got "ripd"',
+        'objectives[1].check.daemons: expected at least one daemon',
+        'objectives[2].check: expected "prefix" (that exact route) or "to" (the route an address would use), not both',
+        'objectives[3].check: expected "prefix" (that exact route) or "to" (the route an address would use), not both',
+        'objectives[4].check.to: expected an address like 10.0.1.2, got "10.0.2.0/30"',
+        'objectives[4].check.protocol: expected a protocol as ip route names it, like static, got "Static"',
+        'objectives[4].check.via: expected an address like 10.0.1.2, got "b"',
+        'objectives[5].check.to: expected an address like 10.0.1.2, got "c"',
+        'objectives[5].check.minReplies: expected a number from 1 to 3, got 4',
+        'objectives[6].check.source: expected one of running, saved, got "startup"',
+        'objectives[6].check.block: expected a list, got text',
+        'objectives[6].check.line: expected non-empty text, got empty text',
+      ])
+    })
+
+    it('only lets a state check name a router of the network, and an interface of that router', () => {
+      expect(
+        stateErrors({
+          objectives: [
+            { ...FRR_RUNS, check: { kind: 'daemons', router: 'z', daemons: ['zebra'] } },
+            { ...ROUTE_OUT, check: { kind: 'route', router: 'a', to: '10.0.2.2', interface: 'c-b' } },
+            { ...ROUTE_OUT, id: 'own', check: { kind: 'route', router: 'a', to: '10.255.0.1', interface: 'lo' } },
+            { ...ROUTE_OUT, id: 'ping', check: { kind: 'reaches', from: 'd', to: '10.0.2.2' } },
+          ],
+        })
+      ).toEqual([
+        'objectives[0].check.router: no router named "z"',
+        'objectives[1].check.interface: "c-b" is not an interface of router "a" (expected one of: a-b, lo)',
+        'objectives[3].check.from: no router named "d"',
+      ])
+    })
+
+    it('only restarts a router that FRR’s init script started, and only before a state check', () => {
+      expect(stateErrors({ restartOnCheck: ['b', 'z', 'a', 'a'] })).toEqual([
+        'restartOnCheck: "a" appears more than once',
+      ])
+      expect(stateErrors({ restartOnCheck: ['b', 'z'] })).toEqual([
+        'restartOnCheck[0]: router "b" is restarted by FRR\'s init script: give it "startup: watchfrr"',
+        'restartOnCheck[1]: no router named "z"',
+      ])
+      expect(errorsWith({ restartOnCheck: [] })).toEqual([
+        'restartOnCheck: nothing is checked after the restart: add a check that reads the Machine’s state',
+      ])
+    })
+
+    it('reports a startup the Machine does not know', () => {
+      const [a, b, c] = STATE.network.routers
+      expect(stateErrors({ network: { ...STATE.network, routers: [{ ...a, startup: 'systemd' }, b, c] } })).toEqual([
+        'network.routers[0].startup: expected one of direct, watchfrr, none, got "systemd"',
+      ])
     })
   })
 

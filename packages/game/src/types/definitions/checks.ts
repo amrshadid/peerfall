@@ -1,3 +1,4 @@
+import type { KernelRoute } from '@peerfall/machine/types'
 import type { ObjectiveId } from '#types/definitions/mission'
 
 /** The two things FRR can notice a dead neighbor by, under the names of the Machine's events. */
@@ -5,15 +6,64 @@ export const DETECTION_EVENTS = ['bfd_session_down', 'ospf_dead_timer_expired'] 
 
 export type DetectionEvent = (typeof DETECTION_EVENTS)[number]
 
-export const CHECK_KINDS = ['reachable', 'path', 'recovery', 'outage', 'detected-by'] as const
+/** Checks that read a run of the mission's probe and fault from the Machine's events. */
+export const RUN_CHECK_KINDS = ['reachable', 'path', 'recovery', 'outage', 'detected-by'] as const
+
+/** Checks that read the Machine as it is when the player's work is checked: no fault is needed. */
+export const STATE_CHECK_KINDS = ['daemons', 'route', 'reaches', 'config'] as const
+
+export const CHECK_KINDS = [...RUN_CHECK_KINDS, ...STATE_CHECK_KINDS] as const
 
 export type CheckKind = (typeof CHECK_KINDS)[number]
 
+export type StateCheckKind = (typeof STATE_CHECK_KINDS)[number]
+
+/** Where a `config` check looks: what the router runs now, or the frr.conf it would start with. */
+export const CONFIG_SOURCES = ['running', 'saved'] as const
+
+export type ConfigSource = (typeof CONFIG_SOURCES)[number]
+
+/** How many packets a `reaches` check sends. */
+export const REACH_PACKETS = 3
+
 /**
- * A mission's declared `check:` block. Every kind reads outcomes from the Machine's events:
- * none of them can see which command was typed.
+ * A mission's declared `check:` block. Every kind reads outcomes: the Machine's events, or the
+ * Machine's state as root reads it. None of them can see which command was typed.
  */
 export type CheckDefinition =
+  | RunCheckDefinition
+  /** These FRR daemons run on the router and answer vtysh. */
+  | { readonly kind: 'daemons'; readonly router: string; readonly daemons: readonly string[] }
+  /**
+   * The router's kernel has a route: the one for exactly `prefix`, or the one it would use for
+   * the address `to` (the longest prefix that covers it). One of the two is given. `protocol`,
+   * `via` and `interface` narrow it when given: who installed it, its next hop, its way out.
+   */
+  | {
+      readonly kind: 'route'
+      readonly router: string
+      readonly prefix?: string
+      readonly to?: string
+      readonly protocol?: string
+      readonly via?: string
+      readonly interface?: string
+    }
+  /** At least `minReplies` of the few packets sent from the router to the address are answered. */
+  | { readonly kind: 'reaches'; readonly from: string; readonly to: string; readonly minReplies: number }
+  /**
+   * The router's configuration has a line inside the blocks of `block` (outermost first; none for
+   * a top-level line). `line` is the whole line or its first words: `description` matches any
+   * description, `ip address 10.0.1.1/30` only that address.
+   */
+  | {
+      readonly kind: 'config'
+      readonly router: string
+      readonly source: ConfigSource
+      readonly block: readonly string[]
+      readonly line: string
+    }
+
+export type RunCheckDefinition =
   /** The probe gets replies before the fault. */
   | { readonly kind: 'reachable'; readonly minReplies: number }
   /**
@@ -36,6 +86,12 @@ export type CheckDefinition =
  */
 export const ROUTE_STAMP_TOLERANCE_MS = 50
 
+/**
+ * The limit of a `recovery` or `outage` check that states none in a mission with no recovery
+ * target. The schema refuses such a mission; a definition built by hand never passes the check.
+ */
+export const NO_LIMIT_MS = 0
+
 /** Why a check didn't pass, for the app to put into words. */
 export const CHECK_FAILURES = {
   /** The fault hasn't been injected in this run, so there is nothing to judge yet. */
@@ -51,6 +107,14 @@ export const CHECK_FAILURES = {
   /** Neither BFD nor the dead timer reported the fault. */
   notDetected: 'not_detected',
   wrongDetector: 'wrong_detector',
+  /** The Machine's state hasn't been read yet: the player hasn't asked for their work to be checked. */
+  notChecked: 'not_checked',
+  /** A daemon the check names is not running, or does not answer. */
+  daemonsDown: 'daemons_down',
+  /** The kernel has a route there, but not from the protocol, next hop or interface asked for. */
+  wrongRoute: 'wrong_route',
+  /** The configuration does not have the line. */
+  notConfigured: 'not_configured',
 } as const
 
 export type CheckFailure = (typeof CHECK_FAILURES)[keyof typeof CHECK_FAILURES]
@@ -131,6 +195,42 @@ export type CheckResult =
       readonly passed: boolean
       readonly failure: CheckFailure | null
       readonly detection: Detection | null
+    }
+  | {
+      readonly kind: 'daemons'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      /** Every daemon that answered vtysh on the router. */
+      readonly running: readonly string[]
+      /** The daemons the check names that did not. */
+      readonly missing: readonly string[]
+    }
+  | {
+      readonly kind: 'route'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      /** The kernel's route for the prefix or the address; `null` when it has none. */
+      readonly route: KernelRoute | null
+    }
+  | {
+      readonly kind: 'reaches'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly from: string
+      readonly to: string
+      readonly sent: number
+      readonly received: number
+    }
+  | {
+      readonly kind: 'config'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      readonly source: ConfigSource
+      /** The configuration's line that matched, as FRR wrote it; `null` when none did. */
+      readonly found: string | null
     }
 
 export interface ObjectiveVerdict {

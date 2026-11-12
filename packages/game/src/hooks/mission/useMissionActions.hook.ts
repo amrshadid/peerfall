@@ -1,6 +1,6 @@
 import { eventBus } from '@peerfall/core/services'
 import type { ServiceResponse } from '@peerfall/core/types'
-import type { StampedMachineEvent } from '@peerfall/machine/types'
+import type { MachineState, StampedMachineEvent } from '@peerfall/machine/types'
 import { useMemo } from 'react'
 import { getGameConfig, getGameNow } from '#config'
 import type { MissionCompletedPayload, MissionStartedPayload, RunRecordedPayload } from '#events/types'
@@ -30,12 +30,22 @@ export interface UseMissionActionsResult {
   start: (missionId: MissionId) => Promise<ServiceResponse<ActiveMission>>
   /** Incident read: on to the network. */
   begin: () => ServiceResponse<ActiveMission>
-  /** How the events so far would be judged, without keeping anything: for ticking objectives live. */
-  judge: (events: readonly StampedMachineEvent[]) => ServiceResponse<MissionVerdict>
+  /**
+   * How the events so far would be judged, without keeping anything: for ticking objectives live.
+   * `state` is the Machine as it was last read, for the checks that read it; without it they are
+   * `not_checked`.
+   */
+  judge: (events: readonly StampedMachineEvent[], state?: MachineState | null) => ServiceResponse<MissionVerdict>
   /** Keeps a run of the fault on the network as it was given, to compare the repaired run with. Not judged. */
   saveBaseline: (events: readonly StampedMachineEvent[]) => Promise<ServiceResponse<RunSummary>>
-  /** Judges a run, keeps it, and completes the mission the first time it passes. Retries are free. */
-  submitRun: (events: readonly StampedMachineEvent[]) => Promise<ServiceResponse<MissionVerdict>>
+  /**
+   * Judges a run, or the player's work as `state` shows it, keeps it, and completes the mission
+   * the first time it passes. Retries are free.
+   */
+  submitRun: (
+    events: readonly StampedMachineEvent[],
+    state?: MachineState | null
+  ) => Promise<ServiceResponse<MissionVerdict>>
   /** Only once the mission has passed. */
   showDebrief: () => ServiceResponse<ActiveMission>
   leave: () => void
@@ -72,21 +82,25 @@ export function createMissionActions(): UseMissionActionsResult {
     return { success: true, data: moved }
   }
 
-  const judge = (events: readonly StampedMachineEvent[]): ServiceResponse<MissionVerdict> => {
+  const judge = (
+    events: readonly StampedMachineEvent[],
+    state: MachineState | null = null
+  ): ServiceResponse<MissionVerdict> => {
     const { active } = store()
-    return active ? { success: true, data: judgeMission(active.mission, events) } : noActiveMissionError()
+    return active ? { success: true, data: judgeMission(active.mission, events, state) } : noActiveMissionError()
   }
 
   /** Keeps the run in the progress; `null` when no mission is active. */
   const keep = async (
     events: readonly StampedMachineEvent[],
-    role: RunRole
+    role: RunRole,
+    state: MachineState | null = null
   ): Promise<{ summary: RunSummary; verdict: MissionVerdict } | null> => {
     const { active, progress } = store()
     if (!active) return null
     const { mission } = active
     const at = getGameNow()
-    const verdict = judgeMission(mission, events)
+    const verdict = judgeMission(mission, events, state)
     const summary = summariseRun(events, mission)
     const passed = role === 'attempt' && verdict.passed
     const recorded = recordRun(progress, mission.id, {
@@ -131,8 +145,8 @@ export function createMissionActions(): UseMissionActionsResult {
       const kept = await keep(events, 'baseline')
       return kept ? { success: true, data: kept.summary } : noActiveMissionError()
     },
-    submitRun: async (events) => {
-      const kept = await keep(events, 'attempt')
+    submitRun: async (events, state = null) => {
+      const kept = await keep(events, 'attempt', state)
       return kept ? { success: true, data: kept.verdict } : noActiveMissionError()
     },
     showDebrief: () => moveTo('debrief'),

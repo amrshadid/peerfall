@@ -3,6 +3,7 @@ import {
   CHECK_FAILURES,
   type CheckDefinition,
   type CheckResult,
+  NO_LIMIT_MS,
   type Recovery,
   ROUTE_STAMP_TOLERANCE_MS,
 } from '#types/definitions/checks'
@@ -45,7 +46,7 @@ export function checkRecovery(
 ): Extract<CheckResult, { kind: 'recovery' }> {
   const reading = readRun(events, context)
   const recovery = recoveryOf(reading, check.via)
-  const limitMs = check.withinMs ?? context.recoveryTargetMs
+  const limitMs = check.withinMs ?? context.recoveryTargetMs ?? NO_LIMIT_MS
   const result = (failure: Extract<CheckResult, { kind: 'recovery' }>['failure']) =>
     ({ kind: 'recovery', passed: failure === null, failure, recovery, limitMs }) as const
   if (!reading.fault) {

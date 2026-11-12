@@ -21,13 +21,15 @@ export interface RunReading {
   readonly routes: readonly RouteChange[]
 }
 
+/** A mission with no fault never has a fault window; one with no probe has no replies and no path. */
 export function readRun(events: readonly StampedMachineEvent[], context: RunContext): RunReading {
   const ordered = inTimeOrder(events)
+  const { fault, probe } = context
   return {
     events: ordered,
-    fault: faultWindow(ordered, context.fault),
-    replies: probeReplies(ordered, context.probe.id),
-    routes: routeChanges(ordered, context.probe.from, context.probe.destination),
+    fault: fault ? faultWindow(ordered, fault) : null,
+    replies: probe ? probeReplies(ordered, probe.id) : [],
+    routes: probe ? routeChanges(ordered, probe.from, probe.destination) : [],
   }
 }
 

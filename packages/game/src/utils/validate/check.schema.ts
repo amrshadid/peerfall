@@ -1,5 +1,14 @@
+import type { StringRule } from '@peerfall/core/types'
 import type { ObjectReader } from '@peerfall/core/utils'
-import { CHECK_KINDS, type CheckDefinition, type CheckKind, DETECTION_EVENTS } from '#types/definitions/checks'
+import { FRR_BASE_DAEMONS, FRR_DAEMONS, IPV4, IPV4_WITH_PREFIX } from '@peerfall/machine/types'
+import {
+  CHECK_KINDS,
+  type CheckDefinition,
+  type CheckKind,
+  CONFIG_SOURCES,
+  DETECTION_EVENTS,
+  REACH_PACKETS,
+} from '#types/definitions/checks'
 
 /** The fields each kind of check takes besides `kind`; anything else is reported as a typo. */
 const CHECK_FIELDS: Readonly<Record<CheckKind, readonly string[]>> = {
@@ -8,9 +17,44 @@ const CHECK_FIELDS: Readonly<Record<CheckKind, readonly string[]>> = {
   recovery: ['via', 'withinMs'],
   outage: ['maxMs'],
   'detected-by': ['event'],
+  daemons: ['router', 'daemons'],
+  route: ['router', 'prefix', 'to', 'protocol', 'via', 'interface'],
+  reaches: ['from', 'to', 'minReplies'],
+  config: ['router', 'source', 'block', 'line'],
 }
 
-/** Reads an objective's `check:` block. Whether its interfaces exist is the mission's to check. */
+/** Every FRR process a `daemons` check may name: watchfrr, which starts the others, counts as one. */
+const CHECKED_DAEMONS = ['watchfrr', ...FRR_BASE_DAEMONS, ...FRR_DAEMONS] as const
+
+const ADDRESS: StringRule = { pattern: IPV4, expected: 'an address like 10.0.1.2' }
+const PREFIX: StringRule = { pattern: IPV4_WITH_PREFIX, expected: 'a prefix like 10.0.1.0/30' }
+// As `ip route` names who installed a route: kernel, static, ospf…
+const PROTOCOL: StringRule = { pattern: /^[a-z][a-z0-9]*$/, expected: 'a protocol as ip route names it, like static' }
+
+function readRoute(check: ObjectReader): Extract<CheckDefinition, { kind: 'route' }> {
+  const prefix = check.optional('prefix', (key) => check.string(key, PREFIX))
+  const to = check.optional('to', (key) => check.string(key, ADDRESS))
+  const protocol = check.optional('protocol', (key) => check.string(key, PROTOCOL))
+  const via = check.optional('via', (key) => check.string(key, ADDRESS))
+  const name = check.optional('interface', (key) => check.string(key))
+  if ((prefix === undefined) === (to === undefined)) {
+    check.issues.add(
+      check.path,
+      'expected "prefix" (that exact route) or "to" (the route an address would use), not both'
+    )
+  }
+  return {
+    kind: 'route',
+    router: check.string('router'),
+    ...(prefix !== undefined && { prefix }),
+    ...(to !== undefined && { to }),
+    ...(protocol !== undefined && { protocol }),
+    ...(via !== undefined && { via }),
+    ...(name !== undefined && { interface: name }),
+  }
+}
+
+/** Reads an objective's `check:` block. Whether its routers and interfaces exist is the mission's to check. */
 export function readCheck(check: ObjectReader): CheckDefinition {
   const problemsSoFar = check.issues.count
   const kind = check.oneOf('kind', CHECK_KINDS)
@@ -41,10 +85,35 @@ export function readCheck(check: ObjectReader): CheckDefinition {
     }
     case 'detected-by':
       return { kind, event: check.oneOf('event', DETECTION_EVENTS) }
+    case 'daemons': {
+      const daemons = check.oneOfList('daemons', CHECKED_DAEMONS)
+      if (Array.isArray(check.value('daemons')) && daemons.length === 0) {
+        check.issues.add(check.pathOf('daemons'), 'expected at least one daemon')
+      }
+      return { kind, router: check.string('router'), daemons }
+    }
+    case 'route':
+      return readRoute(check)
+    case 'reaches':
+      return {
+        kind,
+        from: check.string('from'),
+        to: check.string('to', ADDRESS),
+        // One packet may be lost to a neighbor being looked up: two of the three is reaching it.
+        minReplies: check.optional('minReplies', (key) => check.integer(key, 1, REACH_PACKETS)) ?? REACH_PACKETS - 1,
+      }
+    case 'config':
+      return {
+        kind,
+        router: check.string('router'),
+        source: check.oneOf('source', CONFIG_SOURCES),
+        block: check.optional('block', (key) => check.stringList(key)) ?? [],
+        line: check.string('line'),
+      }
   }
 }
 
-/** The interfaces a check names, each with the field that names it. */
+/** The interfaces a run check names on the probe's router, each with the field that names it. */
 export function checkInterfaces(check: CheckDefinition): readonly { readonly field: string; readonly name: string }[] {
   if (check.kind === 'path') {
     return [
@@ -53,4 +122,18 @@ export function checkInterfaces(check: CheckDefinition): readonly { readonly fie
     ]
   }
   return check.kind === 'recovery' ? [{ field: 'via', name: check.via }] : []
+}
+
+/** The router a state check reads, with the field that names it; `null` for a run check. */
+export function checkRouter(check: CheckDefinition): { readonly field: string; readonly name: string } | null {
+  switch (check.kind) {
+    case 'daemons':
+    case 'route':
+    case 'config':
+      return { field: 'router', name: check.router }
+    case 'reaches':
+      return { field: 'from', name: check.from }
+    default:
+      return null
+  }
 }

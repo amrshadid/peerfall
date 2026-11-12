@@ -31,7 +31,7 @@ export interface HintDefinition {
 /** An objective needs at least this many hints, so the first is never the answer. */
 export const MIN_HINTS = 2
 
-/** One outcome the player has to bring about, judged from the Machine's events by its `check`. */
+/** One outcome the player has to bring about, judged from the Machine's events or its state by its `check`. */
 export interface ObjectiveDefinition {
   readonly id: ObjectiveId
   readonly text: string
@@ -60,10 +60,17 @@ export interface MissionDefinition {
   /** Missions that must be completed first. */
   readonly prerequisites: readonly MissionId[]
   readonly network: NetworkDefinition
-  readonly fault: FaultDefinition
-  readonly probe: ProbeDefinition
+  /** Left out by a mission that breaks nothing: its checks read the Machine's state instead of a fault run. */
+  readonly fault?: FaultDefinition
+  /** Left out by a mission with no traffic to watch. */
+  readonly probe?: ProbeDefinition
   /** Traffic must be back within this long after the fault, unless a check states its own limit. */
-  readonly recoveryTargetMs: number
+  readonly recoveryTargetMs?: number
+  /**
+   * Routers whose FRR is restarted, from its saved frr.conf, just before the player's work is
+   * checked: what is judged is what survives a restart. Each is started by `watchfrr` or `none`.
+   */
+  readonly restartOnCheck?: readonly string[]
   /** In the order the player meets them. */
   readonly objectives: readonly ObjectiveDefinition[]
 }

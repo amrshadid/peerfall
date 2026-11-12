@@ -1,5 +1,11 @@
 import type { StampedMachineEvent } from '@peerfall/machine/types'
-import { CHECK_FAILURES, type CheckDefinition, type CheckResult, type Outage } from '#types/definitions/checks'
+import {
+  CHECK_FAILURES,
+  type CheckDefinition,
+  type CheckResult,
+  NO_LIMIT_MS,
+  type Outage,
+} from '#types/definitions/checks'
 import type { RunContext } from '#types/definitions/mission'
 import { type RunReading, readRun, repliesDuringFault } from '#utils/checks/run-reading.util'
 
@@ -8,9 +14,9 @@ import { type RunReading, readRun, repliesDuringFault } from '#utils/checks/run-
  * was already on its way when the link broke still arrives, so the gap is not always the first one.
  * While nothing has come back, the outage is open: it has a start and no length yet.
  */
-export function outageOf(reading: RunReading, probeId: string): Outage | null {
+export function outageOf(reading: RunReading, probeId: string | undefined): Outage | null {
   const { fault, replies } = reading
-  if (!fault) {
+  if (!fault || probeId === undefined) {
     return null
   }
   let previous = replies.findLast((reply) => reply.timeMs <= fault.atMs)
@@ -36,7 +42,7 @@ const isProbeEvent = (event: StampedMachineEvent): event is Extract<StampedMachi
   event.type === 'probe_lost' || event.type === 'probe_received'
 
 export function measureOutage(events: readonly StampedMachineEvent[], context: RunContext): Outage | null {
-  return outageOf(readRun(events, context), context.probe.id)
+  return outageOf(readRun(events, context), context.probe?.id)
 }
 
 export function checkOutage(
@@ -45,8 +51,8 @@ export function checkOutage(
   check: Extract<CheckDefinition, { kind: 'outage' }>
 ): Extract<CheckResult, { kind: 'outage' }> {
   const reading = readRun(events, context)
-  const outage = outageOf(reading, context.probe.id)
-  const limitMs = check.maxMs ?? context.recoveryTargetMs
+  const outage = outageOf(reading, context.probe?.id)
+  const limitMs = check.maxMs ?? context.recoveryTargetMs ?? NO_LIMIT_MS
   const result = (failure: Extract<CheckResult, { kind: 'outage' }>['failure']) =>
     ({ kind: 'outage', passed: failure === null, failure, outage, limitMs }) as const
   if (!reading.fault) {

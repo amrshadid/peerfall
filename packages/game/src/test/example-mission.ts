@@ -92,6 +92,71 @@ export const FOLLOW_UP_MISSION: MissionDefinition = exampleMission({
   prerequisites: [EXAMPLE_MISSION.id],
 })
 
+const HINTS = [{ text: 'Look at the router.' }, { text: 'Ask it.', command: 'show running-config' }]
+
+/**
+ * A parsed `mission.yaml` with no fault and no probe, judged from the Machine's state alone:
+ * three routers in a line, a's FRR started by watchfrr, and one check of every state kind.
+ */
+export const STATE_MISSION_YAML = {
+  id: 'two-static-routes',
+  version: 1,
+  title: 'Two Static Routes',
+  chapter: 'recover-from-failure',
+  objective: 'Router a reaches c, and still does after a restart.',
+  prerequisites: [],
+  network: {
+    routers: [
+      { name: 'a', daemons: ['staticd'], config: '', startup: 'watchfrr' },
+      { name: 'b', daemons: ['staticd'], config: '' },
+      { name: 'c', daemons: ['staticd'], config: '' },
+    ],
+    links: [link('a', 'b', 1), link('b', 'c', 2)],
+  },
+  restartOnCheck: ['a'],
+  objectives: [
+    {
+      id: 'frr-runs',
+      text: 'FRR runs on a.',
+      check: { kind: 'daemons', router: 'a', daemons: ['watchfrr', 'zebra', 'mgmtd', 'staticd'] },
+      hints: HINTS,
+    },
+    {
+      id: 'route-out',
+      text: 'a has a static route towards c.',
+      check: { kind: 'route', router: 'a', to: '10.0.2.2', protocol: 'static', interface: 'a-b' },
+      hints: HINTS,
+    },
+    {
+      id: 'route-back',
+      text: 'c has a static route back to a.',
+      check: { kind: 'route', router: 'c', prefix: '10.0.1.0/30', protocol: 'static' },
+      hints: HINTS,
+    },
+    {
+      id: 'reaches-c',
+      text: 'a reaches c.',
+      check: { kind: 'reaches', from: 'a', to: '10.0.2.2' },
+      hints: HINTS,
+    },
+    {
+      id: 'saved',
+      text: 'The route is in a’s saved configuration.',
+      check: { kind: 'config', router: 'a', source: 'saved', line: 'ip route 10.0.2.0/30' },
+      hints: HINTS,
+    },
+  ],
+} as const
+
+/** The state mission with `fields` changed; throws if it doesn't validate. */
+export function stateMission(fields: Readonly<Record<string, unknown>> = {}): MissionDefinition {
+  const result = validateMission({ ...STATE_MISSION_YAML, ...fields })
+  if (!result.ok) {
+    throw new Error(result.errors.join('\n'))
+  }
+  return result.value
+}
+
 /** A parsed `chapters.yaml`: one stage with missions and one still to come. */
 export const EXAMPLE_CHAPTERS_YAML = {
   chapters: [
