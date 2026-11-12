@@ -18,8 +18,7 @@ export function ConsentNoticePresentation({ privacyHref, onAllow, onDecline }: C
       </h2>
       <p id="pf-consent-text" className="pf-consent__text">
         Microsoft Clarity would record how you play: clicks, scrolling, the screens you open, and what you type in the
-        terminal and the editor, which means your router commands and configuration. It uses cookies. Your progress
-        stays in your browser either way.
+        terminal and the editor. It uses cookies. Your progress stays in your browser either way.
       </p>
       <div className="pf-consent__actions">
         <Button size="sm" onClick={onAllow}>

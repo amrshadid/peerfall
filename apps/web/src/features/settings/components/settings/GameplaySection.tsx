@@ -22,7 +22,7 @@ export function GameplaySection({ showAllPanels, onChange, onReplayTours }: Game
           value={showAllPanels ? 'all' : 'mission'}
           onChange={(panels) => onChange({ showAllPanels: panels === 'all' })}
           options={[
-            { value: 'mission', label: 'Open with the mission' },
+            { value: 'mission', label: 'Unlock with the mission' },
             { value: 'all', label: 'Show all panels' },
           ]}
         />

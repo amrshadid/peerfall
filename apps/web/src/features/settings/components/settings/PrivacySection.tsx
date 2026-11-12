@@ -16,8 +16,6 @@ const CONSENT_TEXT: Readonly<Record<ClarityConsent, string>> = {
   denied: 'Not allowed: Clarity is never loaded.',
 }
 
-const STAYS = 'Your saves and progress, and the Machine: its Linux, its routers, their configuration and what they run.'
-
 export function PrivacySection({ clarityConfigured, consent, onChange }: PrivacySectionProps) {
   return (
     <section aria-labelledby="settings-privacy-h" className="settings__section" id="settings-privacy">
@@ -39,8 +37,7 @@ export function PrivacySection({ clarityConfigured, consent, onChange }: Privacy
             <dt>What is recorded</dt>
             <dd>
               Only if you allow it, Microsoft Clarity records how you play: clicks, scrolling, the screens you open, and
-              what you type in the terminal and the editor, which means your router commands and configuration.
-              Microsoft handles that data under its{' '}
+              what you type in the terminal and the editor. Microsoft handles that data under its{' '}
               <a href="https://privacy.microsoft.com/privacystatement" target="_blank" rel="noreferrer">
                 privacy statement
               </a>
@@ -54,7 +51,9 @@ export function PrivacySection({ clarityConfigured, consent, onChange }: Privacy
             <dt>Keep it out</dt>
             <dd>Don't type anything private in the terminal or the editor.</dd>
             <dt>Stays in your browser</dt>
-            <dd>{STAYS}</dd>
+            <dd>
+              Your saves and progress, your configuration files, and the Machine: its disk, its files and what it runs.
+            </dd>
             <dt>Changing your mind</dt>
             <dd>
               Choose above at any time. "Don't allow" stops recording at once, and Clarity isn't loaded on later visits.
@@ -66,7 +65,9 @@ export function PrivacySection({ clarityConfigured, consent, onChange }: Privacy
           <dt>What is recorded</dt>
           <dd>Nothing: this copy of the game records nothing.</dd>
           <dt>Stays in your browser</dt>
-          <dd>{STAYS}</dd>
+          <dd>
+            Your saves and progress, your configuration files, and the Machine: its disk, its files and what it runs.
+          </dd>
         </dl>
       )}
     </section>

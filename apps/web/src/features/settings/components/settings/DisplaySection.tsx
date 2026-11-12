@@ -25,7 +25,7 @@ export function DisplaySection({ values, scales, onChange }: DisplaySectionProps
           ]}
         />
       </SettingRow>
-      <SettingRow label="Text size" description="Scales every screen, the terminal included.">
+      <SettingRow label="Text size" description="Scales every screen, the configuration and the terminal included.">
         <Segmented
           legend="Text size"
           value={String(values.uiScale)}
