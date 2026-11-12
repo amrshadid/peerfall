@@ -1,5 +1,18 @@
 # Peerfall
 
+[![Play](https://img.shields.io/badge/play-peerfall.shadid.dev-1a1a1a?logo=vercel&logoColor=white)](https://peerfall.shadid.dev)
+[![CI](https://github.com/amrshadid/peerfall/actions/workflows/ci.yml/badge.svg)](https://github.com/amrshadid/peerfall/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/amrshadid/peerfall?include_prereleases&sort=semver)](https://github.com/amrshadid/peerfall/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![FRR 10.6](https://img.shields.io/badge/FRR-10.6-black)](docs/ARCHITECTURE.md#the-machine)
+
+**Play it in your browser: [peerfall.shadid.dev](https://peerfall.shadid.dev)** (a
+desktop browser; the first visit downloads the Linux machine).
+
+> We reject: kings, presidents and voting. We believe in: rough consensus and running code.
+>
+> — David D. Clark, at the IETF, 1992
+
 **Learn FRRouting from your first router to operating a multi-protocol network.**
 
 Peerfall is a free, open-source browser game where you build networks, diagnose outages
@@ -16,7 +29,7 @@ including what you type in the terminal and the editor; Settings → Privacy cha
 answer.
 
 Peerfall is in development. The first mission, **The Link That Never Went Down**, is
-being built ([roadmap](docs/ROADMAP.md)).
+playable; the first two stages are being written ([roadmap](docs/ROADMAP.md)).
 
 ## What you'll learn
 
