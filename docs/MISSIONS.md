@@ -42,11 +42,11 @@ mgmtd; `daemons:` adds others (`staticd`, `ospfd`, `ospf6d`, `isisd`, `bgpd`, `b
 (hostname, log file). Two optional fields set up a mission that does not start from
 "everything running and addressed":
 
-| Field                          | What it does                                                                                                                                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| router `startup: watchfrr`     | FRR is started by its own init script (`/usr/lib/frr/frrinit.sh start <router>`): watchfrr starts the daemons, loads `frr.conf` and restarts a daemon that dies, as on an installed router. The script always starts staticd as well. |
-| router `startup: none`         | FRR is installed and configured (`frr.conf`, `daemons`) and nothing runs: starting it is the player's.                                                                                                                               |
-| link end `unaddressed: true`   | The Machine leaves that interface without its address: giving it, in FRR, is the player's. `address` is then the one the mission plans for it.                                                                                       |
+| Field                        | What it does                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| router `startup: watchfrr`   | FRR is started by its own init script (`/usr/lib/frr/frrinit.sh start <router>`): watchfrr starts the daemons, loads `frr.conf` and restarts a daemon that dies, as on an installed router. The script always starts staticd as well. |
+| router `startup: none`       | FRR is installed and configured (`frr.conf`, `daemons`) and nothing runs: starting it is the player's.                                                                                                                                |
+| link end `unaddressed: true` | The Machine leaves that interface without its address: giving it, in FRR, is the player's. `address` is then the one the mission plans for it.                                                                                        |
 
 Left out, a router's daemons are started one by one by the Machine and every link end
 gets its address from Linux.
@@ -58,24 +58,24 @@ families, and a mission may use both.
 
 **Run checks** read the events of a run of the mission's `probe:` and `fault:`.
 
-| Kind          | Fields                    | Passes when                                                                    | Needs                                        |
-| ------------- | ------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
-| `reachable`   | `minReplies` (1)          | the probe got that many replies before the fault                               | `probe`                                      |
-| `path`        | `before`, `after`         | the probe's router forwards to the destination only through that interface     | `probe`; `fault` for `after`                 |
-| `recovery`    | `via`, `withinMs`         | replies are back through `via` within the limit                                | `probe`, `fault`, a limit or `recoveryTargetMs` |
-| `outage`      | `maxMs`                   | the longest gap between replies around the fault is under the limit            | `probe`, `fault`, a limit or `recoveryTargetMs` |
-| `detected-by` | `event`                   | that is what noticed the fault first (`bfd_session_down`, `ospf_dead_timer_expired`) | `probe`, `fault`                             |
+| Kind          | Fields            | Passes when                                                                          | Needs                                           |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `reachable`   | `minReplies` (1)  | the probe got that many replies before the fault                                     | `probe`                                         |
+| `path`        | `before`, `after` | the probe's router forwards to the destination only through that interface           | `probe`; `fault` for `after`                    |
+| `recovery`    | `via`, `withinMs` | replies are back through `via` within the limit                                      | `probe`, `fault`, a limit or `recoveryTargetMs` |
+| `outage`      | `maxMs`           | the longest gap between replies around the fault is under the limit                  | `probe`, `fault`, a limit or `recoveryTargetMs` |
+| `detected-by` | `event`           | that is what noticed the fault first (`bfd_session_down`, `ospf_dead_timer_expired`) | `probe`, `fault`                                |
 
 **State checks** read the Machine as it is when the player asks for their work to be
 checked. The game reads it as root: `vtysh -c 'show daemons'`, `ip route show`,
 `show running-config`, the router's `frr.conf`, and a short `ping`.
 
-| Kind      | Fields                                                           | Passes when                                                                                                                                                             |
-| --------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `daemons` | `router`, `daemons` (list)                                       | each of those FRR daemons (`watchfrr`, `zebra`, `mgmtd`, `staticd`, …) runs on the router and answers vtysh                                                              |
-| `route`   | `router`; `prefix` or `to`; optional `protocol`, `via`, `interface` | the router's kernel has a route for exactly `prefix`, or one that covers the address `to` (the longest match), installed by `protocol` (`kernel` for a connected route, `static`, `ospf`…), with that next hop and that way out |
-| `reaches` | `from`, `to`, `minReplies` (2)                                   | at least that many of three packets from the router to the address are answered                                                                                         |
-| `config`  | `router`, `source` (`running` or `saved`), `block` (list, optional), `line` | the router's running configuration, or its saved `frr.conf`, has `line` inside those blocks (`block: [interface lo]`). `line` is a whole line or its first words         |
+| Kind      | Fields                                                                      | Passes when                                                                                                                                                                                                                     |
+| --------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `daemons` | `router`, `daemons` (list)                                                  | each of those FRR daemons (`watchfrr`, `zebra`, `mgmtd`, `staticd`, …) runs on the router and answers vtysh                                                                                                                     |
+| `route`   | `router`; `prefix` or `to`; optional `protocol`, `via`, `interface`         | the router's kernel has a route for exactly `prefix`, or one that covers the address `to` (the longest match), installed by `protocol` (`kernel` for a connected route, `static`, `ospf`…), with that next hop and that way out |
+| `reaches` | `from`, `to`, `minReplies` (2)                                              | at least that many of three packets from the router to the address are answered                                                                                                                                                 |
+| `config`  | `router`, `source` (`running` or `saved`), `block` (list, optional), `line` | the router's running configuration, or its saved `frr.conf`, has `line` inside those blocks (`block: [interface lo]`). `line` is a whole line or its first words                                                                |
 
 A mission with only state checks needs no `fault:`, no `probe:` and no
 `recoveryTargetMs:`. It may still have a `probe:`, for the player to send. The schema
