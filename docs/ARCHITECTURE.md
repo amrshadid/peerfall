@@ -6,7 +6,11 @@ How the code fits together. The code rules (layout, imports, file names) are in
 ## Constraints
 
 - **Client-side only.** A static site; the network runs in the player's browser. No
-  backend, no account, and it works offline once loaded.
+  backend, no account, and it works offline once loaded. One third-party service:
+  Microsoft Clarity session recordings, loaded only when the build sets `VITE_CLARITY_ID`
+  and the player allows it in the consent notice (or later in Settings → Privacy). Once
+  allowed, Clarity may set its analytics cookies (ad storage stays denied); nothing is
+  masked, and Settings → Privacy says what is recorded.
 - **Real FRR on real Linux.** The Machine is a real Linux kernel running FRR's own
   daemons. What players see is what FRR and the kernel do and print; nothing is
   re-implemented.

@@ -10,7 +10,10 @@ The network is real: a Linux kernel running in an emulated PC
 ([v86](https://github.com/copy/v86)) inside your browser, with one network namespace per
 router and FRR's own daemons in each. You type into the real `vtysh`, the routes are in
 the real Linux forwarding table, and the timeline is read from FRR's own logs. There is
-nothing to install and no server: your progress stays in your browser.
+nothing to install and no server: your progress stays in your browser. The public site
+asks first, and only if you allow it records how you play with Microsoft Clarity,
+including what you type in the terminal and the editor; Settings → Privacy changes your
+answer.
 
 Peerfall is in development. The first mission, **The Link That Never Went Down**, is
 being built ([roadmap](docs/ROADMAP.md)).
