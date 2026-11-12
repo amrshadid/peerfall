@@ -24,7 +24,7 @@ export interface TitlePresentationProps {
   firstMission: FirstMission
   onNewGame: () => void
   contents: readonly ContentsEntry[]
-  /** Fig. 1: the map around "you". */
+  /** Fig. 1: the Peer Map around "you". */
   figure: MapOverviewProps
   newGame: NewGameDialog
   saveText: string
@@ -122,7 +122,7 @@ export function TitlePresentation({
           <figure className="title__drawing">
             <MapOverview {...figure} />
             <figcaption>
-              <span>Fig. 1. The map around you. Select it to open the whole map.</span>
+              <span>Fig. 1. The Peer Map around you. Select it to open the whole map.</span>
               <span>Solid: passed. Hatched: ahead. Red: you.</span>
             </figcaption>
           </figure>

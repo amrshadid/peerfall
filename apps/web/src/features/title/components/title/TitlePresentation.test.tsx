@@ -46,7 +46,7 @@ function title(overrides: Partial<TitlePresentationProps> = {}) {
     onNewGame: vi.fn(),
     contents: [
       { id: 'new', name: 'New game', reference: 'from The Link That Never Went Down', onSelect: vi.fn() },
-      { id: 'map', name: 'Map', reference: 'Stage 4, 0 of 1 passed', href: '#/map' },
+      { id: 'map', name: 'Peer Map', reference: 'Stage 4, 0 of 1 passed', href: '#/map' },
       { id: 'settings', name: 'Settings', reference: 'theme, motion, saves', href: '#/settings' },
     ],
     figure: { chapters: journeyChapters(chapters, game.missions[0] ?? null), href: '#/map' },
@@ -90,7 +90,7 @@ describe('TitlePresentation', () => {
     expect(screen.getByText('In progress · last played just now')).toBeTruthy()
   })
 
-  it('lists New game, the Map and Settings in the contents', () => {
+  it('lists New game, the Peer Map and Settings in the contents', () => {
     title()
     const contents = within(screen.getByRole('navigation', { name: 'Main menu' })).getByRole('list', {
       name: 'Contents',
@@ -101,7 +101,7 @@ describe('TitlePresentation', () => {
         .map((item) => item.textContent)
     ).toEqual([
       'New gamefrom The Link That Never Went Down',
-      'MapStage 4, 0 of 1 passed',
+      'Peer MapStage 4, 0 of 1 passed',
       'Settingstheme, motion, saves',
     ])
   })
@@ -116,7 +116,7 @@ describe('TitlePresentation', () => {
 
   it('shows the map around the player as Fig. 1, linked to the whole map', () => {
     title()
-    expect(screen.getByText(/^Fig\. 1\. The map around you/)).toBeTruthy()
+    expect(screen.getByText(/^Fig\. 1\. The Peer Map around you/)).toBeTruthy()
     expect(document.querySelector('.title__drawing a')?.getAttribute('href')).toBe('#/map')
   })
 

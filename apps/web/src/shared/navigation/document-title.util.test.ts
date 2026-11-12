@@ -11,7 +11,7 @@ const content = loaded.value
 describe('documentTitleOf', () => {
   it.each([
     [{ name: 'title' } as const, 'Peerfall: learn FRRouting on a real network'],
-    [{ name: 'map' } as const, 'Map · Peerfall'],
+    [{ name: 'map' } as const, 'Peer Map · Peerfall'],
     [
       { name: 'mission', missionId: 'the-link-that-never-went-down' } as const,
       'The Link That Never Went Down · Peerfall',
@@ -30,6 +30,6 @@ describe('screenTitleOf', () => {
     const map = { name: 'map' } as const
     expect(screenTitleOf(map, null, true)).toBe('Content errors · Peerfall')
     expect(screenTitleOf(map, content, false)).toBe('Needs a bigger screen · Peerfall')
-    expect(screenTitleOf(map, content, true)).toBe('Map · Peerfall')
+    expect(screenTitleOf(map, content, true)).toBe('Peer Map · Peerfall')
   })
 })

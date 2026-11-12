@@ -52,7 +52,7 @@ export function titleContentsOf({ chapter, firstMission, onNewGame }: TitleConte
     },
     {
       id: 'map',
-      name: 'Map',
+      name: 'Peer Map',
       reference: chapter ? `${stageName(chapter)}, ${passed} of ${chapter.missions.length} passed` : 'the journey',
       href: hrefOf({ name: 'map' }),
     },
@@ -85,7 +85,7 @@ export function continueTargetOf({ mission, chapters, lastPlayed }: ContinueTarg
 export function firstMissionOf(mission: MissionDefinition | undefined): FirstMission {
   return mission
     ? { where: `Start at ${mission.title}.`, step: mission.objective }
-    : { where: 'No mission is written yet.', step: 'The journey is on the map.' }
+    : { where: 'No mission is written yet.', step: 'The journey is on the Peer Map.' }
 }
 
 export function lastPlayedText(now: number, lastSavedAt: number | null): string {

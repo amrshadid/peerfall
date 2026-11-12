@@ -19,7 +19,7 @@ export function documentTitleOf(route: Route, content: LoadedContent): string {
     case 'title':
       return `${APP}: ${TAGLINE}`
     case 'map':
-      return `Map · ${APP}`
+      return `Peer Map · ${APP}`
     case 'mission':
       return `${content.game.mission(route.missionId)?.title ?? 'Mission'} · ${APP}`
     case 'settings':
