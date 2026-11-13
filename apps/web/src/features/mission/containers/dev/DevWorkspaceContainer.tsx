@@ -4,6 +4,8 @@ import { DebriefPresentation } from '@features/debrief/components/debrief'
 import { CodeEditorPresentation } from '@features/editor/components/editor'
 import type { EditorFile } from '@features/editor/types'
 import { GuidePresentation } from '@features/guide/components/guide'
+import { useGuidePace } from '@features/guide/hooks/pace'
+import { BUILD_NOTE, beatsOf, blocksFor, pacedGuideOf } from '@features/guide/utils/story'
 import { MissionScreenPresentation } from '@features/mission/components/layout'
 import type { MissionPanels } from '@features/mission/types'
 import {
@@ -34,9 +36,10 @@ import {
   DEBRIEF_LEARNED,
   DEBRIEF_MEASURES,
 } from '@/test/fixtures/debrief.fixture'
-import { COMMANDS, HINTS, INCIDENT, OBJECTIVES, TASK } from '@/test/fixtures/guide.fixture'
+import { COMMANDS, HINTS, OBJECTIVES } from '@/test/fixtures/guide.fixture'
 import { BASELINE_EVENTS, HEALTHY_EVENTS, REPAIRED_EVENTS } from '@/test/fixtures/machine-events.fixture'
 import { TRIANGLE } from '@/test/fixtures/network.fixture'
+import { STORY } from '@/test/fixtures/story.fixture'
 import { DevTerminalContainer } from './DevTerminalContainer'
 
 const TITLE = 'The Link That Never Went Down'
@@ -55,11 +58,12 @@ const FIRST_STAGE: Stage = {
   repaired: false,
 }
 
-/** What each step of the fixture shows: the panels it has opened and the runs recorded by then. */
+/** What each step of the fixture's story shows: the panels it has opened and the runs recorded by then. */
 const STAGES: readonly Stage[] = [
   FIRST_STAGE,
   { panels: { editor: false, topology: true, timeline: true }, baseline: true, repaired: false },
   { panels: { editor: true, topology: true, timeline: true }, baseline: true, repaired: false },
+  { panels: { editor: true, topology: true, timeline: true }, baseline: true, repaired: true },
   { panels: { editor: true, topology: true, timeline: true }, baseline: true, repaired: true },
 ]
 
@@ -92,6 +96,9 @@ export function DevWorkspaceContainer() {
   const lock = useMachineLock({ phase, detail: null })
 
   const stage = STAGES[step] ?? FIRST_STAGE
+  const storyStep = MISSION_STEPS[step]?.id ?? 'scene'
+  const pace = useGuidePace(`dev#${storyStep}`)
+  const paced = pacedGuideOf(beatsOf(blocksFor(storyStep, STORY)), pace, false)
   const panels = panelsFor(stage.panels, showAll)
   useTourScreen('mission', openPanelsKey(panels))
 
@@ -166,18 +173,21 @@ export function DevWorkspaceContainer() {
           guide: (
             <GuidePresentation
               stepLabel={MISSION_STEPS[step]?.label ?? ''}
-              incident={INCIDENT}
-              task={TASK}
+              reviewNote={null}
+              beats={paced.beats}
+              onContinue={paced.onContinue}
+              showObjectives={step > 0}
               objectives={OBJECTIVES.map((objective) => ({
                 ...objective,
                 passed: objective.passed || stage.repaired,
                 observed: stage.baseline ? (objective.observed ?? null) : null,
               }))}
-              commands={COMMANDS.map((entry) => ({
+              chips={COMMANDS.map((entry) => ({
                 ...entry,
                 onRun: () => {
                   terminal.current?.write(entry.command)
                   terminal.current?.focus()
+                  pace.advance()
                 },
               }))}
               hints={{
@@ -185,7 +195,9 @@ export function DevWorkspaceContainer() {
                 left: HINTS.length - hints,
                 onReveal: hints < HINTS.length ? revealHint : null,
               }}
-              note="Nothing is timed. Retry as often as you like."
+              codex={[{ id: 'bfd', term: 'BFD', href: hrefOf({ name: 'codex', cardId: 'bfd' }) }]}
+              codexOpen={step >= 3}
+              note={step === 2 ? BUILD_NOTE : null}
               actions={[
                 {
                   id: 'next',

@@ -1,17 +1,8 @@
-import type { ObjectiveHints } from '@peerfall/game/hooks'
-import type { MissionDefinition, MissionVerdict, ObjectiveDefinition } from '@peerfall/game/types'
+import type { MissionDefinition } from '@peerfall/game/types'
 import type { MissionRunPhase } from '@peerfall/missions/hooks'
 import { describe, expect, it } from 'vitest'
 import { TRIANGLE } from '@/test/fixtures/network.fixture'
-import {
-  hasStateChecks,
-  hintsLeftOf,
-  hintTargetOf,
-  revealedHintsOf,
-  runStatusOf,
-  taskOf,
-  waitReasonOf,
-} from './run-text.util'
+import { hasStateChecks, runStatusOf, waitReasonOf } from './run-text.util'
 
 const NAMES = { from: 'a', destination: '10.255.0.3', target: 'c' }
 const MISSION = {
@@ -23,36 +14,6 @@ const MISSION = {
 const QUIET: Pick<MissionDefinition, 'fault' | 'probe' | 'network'> = {
   network: { routers: [{ name: 'a', daemons: ['staticd'], config: '' }], links: [] },
 }
-
-const objective = (id: string): ObjectiveDefinition => ({
-  id,
-  text: id,
-  check: { kind: 'reachable', minReplies: 3 },
-  hints: [{ text: 'look' }, { text: 'type this', command: 'show ip route' }],
-})
-
-const hints = (id: string, revealed: number): ObjectiveHints => {
-  const definition = objective(id)
-  return {
-    objective: definition,
-    revealed: definition.hints.slice(0, revealed),
-    left: definition.hints.length - revealed,
-  }
-}
-
-const verdict = (passed: readonly string[], open: readonly string[]): MissionVerdict => ({
-  passed: open.length === 0,
-  objectives: [
-    ...passed.map((objectiveId) => ({
-      objectiveId,
-      result: { kind: 'reachable', passed: true, failure: null, replies: 3 } as const,
-    })),
-    ...open.map((objectiveId) => ({
-      objectiveId,
-      result: { kind: 'reachable', passed: false, failure: 'unreachable', replies: 0 } as const,
-    })),
-  ],
-})
 
 describe('runStatusOf', () => {
   it('says the routers are starting, and for how long, while the network is built', () => {
@@ -116,26 +77,10 @@ describe('checking', () => {
   })
 
   it('knows a mission that has to be asked for its check from one judged by its fault run', () => {
-    const hints = [{ text: 'look' }, { text: 'type' }]
-    const route = { id: 'r', text: 'r', check: { kind: 'route', router: 'a', to: '10.255.0.3' }, hints } as const
-    const recovery = { id: 'f', text: 'f', check: { kind: 'recovery', via: 'a-b' }, hints } as const
+    const route = { id: 'r', text: 'r', check: { kind: 'route', router: 'a', to: '10.255.0.3' } } as const
+    const recovery = { id: 'f', text: 'f', check: { kind: 'recovery', via: 'a-b' } } as const
     expect(hasStateChecks({ objectives: [recovery, route] })).toBe(true)
     expect(hasStateChecks({ objectives: [recovery] })).toBe(false)
-  })
-})
-
-describe('taskOf', () => {
-  it('uses the mission’s own names in every step of the loop', () => {
-    expect(taskOf('inspect', MISSION, NAMES).join(' ')).toContain('makes the link a–c drop every packet')
-    expect(taskOf('inspect', MISSION, NAMES).join(' ')).toContain('from a to c')
-    expect(taskOf('predict', MISSION, NAMES).join(' ')).toContain('say what you expect')
-    expect(taskOf('apply', MISSION, NAMES)).toHaveLength(1)
-    expect(taskOf('verify', MISSION, NAMES).join(' ')).toContain('read the debrief')
-  })
-
-  it('asks for no baseline in a mission that breaks nothing', () => {
-    expect(taskOf('inspect', QUIET, NAMES).join(' ')).not.toContain('Break the link')
-    expect(taskOf('inspect', QUIET, NAMES).join(' ')).toContain('work through the objectives below')
   })
 })
 
@@ -144,28 +89,5 @@ describe('runStatusOf without OSPF', () => {
     expect(runStatusOf('settling', [], QUIET, NAMES)?.text).toBe(
       'The routers are up and FRR is settling on each of them. A few seconds more.'
     )
-  })
-})
-
-describe('hints', () => {
-  const entries = [hints('first', 1), hints('second', 0), hints('third', 2)]
-
-  it('aims the next hint at the first objective still open', () => {
-    expect(hintTargetOf(entries, null)).toBe('first')
-    expect(hintTargetOf(entries, verdict(['first'], ['second', 'third']))).toBe('second')
-  })
-
-  it('falls back to any objective with a hint left, and to none when all are shown', () => {
-    expect(hintTargetOf(entries, verdict(['first', 'second'], ['third']))).toBe('first')
-    expect(hintTargetOf([hints('third', 2)], null)).toBeNull()
-  })
-
-  it('lists the hints shown, each with its objective, its stage and its command', () => {
-    expect(revealedHintsOf(entries)).toEqual([
-      { stage: 'objective 1, step 1 of 2', text: 'look', command: null },
-      { stage: 'objective 3, step 1 of 2', text: 'look', command: null },
-      { stage: 'objective 3, step 2 of 2', text: 'type this', command: 'show ip route' },
-    ])
-    expect(hintsLeftOf(entries)).toBe(3)
   })
 })

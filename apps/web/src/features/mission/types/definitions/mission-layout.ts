@@ -86,15 +86,21 @@ export interface MissionLayoutModel {
   readonly status: MissionStatusBar
 }
 
-/** The mission loop's steps, as docs/MISSIONS.md names them. */
-export type MissionStepId = 'inspect' | 'predict' | 'apply' | 'verify'
+/** The steps of a mission's story: Scene, See it, Build it, Watch it, Debrief. */
+export type MissionStepId = 'scene' | 'see' | 'build' | 'watch' | 'debrief'
 
 /** What the mission's container hands to the slots that need its run. */
 export interface MissionRunView<Run> {
   /** The mission's run on the Machine: its phase, its last verdict, and how to start one. */
   readonly run: Run
+  /** The step the player is on. */
   readonly step: MissionStepId
-  readonly stepLabel: string
+  /** A done step looked back at; null on the current one. */
+  readonly reviewing: MissionStepId | null
+  /** Goes on to the next step of the story; null where the story moves on by itself or ends. */
+  readonly onNext: (() => void) | null
+  /** Jumps from the scene straight to Build it; null on other steps. */
+  readonly onSkipToBuild: (() => void) | null
   /** Asks before the network goes back to how the mission found it. */
   readonly onStartOver: () => void
 }

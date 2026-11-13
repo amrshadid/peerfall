@@ -1,32 +1,30 @@
-import { MarkdownText } from '@features/guide/components/markdown'
-import type { GuideIncident, GuidePresentationProps } from '@features/guide/types'
-import { Button, Checklist, Icon, InlineText, SectionHead } from '@shared/components/ui'
-import { useState } from 'react'
+import type { GuidePresentationProps } from '@features/guide/types'
+import { speakerOf } from '@features/guide/utils/story'
+import { Button, Checklist, Chip, Dialogue, Icon, InlineText, SectionHead } from '@shared/components/ui'
+import { Fragment, useState } from 'react'
 import './Guide.css'
+import { GuidePredict } from './GuidePredict'
+import { speakerWithPortraits } from './Portraits'
 
-// A hint that appears after a click is brought into view; the ones already there are left alone.
-const showHint = (hint: HTMLLIElement | null) => hint?.scrollIntoView?.({ block: 'nearest' })
+// A beat or hint that appears after the player acts is brought into view; the first one is already there.
+const showNewest = (element: HTMLElement | null) => element?.scrollIntoView?.({ block: 'nearest' })
 
-function IncidentBody({ incident }: { incident: GuideIncident }) {
-  return incident.content ? (
-    <MarkdownText blocks={incident.content} topLevel={3} />
-  ) : (
-    incident.body.map((paragraph) => (
-      <p key={paragraph}>
-        <InlineText text={paragraph} />
-      </p>
-    ))
-  )
-}
-
-/** The incident, what to do about it now, the objectives the network has to meet, and the hints asked for. */
+/**
+ * The mission's story told in beats: text up to each pause, the rest once the player finishes a
+ * command or presses Continue. Then the objectives, ticking by themselves, the commands to try,
+ * the hints asked for and the Codex cards the mission files.
+ */
 export function GuidePresentation({
   stepLabel,
-  incident,
-  task,
+  reviewNote,
+  beats,
+  onContinue,
+  showObjectives,
   objectives,
-  commands,
+  chips,
   hints,
+  codex,
+  codexOpen,
   note,
   actions,
   status = null,
@@ -38,38 +36,76 @@ export function GuidePresentation({
     hints.onCopy?.(command)
     setCopied(command)
   }
+  const codexChips = (
+    <p className="guide__chips">
+      {codex.map((card) => (
+        <Chip key={card.id} href={card.href}>
+          {card.term}
+        </Chip>
+      ))}
+    </p>
+  )
 
   return (
     <div className="guide">
       <div className="guide__body">
-        <article className="guide__incident" aria-labelledby="guide-incident-h">
-          <p className="guide__kicker">Incident report</p>
-          <h2 id="guide-incident-h">{incident.title}</h2>
-          {incident.source !== null && <p className="guide__source">{incident.source}</p>}
-          {incident.folded ? (
-            <details className="guide__report">
-              <summary>Read the report again</summary>
-              <IncidentBody incident={incident} />
-            </details>
-          ) : (
-            <IncidentBody incident={incident} />
-          )}
-        </article>
+        {reviewNote !== null && <p className="guide__review">{reviewNote}</p>}
 
-        {task.length > 0 && (
-          <section aria-labelledby="guide-task-h" className="guide__task">
-            <SectionHead id="guide-task-h" aside="this step">
-              {stepLabel}
-            </SectionHead>
-            {task.map((paragraph) => (
-              <p key={paragraph}>
-                <InlineText text={paragraph} />
-              </p>
-            ))}
-          </section>
+        {beats.map((beat, index) => {
+          const current = index === beats.length - 1
+          return (
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: beats of a step never reorder
+              key={index}
+              ref={current && index > 0 ? showNewest : undefined}
+              className={current ? 'guide__beat' : 'guide__beat guide__beat--read'}
+            >
+              {beat.map((part, at) => {
+                if (part.kind === 'code') {
+                  return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: parts of a beat never reorder
+                    <pre key={at} className="guide__code">
+                      {part.text}
+                    </pre>
+                  )
+                }
+                if (part.kind === 'heading') {
+                  return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: parts of a beat never reorder
+                    <h3 key={at} className="guide__heading">
+                      {part.text}
+                    </h3>
+                  )
+                }
+                return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: parts of a beat never reorder
+                  <Fragment key={at}>
+                    <Dialogue
+                      label={`${stepLabel}: transcript`}
+                      // Only the step's first lines introduce the speaker.
+                      continued={
+                        index > 0 ||
+                        beat.findIndex((other) => other.kind === 'lines' || other.kind === 'predict') !== at
+                      }
+                      lines={(part.kind === 'predict' ? [part.line] : part.lines).map((line) => ({
+                        speaker: speakerWithPortraits(speakerOf(line.speaker)),
+                        text: <InlineText text={line.text} />,
+                      }))}
+                    />
+                    {part.kind === 'predict' && <GuidePredict predict={part} />}
+                  </Fragment>
+                )
+              })}
+            </div>
+          )
+        })}
+        {onContinue !== null && (
+          <button type="button" className="guide__continue" onClick={onContinue}>
+            Continue
+          </button>
         )}
 
-        {objectives.length > 0 && (
+        {showObjectives && objectives.length > 0 && (
           <section aria-labelledby="guide-objectives-h">
             <SectionHead id="guide-objectives-h" aside={`${passing} of ${objectives.length} met`}>
               Objectives
@@ -83,39 +119,39 @@ export function GuidePresentation({
                     <InlineText text={objective.text} />
                     {objective.passed && objective.evidence && (
                       <span className="guide__evidence">
-                        <InlineText text={`Last run: ${objective.evidence}`} />
+                        <InlineText text={`Seen: ${objective.evidence}`} />
                       </span>
                     )}
                   </>
                 ),
                 ...(objective.passed || !objective.observed
                   ? {}
-                  : { why: <InlineText text={`Last run: ${objective.observed}`} /> }),
+                  : { why: <InlineText text={`Seen: ${objective.observed}`} /> }),
               }))}
             />
           </section>
         )}
 
-        {commands.length > 0 && (
+        {chips.length > 0 && (
           <section aria-labelledby="guide-commands-h" className="guide__commands">
             <SectionHead id="guide-commands-h">Commands to try</SectionHead>
             <ul>
-              {commands.map((entry) => (
-                <li key={entry.command}>
-                  {entry.onRun ? (
+              {chips.map((chip) => (
+                <li key={chip.command}>
+                  {chip.onRun ? (
                     <button
                       type="button"
                       className="guide__command"
-                      onClick={entry.onRun}
-                      aria-label={`Type ${entry.command} into the terminal`}
+                      onClick={chip.onRun}
+                      aria-label={`Run ${chip.command} in the terminal`}
                     >
-                      {entry.command}
+                      {chip.command}
                     </button>
                   ) : (
-                    <code className="guide__command guide__command--name">{entry.command}</code>
+                    <code className="guide__command guide__command--name">{chip.command}</code>
                   )}
                   <span>
-                    <InlineText text={entry.explain} />
+                    <InlineText text={chip.explain} />
                   </span>
                 </li>
               ))}
@@ -126,17 +162,14 @@ export function GuidePresentation({
         {(hints.revealed.length > 0 || hints.left > 0) && (
           <section aria-labelledby="guide-hints-h" className="guide__hints">
             <SectionHead id="guide-hints-h" aside={hints.left > 0 ? `${hints.left} left` : 'none left'}>
-              Hints
+              zebra's hints
             </SectionHead>
             {hints.revealed.length > 0 ? (
               <ol aria-live="polite">
                 {hints.revealed.map((hint, index) => (
-                  <li
-                    key={`${hint.stage}-${hint.text}`}
-                    ref={index === hints.revealed.length - 1 && index > 0 ? showHint : undefined}
-                  >
-                    <span className="guide__hint-stage">
-                      Hint {index + 1}, {hint.stage}
+                  <li key={hint.tier} ref={index === hints.revealed.length - 1 && index > 0 ? showNewest : undefined}>
+                    <span className="guide__hint-tier">
+                      Hint {index + 1}, {hint.tier}
                     </span>
                     <InlineText text={hint.text} />
                     {hint.command && (
@@ -158,7 +191,7 @@ export function GuidePresentation({
                 ))}
               </ol>
             ) : (
-              <p className="guide__hints-none">Hints come in stages: where to look first, a specific command last.</p>
+              <p className="guide__hints-none">Three hints: a nudge first, then the concept, then the spot.</p>
             )}
             {hints.left > 0 && hints.onReveal !== null && (
               <button type="button" className="guide__more" onClick={hints.onReveal}>
@@ -174,6 +207,24 @@ export function GuidePresentation({
         )}
 
         {note !== null && <p className="guide__note">{note}</p>}
+
+        {codex.length > 0 && !codexOpen && (
+          <details className="guide__codex-fold">
+            <summary>
+              Codex{' '}
+              <span>
+                {codex.length} card{codex.length === 1 ? '' : 's'} for this mission
+              </span>
+            </summary>
+            {codexChips}
+          </details>
+        )}
+        {codex.length > 0 && codexOpen && (
+          <section aria-labelledby="guide-codex-h">
+            <SectionHead id="guide-codex-h">Codex</SectionHead>
+            {codexChips}
+          </section>
+        )}
       </div>
 
       {status !== null && (

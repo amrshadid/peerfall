@@ -14,6 +14,17 @@ describe('parseRoute', () => {
     expect(parseRoute('#/dev/workspace')).toEqual({ name: 'dev-workspace' })
   })
 
+  it('opens a Codex card over a mission, and the Codex at a card, a chapter or a page', () => {
+    expect(parseRoute('#/mission/m?card=vtysh')).toEqual({ name: 'mission', missionId: 'm', card: 'vtysh' })
+    expect(parseRoute('#/codex')).toEqual({ name: 'codex', cardId: null })
+    expect(parseRoute('#/codex/the-rib')).toEqual({ name: 'codex', cardId: 'the-rib' })
+    expect(parseRoute('#/codex/chapter/first-router')).toEqual({ name: 'codex', cardId: null, chapter: 'first-router' })
+    expect(parseRoute('#/codex/field-guide')).toEqual({ name: 'codex', cardId: null, page: 'field-guide' })
+    expect(parseRoute('#/codex/glossary')).toEqual({ name: 'codex', cardId: null, page: 'glossary' })
+    expect(parseRoute('#/codex/chapter')).toEqual({ name: 'not-found' })
+    expect(parseRoute('#/codex/a/b')).toEqual({ name: 'not-found' })
+  })
+
   it('sends anything else to not-found', () => {
     expect(parseRoute('#/mission')).toEqual({ name: 'not-found' })
     expect(parseRoute('#/settings/sound')).toEqual({ name: 'not-found' })
@@ -31,6 +42,11 @@ describe('hrefOf', () => {
       { name: 'title' },
       { name: 'map' },
       { name: 'mission', missionId: 'the link/that never' },
+      { name: 'mission', missionId: 'm', card: 'show ip route' },
+      { name: 'codex', cardId: null },
+      { name: 'codex', cardId: 'the rib' },
+      { name: 'codex', cardId: null, chapter: 'first-router' },
+      { name: 'codex', cardId: null, page: 'field-guide' },
       { name: 'settings', section: null },
       { name: 'settings', section: 'privacy' },
       { name: 'dev-workspace' },

@@ -1,0 +1,38 @@
+.codex-card__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+.codex-card__try {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--soft);
+  padding-right: 0.375rem;
+}
+
+.pf-man-page__body > div:has(.codex-card__try) {
+  align-items: center;
+}
+
+.codex-card__try pre {
+  flex: 1;
+  min-width: 0;
+}
+
+.codex-card__list {
+  list-style: square;
+  padding-left: 1.125rem;
+}
+
+.codex-card__number {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.codex-card__blank {
+  color: var(--ink-2);
+  font-style: italic;
+}

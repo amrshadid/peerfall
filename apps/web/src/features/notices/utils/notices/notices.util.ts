@@ -6,6 +6,20 @@ export function missionPassedNotice(missionId: string, title: string, at: number
   return { id: `complete-${missionId}-${at}`, kind: 'complete', kicker: 'Mission passed', text: title, sticky: false }
 }
 
+/** The mission's Codex cards, filed with its pass; null when it files none. */
+export function codexFiledNotice(missionId: string, terms: readonly string[], at: number): Notice | null {
+  if (terms.length === 0) {
+    return null
+  }
+  return {
+    id: `codex-${missionId}-${at}`,
+    kind: 'info',
+    kicker: terms.length === 1 ? 'Card filed in the Codex' : `${terms.length} cards filed in the Codex`,
+    text: terms.join(', '),
+    sticky: false,
+  }
+}
+
 export function saveFailedNotice(at: number): Notice {
   return {
     id: `save-failed-${at}`,

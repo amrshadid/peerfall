@@ -51,9 +51,9 @@ describe('stopStateOf', () => {
     expect(done && stopStateOf(done)).toBe(NOTE_STATES.helped)
     expect(done && stopStateOf({ ...done, state: 'clean' })).toBe(NOTE_STATES.clean)
     expect(done && stopStateOf({ ...done, state: 'done' })).toBe(NOTE_STATES.done)
-    expect(stopStateOf(plannedStopOf({ id: 'first-router', stage: 1, title: 'First router', summary: '' }))).toBe(
-      NOTE_STATES.planned
-    )
+    expect(
+      stopStateOf(plannedStopOf({ id: 'first-router', stage: 1, title: 'First router', summary: '', outcomes: [] }))
+    ).toBe(NOTE_STATES.planned)
     expect(open && stopStateOf(open)).toBe(NOTE_STATES.available)
     expect(open && stopStateOf({ ...open, here: true })).toBe(NOTE_STATES.next)
     expect(stopStateOf({ ...second, needs: [] })).toBe(NOTE_STATES.lockedUnknown)

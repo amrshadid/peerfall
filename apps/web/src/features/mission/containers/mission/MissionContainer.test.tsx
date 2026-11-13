@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   baseline: null as unknown,
   start: vi.fn(),
   begin: vi.fn(),
+  showDebrief: vi.fn(),
   leave: vi.fn(),
   startOver: vi.fn(),
   missionRunOf: vi.fn(),
@@ -21,9 +22,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@peerfall/game/hooks', () => ({
   useProgress: () => ({ isOpen: true }),
-  useMissionActions: () => ({ start: mocks.start, begin: mocks.begin, leave: mocks.leave }),
+  useMissionActions: () => ({
+    start: mocks.start,
+    begin: mocks.begin,
+    showDebrief: mocks.showDebrief,
+    leave: mocks.leave,
+  }),
   useActiveMission: () => mocks.active,
-  useHints: () => ({ objectives: [], reveal: vi.fn() }),
+  useHints: () => ({ revealed: [], left: 3, next: 'nudge', reveal: vi.fn() }),
   useRunComparison: () => ({ baseline: mocks.baseline, repaired: null, comparison: null }),
 }))
 vi.mock('@peerfall/missions/hooks', () => ({
@@ -132,7 +138,7 @@ describe('MissionContainer', () => {
     expect(mocks.missionRunOf).toHaveBeenLastCalledWith(null)
   })
 
-  it('reads the incident beside the map and the terminal, with the Machine already starting', () => {
+  it('tells the scene beside the map and the terminal, with the Machine already starting', () => {
     mocks.active = activeAt('incident')
     const { lastView } = mount()
     expect(screen.getByRole('heading', { level: 1, name: 'The Link That Never Went Down' })).toBeTruthy()
@@ -143,22 +149,32 @@ describe('MissionContainer', () => {
     expect(screen.queryByText('timeline slot')).toBeNull()
     expect(screen.queryByText('editor slot')).toBeNull()
     expect(mocks.missionRunOf).toHaveBeenLastCalledWith(mission)
-    expect(lastView()).toMatchObject({ step: 'inspect', stepLabel: 'Inspect' })
+    expect(lastView()).toMatchObject({ step: 'scene', reviewing: null })
+    act(() => lastView()?.onNext?.())
+    expect(mocks.begin).toHaveBeenCalledOnce()
   })
 
-  it('opens the timeline with the network, and the editor once a baseline is recorded', () => {
+  it('opens the timeline with See it and the editor with Build it', () => {
     mocks.active = activeAt('play')
     mocks.run = runAt('ready')
-    const first = mount()
+    const { lastView } = mount()
+    expect(lastView()?.step).toBe('see')
     expect(screen.getByText('timeline slot')).toBeTruthy()
     expect(screen.queryByText('editor slot')).toBeNull()
-    first.unmount()
-
-    mocks.baseline = { role: 'baseline' }
-    const { lastView } = mount()
+    act(() => lastView()?.onNext?.())
+    expect(lastView()?.step).toBe('build')
+    expect(lastView()?.onNext).toBeNull()
     expect(screen.getByText('editor slot')).toBeTruthy()
-    expect(lastView()?.step).toBe('predict')
     expect(screen.getByText('router a')).toBeTruthy()
+  })
+
+  it('moves Build it on to Watch it by itself once every objective is met live', () => {
+    mocks.active = activeAt('play')
+    mocks.run = { ...runAt('ready'), verdict: { passed: true, objectives: [] } }
+    const { lastView } = mount()
+    expect(lastView()?.step).toBe('watch')
+    act(() => lastView()?.onNext?.())
+    expect(mocks.showDebrief).toHaveBeenCalledOnce()
   })
 
   it('lays the debrief over the workspace once the player opens it', () => {

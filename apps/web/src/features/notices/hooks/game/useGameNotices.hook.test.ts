@@ -35,6 +35,22 @@ describe('useGameNotices', () => {
     ])
   })
 
+  it('says which Codex cards the pass filed, after the pass', () => {
+    renderHook(() =>
+      useGameNotices(
+        (id) => id,
+        () => ['vtysh', 'watchfrr']
+      )
+    )
+    bus.listeners.get('GAME_MISSION_COMPLETED')?.({
+      payload: { missionId: 'the-silent-router', attempts: 1, hintsUsed: 0, at: 3 },
+    })
+    expect(useAppStore.getState().notices).toMatchObject([
+      { kind: 'complete' },
+      { kind: 'info', kicker: '2 cards filed in the Codex', text: 'vtysh, watchfrr' },
+    ])
+  })
+
   it('keeps a failed save on the status line until it is dismissed', () => {
     renderHook(() => useGameNotices((id) => id))
     bus.listeners.get('GAME_SAVE_FAILED')?.({ payload: { issue: 'write_failed', at: 9 } })

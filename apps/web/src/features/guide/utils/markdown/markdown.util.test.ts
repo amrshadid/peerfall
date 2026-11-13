@@ -1,4 +1,3 @@
-import { DEBRIEF_FIXTURE, INCIDENT_FIXTURE } from '@features/mission/utils/fixtures'
 import { describe, expect, it } from 'vitest'
 import { parseMarkdown, titledMarkdown } from './markdown.util'
 
@@ -61,16 +60,5 @@ describe('titledMarkdown', () => {
       blocks: [{ kind: 'paragraph', text: 'Body.' }],
     })
     expect(titledMarkdown('Body only.').title).toBeNull()
-  })
-
-  it('reads a mission’s texts: an incident of paragraphs, a debrief that ends in the commands to repeat', () => {
-    const incident = titledMarkdown(INCIDENT_FIXTURE)
-    const debrief = titledMarkdown(DEBRIEF_FIXTURE)
-    expect(incident.title).toBe('Incident: traffic to c stopped for half a minute')
-    expect(incident.blocks.every((block) => block.kind === 'paragraph')).toBe(true)
-    expect(debrief.title).toBe('Debrief: the link that never went down')
-    expect(debrief.blocks.filter((block) => block.kind === 'heading')).toHaveLength(3)
-    const code = debrief.blocks.find((block) => block.kind === 'code')
-    expect(code?.text).toContain(' interface a-c\n  ip ospf bfd')
   })
 })

@@ -2,8 +2,9 @@ import { useCheatSheet, usePanelSizes, useShowAllPanels } from '@app/store'
 import { useSaveStatus } from '@features/chrome/hooks/save'
 import { useScreenChrome } from '@features/chrome/hooks/screen'
 import { useContent } from '@features/content/hooks/content'
-import { hintsLeftOf, hintTargetOf, waitReasonOf } from '@features/guide/utils/run'
+import { waitReasonOf } from '@features/guide/utils/run'
 import { MissionScreenPresentation } from '@features/mission/components/layout'
+import { useStoryStep } from '@features/mission/hooks/story'
 import type { MissionRunView } from '@features/mission/types'
 import {
   MACHINE_STATUS,
@@ -12,11 +13,11 @@ import {
   openPanelsKey,
   panelsFor,
 } from '@features/mission/utils/layout'
-import { missionStepIndex, panelsOfStep } from '@features/mission/utils/steps'
+import { panelsOfStep } from '@features/mission/utils/steps'
 import { useShortcut } from '@features/shortcuts/hooks/keys'
 import { formatSeconds } from '@features/timeline/utils/runs'
 import { useTourScreen } from '@features/tour/hooks/tour'
-import { useActiveMission, useHints, useMissionActions, useProgress, useRunComparison } from '@peerfall/game/hooks'
+import { useActiveMission, useHints, useMissionActions, useProgress } from '@peerfall/game/hooks'
 import { useMachineStatus, useRouterSelection } from '@peerfall/machine/hooks'
 import { type UseMissionRunResult, useMissionRun } from '@peerfall/missions/hooks'
 import { APP_MANUAL } from '@shared/constants/app'
@@ -65,7 +66,7 @@ export function MissionContainer({
   const content = useContent()
   const definition = content.game.mission(missionId) ?? null
   const { isOpen } = useProgress()
-  const { start, begin, leave } = useMissionActions()
+  const { start, begin, showDebrief, leave } = useMissionActions()
   const active = useActiveMission()
   const [refused, setRefused] = useState<string | null>(null)
 
@@ -88,7 +89,6 @@ export function MissionContainer({
 
   const mission = active.mission?.id === missionId ? active.mission : null
   const run = useMissionRun(mission)
-  const { baseline, repaired } = useRunComparison()
   const hints = useHints()
   const machine = useMachineStatus()
   const lock = useMachineLock(machine)
@@ -102,24 +102,36 @@ export function MissionContainer({
   const [restartOpen, setRestartOpen] = useState(false)
 
   const phase = active.phase ?? 'incident'
-  const stepIndex = missionStepIndex({
-    phase,
-    hasBaseline: baseline !== null,
-    hasAttempt: repaired !== null,
-    completed: active.isCompleted,
-  })
-  const panels = panelsFor(panelsOfStep(phase, stepIndex, mission?.fault !== undefined), showAll)
+  const verdict = run.verdict ?? active.verdict
+  // Every reset of the network starts the story's played steps over.
+  const [runs, setRuns] = useState(0)
+  const story = useStoryStep({ key: `${missionId}#${runs}`, phase, passed: run.verdict?.passed ?? false })
+  const { step } = story
+  const stepIndex = MISSION_STEPS.findIndex((entry) => entry.id === step)
+  const panels = panelsFor(panelsOfStep(step, mission?.fault !== undefined), showAll)
   // Each new step can open a panel, which gets its own tour stop once.
   useTourScreen('mission', mission ? openPanelsKey(panels) : 'opening')
 
-  const verdict = run.verdict ?? active.verdict
-  const hintTarget = phase === 'play' ? hintTargetOf(hints.objectives, verdict) : null
+  const onNext =
+    step === 'scene'
+      ? () => {
+          begin()
+          story.goTo('see')
+        }
+      : step === 'see'
+        ? () => story.goTo('build')
+        : step === 'watch'
+          ? showDebrief
+          : null
+  useShortcut('next-step', () => onNext?.(), mission !== null && onNext !== null)
+  // Hints are for the steps played on the network, one at a time: a nudge, the concept, the spot.
+  const hintEnabled = phase === 'play' && hints.next !== null
   const revealHint = () => {
-    if (hintTarget !== null) {
-      void hints.reveal(hintTarget)
+    if (hintEnabled) {
+      void hints.reveal()
     }
   }
-  useShortcut('hint', revealHint, mission !== null && hintTarget !== null)
+  useShortcut('hint', revealHint, mission !== null && hintEnabled)
   useShortcut('focus-guide', () => focusPanel(MISSION_PANEL_IDS.guide), mission !== null)
   useShortcut('focus-editor', () => focusPanel(MISSION_PANEL_IDS.editor), mission !== null && panels.editor)
   useShortcut('focus-network', () => focusPanel(MISSION_PANEL_IDS.network), mission !== null)
@@ -141,14 +153,20 @@ export function MissionContainer({
 
   const chapter = content.game.chapters.find((candidate) => candidate.id === mission.chapter)
   const number = content.game.missionsIn(mission.chapter).findIndex((candidate) => candidate.id === mission.id) + 1
-  const step = MISSION_STEPS[Math.min(stepIndex, MISSION_STEPS.length - 1)] ?? MISSION_STEPS[0]
   const view: MissionView = {
     run,
-    step: step?.id ?? 'inspect',
-    stepLabel: step?.label ?? '',
+    step,
+    reviewing: story.reviewing,
+    onNext,
+    onSkipToBuild:
+      step === 'scene'
+        ? () => {
+            begin()
+            story.goTo('build')
+          }
+        : null,
     onStartOver: () => setRestartOpen(true),
   }
-  const target = hints.objectives.find((entry) => entry.objective.id === hintTarget)
   const lastRunFellShort = verdict !== null && !verdict.passed
 
   return (
@@ -165,17 +183,18 @@ export function MissionContainer({
           subheading: chapter ? `Stage ${chapter.stage} · ${chapter.title}` : '',
           steps: MISSION_STEPS,
           currentIndex: stepIndex,
-          reviewing: null,
-          // The only way back from the debrief is to the network; the loop's steps are not replayed.
-          onReview: () => {
-            if (phase === 'debrief') {
-              begin()
+          reviewing: story.reviewing,
+          // A done step is looked at again in the Guide; progress is kept.
+          onReview: (stepId) => {
+            const target = MISSION_STEPS.find((entry) => entry.id === stepId)
+            if (target && MISSION_STEPS.indexOf(target) < stepIndex) {
+              story.toggleReview(target.id)
             }
           },
-          hintsLeft: hintsLeftOf(hints.objectives),
-          // Offered, never pushed: after a run fell short and before this objective's first hint.
-          hintOffered: lastRunFellShort && target !== undefined && target.revealed.length === 0,
-          hintEnabled: hintTarget !== null,
+          hintsLeft: hints.left,
+          // Offered, never pushed: in Build it, after a run fell short and before the first hint.
+          hintOffered: step === 'build' && lastRunFellShort && hints.revealed.length === 0,
+          hintEnabled,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
           onRestart: () => setRestartOpen(true),
@@ -209,6 +228,7 @@ export function MissionContainer({
           unavailable: phase === 'incident' ? 'The mission has not begun yet.' : waitReasonOf(run.phase),
           onConfirm: () => {
             setRestartOpen(false)
+            setRuns((count) => count + 1)
             void run.startOver()
           },
           onCancel: () => setRestartOpen(false),

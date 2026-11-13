@@ -60,14 +60,10 @@ describe('DebriefContainer', () => {
     expect(screen.getByText('Outage after your change')).toBeTruthy()
   })
 
-  it('prints the mission’s own debrief, its sections and the commands to repeat on real FRR', () => {
-    const { container } = render(<DebriefContainer />)
-    expect(screen.getByRole('heading', { level: 3, name: 'Why the interfaces stayed up' })).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 3, name: 'Try it on real FRR' })).toBeTruthy()
-    expect(screen.getByText('BFD').tagName).toBe('B')
-    expect(container.querySelector('pre')?.textContent).toContain('show ip ospf neighbor\n')
-    // The file's own title would only repeat the mission's name.
-    expect(screen.queryByText('Debrief: the link that never went down')).toBeNull()
+  it('names the terms the mission filed in the Codex; the story tells the debrief in the Guide', () => {
+    render(<DebriefContainer />)
+    expect(screen.getByText('BFD')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Try it on real FRR' })).toBeNull()
   })
 
   it('goes back to the network on Play it again', () => {

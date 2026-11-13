@@ -1,6 +1,6 @@
 import type { Route } from '@shared/navigation'
 import type { ReactNode } from 'react'
-import { DevWorkspacePage, MapPage, MissionPage, NotFoundPage, SettingsPage, TitlePage } from '@/pages'
+import { CodexPage, DevWorkspacePage, MapPage, MissionPage, NotFoundPage, SettingsPage, TitlePage } from '@/pages'
 
 /** Every area page is a lazy chunk fetched when first visited. */
 export function routeElement(route: Route, devRoutes: boolean): ReactNode {
@@ -11,7 +11,9 @@ export function routeElement(route: Route, devRoutes: boolean): ReactNode {
       return <MapPage />
     case 'mission':
       // A new key per mission: the Machine and the mission's state start fresh.
-      return <MissionPage key={route.missionId} missionId={route.missionId} />
+      return <MissionPage key={route.missionId} missionId={route.missionId} cardId={route.card ?? null} />
+    case 'codex':
+      return <CodexPage cardId={route.cardId} chapter={route.chapter ?? null} page={route.page ?? null} />
     case 'settings':
       return <SettingsPage section={route.section} />
     case 'dev-workspace':
