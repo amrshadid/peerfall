@@ -76,7 +76,7 @@ export const TOUR_STOPS: Readonly<Record<TourScreen, readonly TourStop[]>> = {
       id: 'mission:guide',
       selector: '#mission-guide',
       title: 'The Guide',
-      text: 'The incident report, the objectives to meet and the hints you ask for. Objectives tick by what the network does.',
+      text: 'The story, a step at a time: it goes on when you finish a command or press Continue. Objectives tick by themselves.',
       side: 'right',
     },
     {
