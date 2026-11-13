@@ -1,5 +1,5 @@
 import type { Validated } from '@peerfall/core/types'
-import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
+import type { MissionDefinition } from '@peerfall/game/types'
 import { stateRequestOf } from '@peerfall/game/utils'
 import type {
   LinkDefinition,
@@ -282,22 +282,6 @@ export async function liveRead(
   }
   // The events as they are once the read is back: anything the read itself caused is in them.
   return { ok: true, events: [...machine.events()], state: state.value }
-}
-
-/**
- * The play-through's verdict so far: an objective met by any judging stays met, as in Kernelfall,
- * since a mission's objectives can be shown one command at a time. The others are the latest's.
- */
-export function keepMet(previous: MissionVerdict | null, latest: MissionVerdict): MissionVerdict {
-  if (previous === null) {
-    return latest
-  }
-  const objectives = latest.objectives.map(
-    (objective) =>
-      previous.objectives.find(({ objectiveId, result }) => objectiveId === objective.objectiveId && result.passed) ??
-      objective
-  )
-  return { passed: objectives.length > 0 && objectives.every(({ result }) => result.passed), objectives }
 }
 
 /** Routing changes so far, for knowing when a configuration has finished reaching the kernel. */

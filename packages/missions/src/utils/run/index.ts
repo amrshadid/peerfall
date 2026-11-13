@@ -5,7 +5,6 @@ export {
   DEFAULT_RUN_TIMINGS,
   faultLink,
   faultRun,
-  keepMet,
   liveRead,
   type MissionMachine,
   networkConverged,

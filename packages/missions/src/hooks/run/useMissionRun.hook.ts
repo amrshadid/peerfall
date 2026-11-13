@@ -18,7 +18,6 @@ import { createLiveJudge } from '#utils/run/live-judge.util'
 import {
   checkRun,
   faultRun,
-  keepMet,
   liveRead,
   type MissionMachine,
   probeRun,
@@ -129,16 +128,21 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
   // state as that read left them, instead of un-ticking them.
   const checked = useRef<MachineState | null>(null)
 
-  /** Keeps a judging's verdict, objectives already met staying met; records the attempt the first time all are. */
+  /**
+   * Judges what the Machine showed, objectives already met staying met, and records the attempt
+   * (which completes the mission) the first time every objective is met.
+   */
   const keep = useCallback(
-    async (latest: MissionVerdict, events: readonly StampedMachineEvent[], state: MachineState | null) => {
-      const merged = keepMet(verdictNow.current, latest)
-      setVerdict(merged)
-      if (merged.passed && !submitted.current) {
+    async (events: readonly StampedMachineEvent[], state: MachineState | null) => {
+      const previous = verdictNow.current
+      const judged = actions.judge(events, state, previous)
+      if (!judged.success || !judged.data) {
+        return
+      }
+      setVerdict(judged.data)
+      if (judged.data.passed && !submitted.current) {
         submitted.current = true
-        // The game judges this read by itself: it completes the mission when the read alone
-        // shows every objective, which holds once the last one is met on top of the others.
-        await actions.submitRun(events, state)
+        await actions.submitRun(events, state, previous)
       }
     },
     [actions, setVerdict]
@@ -158,12 +162,9 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
           return
         }
         checked.current = outcome.state
-        const latest = actions.judge(outcome.events, outcome.state)
-        if (latest.success && latest.data) {
-          await keep(latest.data, outcome.events, outcome.state)
-        }
+        await keep(outcome.events, outcome.state)
       }),
-    [actions, keep]
+    [keep]
   )
 
   useCommandFinished(() => live.request(AFTER_COMMAND_MS))
@@ -231,14 +232,11 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
         setErrors(outcome.errors)
         return
       }
-      const judged = actions.judge(outcome.events, checked.current)
-      if (judged.success && judged.data) {
-        await keep(judged.data, outcome.events, checked.current)
-      }
+      await keep(outcome.events, checked.current)
     } finally {
       setBusy(null)
     }
-  }, [mission, settled, actions, keep, setBusy])
+  }, [mission, settled, keep, setBusy])
 
   const checkWork = useCallback(async () => {
     if (!mission || busyNow.current !== null || !settled) {
@@ -256,14 +254,11 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
       }
       setErrors([])
       checked.current = outcome.state
-      const judged = actions.judge(outcome.events, outcome.state)
-      if (judged.success && judged.data) {
-        await keep(judged.data, outcome.events, outcome.state)
-      }
+      await keep(outcome.events, outcome.state)
     } finally {
       setBusy(null)
     }
-  }, [mission, settled, actions, keep, setBusy])
+  }, [mission, settled, keep, setBusy])
 
   const runFault = useCallback(async () => {
     if (!mission || busyNow.current !== null || !settled) {
@@ -279,17 +274,20 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
         setErrors(outcome.errors)
         return
       }
-      const judged = actions.judge(outcome.events, checked.current)
-      if (!judged.success || !judged.data) {
+      const previous = verdictNow.current
+      // This run by itself: whether it is the baseline does not depend on the runs before it.
+      const alone = actions.judge(outcome.events, checked.current)
+      const merged = actions.judge(outcome.events, checked.current, previous)
+      if (!alone.success || !alone.data || !merged.success || !merged.data) {
         return
       }
-      setVerdict(keepMet(verdictNow.current, judged.data))
+      setVerdict(merged.data)
       // The first run that falls short is the "before": what the repaired run is compared with.
       // Each fault run is a player's action, so each one is kept, as before live judging.
-      if (!judged.data.passed && baseline === null) {
+      if (!alone.data.passed && baseline === null) {
         await actions.saveBaseline(outcome.events)
       } else {
-        await actions.submitRun(outcome.events, checked.current)
+        await actions.submitRun(outcome.events, checked.current, previous)
       }
     } finally {
       setBusy(null)

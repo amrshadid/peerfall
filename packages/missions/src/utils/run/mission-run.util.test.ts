@@ -1,8 +1,7 @@
-import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
-import { judgeMission } from '@peerfall/game/utils'
+import type { MissionDefinition } from '@peerfall/game/types'
 import type { MachineState, StateRequest } from '@peerfall/machine/types'
 import { describe, expect, it } from 'vitest'
-import { keepMet, liveRead, type MissionMachine } from '#utils/run/mission-run.util'
+import { liveRead, type MissionMachine } from '#utils/run/mission-run.util'
 
 const OBJECTIVES: MissionDefinition['objectives'] = [
   {
@@ -23,29 +22,6 @@ const config = (described: boolean) =>
 const state = (running: boolean, saved: boolean): MachineState => ({
   routers: { a: { runningConfig: config(running), savedConfig: config(saved) } },
   pings: [],
-})
-const judge = (read: MachineState): MissionVerdict =>
-  judgeMission({ objectives: OBJECTIVES } as unknown as MissionDefinition, [], read)
-const met = (verdict: MissionVerdict) =>
-  Object.fromEntries(verdict.objectives.map(({ objectiveId, result }) => [objectiveId, result.passed]))
-
-describe('objectives judged live', () => {
-  it('stay met once met, while the others follow the latest read', () => {
-    const first = keepMet(null, judge(state(true, false)))
-    expect(met(first)).toEqual({ described: true, saved: false })
-    // The description was taken out of the running configuration: it was met, and stays met.
-    const second = keepMet(first, judge(state(false, false)))
-    expect(met(second)).toEqual({ described: true, saved: false })
-    expect(second.passed).toBe(false)
-    const third = keepMet(second, judge(state(false, true)))
-    expect(met(third)).toEqual({ described: true, saved: true })
-    expect(third.passed).toBe(true)
-  })
-
-  it('start from the latest read when nothing was met before', () => {
-    const latest = judge(state(false, true))
-    expect(keepMet(null, latest)).toBe(latest)
-  })
 })
 
 describe('a live read', () => {
