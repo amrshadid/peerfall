@@ -26,7 +26,7 @@ export function MissionPage({ missionId, cardId }: MissionPageProps) {
         terminal={<TerminalContainer />}
         topology={<TopologyContainer />}
         timeline={<TimelineContainer />}
-        debrief={<DebriefContainer />}
+        debrief={({ onPlayAgain }) => <DebriefContainer onPlayAgain={onPlayAgain} />}
         notFound={<NotFoundContainer />}
       />
       <CodexModalContainer missionId={missionId} cardId={cardId} />

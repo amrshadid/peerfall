@@ -82,8 +82,8 @@ export const TOUR_STOPS: Readonly<Record<TourScreen, readonly TourStop[]>> = {
     {
       id: 'mission:steps',
       selector: '.pf-rail',
-      title: 'The steps',
-      text: 'Inspect the network, predict what a change will do, apply it, then verify. Finished steps stay clickable.',
+      title: 'Five steps',
+      text: 'Scene, See it, Build it, Watch it, Debrief. Finished steps stay clickable so you can look again.',
       side: 'bottom',
     },
     {

@@ -86,7 +86,7 @@ function runAt(phase: UseMissionRunResult['phase']): UseMissionRunResult {
 
 function mount(missionId = MISSION_ID) {
   const views: MissionView[] = []
-  const rendered = render(
+  const screenOf = () => (
     <MissionContainer
       missionId={missionId}
       guide={(view) => {
@@ -97,11 +97,16 @@ function mount(missionId = MISSION_ID) {
       terminal={<p>terminal slot</p>}
       topology={<p>topology slot</p>}
       timeline={<p>timeline slot</p>}
-      debrief={<p>debrief slot</p>}
+      debrief={(view) => (
+        <button type="button" onClick={view.onPlayAgain}>
+          debrief slot
+        </button>
+      )}
       notFound={<p>no such page</p>}
     />
   )
-  return { ...rendered, lastView: () => views.at(-1) }
+  const rendered = render(screenOf())
+  return { ...rendered, lastView: () => views.at(-1), redraw: () => rendered.rerender(screenOf()) }
 }
 
 beforeAll(() => {
@@ -149,7 +154,7 @@ describe('MissionContainer', () => {
         terminal={<p>terminal slot</p>}
         topology={<p>topology slot</p>}
         timeline={<p>timeline slot</p>}
-        debrief={<p>debrief slot</p>}
+        debrief={() => <p>debrief slot</p>}
         notFound={<p>no such page</p>}
       />
     )
@@ -254,5 +259,52 @@ describe('MissionContainer', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText(/A run is being measured\./)).toBeTruthy()
     expect(within(dialog).queryByRole('button', { name: 'Start again' })).toBeNull()
+  })
+
+  it('starts over during the scene too, where commands already change the routers', () => {
+    mocks.active = activeAt('incident')
+    mocks.run = runAt('ready')
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText(/back to how the mission found it\./)).toBeTruthy()
+    expect(within(dialog).queryByText(/healthy/)).toBeNull()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Start again' }))
+    expect(mocks.startOver).toHaveBeenCalledTimes(1)
+  })
+
+  it('ends a look back at a done step from the Guide', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    const { lastView } = mount()
+    act(() => lastView()?.onNext?.())
+    fireEvent.click(screen.getByRole('button', { name: /See it/ }))
+    expect(lastView()).toMatchObject({ step: 'build', reviewing: 'see' })
+    act(() => lastView()?.onEndReview())
+    expect(lastView()).toMatchObject({ step: 'build', reviewing: null })
+  })
+
+  it('plays again from See it on a reset network, with the saved verdict set aside', () => {
+    mocks.active = { ...activeAt('debrief', true), verdict: { passed: true, objectives: [] } }
+    mocks.run = runAt('ready')
+    const { lastView, redraw } = mount()
+    expect(lastView()?.startedOver).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'debrief slot' }))
+    expect(mocks.startOver).toHaveBeenCalledTimes(1)
+    expect(mocks.begin).toHaveBeenCalledTimes(1)
+    // The game moves to play once begin() is called.
+    mocks.active = { ...activeAt('play', true), verdict: { passed: true, objectives: [] } }
+    redraw()
+    expect(lastView()).toMatchObject({ step: 'see', reviewing: null, startedOver: true })
+  })
+
+  it('asks Play it again to wait while a run is being measured', () => {
+    mocks.active = activeAt('debrief', true)
+    mocks.run = runAt('faulted')
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'debrief slot' }))
+    expect(mocks.startOver).not.toHaveBeenCalled()
+    expect(mocks.begin).not.toHaveBeenCalled()
+    expect(within(screen.getByRole('dialog')).getByText(/A run is being measured\./)).toBeTruthy()
   })
 })

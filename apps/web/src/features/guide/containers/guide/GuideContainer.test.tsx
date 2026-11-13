@@ -48,7 +48,10 @@ const active = (phase: UseActiveMissionResult['phase']): UseActiveMissionResult 
   isCompleted: false,
 })
 
-function mount(step: GuideStepId, overrides: { reviewing?: GuideStepId | null; onNext?: () => void } = {}) {
+function mount(
+  step: GuideStepId,
+  overrides: { reviewing?: GuideStepId | null; onNext?: () => void; startedOver?: boolean } = {}
+) {
   const props = {
     run: {
       phase: 'ready',
@@ -59,6 +62,8 @@ function mount(step: GuideStepId, overrides: { reviewing?: GuideStepId | null; o
     } as Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>,
     step,
     reviewing: overrides.reviewing ?? null,
+    onEndReview: vi.fn(),
+    startedOver: overrides.startedOver ?? false,
     onNext: overrides.onNext ?? null,
     onSkipToBuild: step === 'scene' ? vi.fn() : null,
     onStartOver: vi.fn(),
@@ -147,6 +152,31 @@ describe('GuideContainer', () => {
     mount('build', { reviewing: 'see' })
     expect(screen.getByText('Looking again at See it. Your progress is kept.')).toBeTruthy()
     expect(screen.getByText(/a router knows its own networks/)).toBeTruthy()
+  })
+
+  it('offers only the way back to the current step while looking back', () => {
+    const props = mount('build', { reviewing: 'see' })
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Build it' }))
+    expect(props.onEndReview).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: 'Send probe' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Start over' })).toBeNull()
+  })
+
+  it('reads objectives from the run alone once the network was started over', () => {
+    mocks.active = {
+      ...active('play'),
+      verdict: {
+        passed: false,
+        objectives: [
+          { objectiveId: 'reaches-c', result: { kind: 'reachable', passed: true, failure: null, replies: 60 } },
+        ],
+      },
+    }
+    mount('see')
+    expect(screen.getByText('1 of 3 met')).toBeTruthy()
+    cleanup()
+    mount('see', { startedOver: true })
+    expect(screen.getByText('0 of 3 met')).toBeTruthy()
   })
 
   it('ends the story with the debrief and the real world', () => {

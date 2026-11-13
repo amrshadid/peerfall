@@ -37,8 +37,8 @@ export interface MissionContainerProps {
   terminal: ReactNode
   topology: ReactNode
   timeline: ReactNode
-  /** Laid over the workspace once the player opens it. */
-  debrief: ReactNode
+  /** Laid over the workspace once the player opens it; handed the run for its Play it again. */
+  debrief: (view: MissionView) => ReactNode
   /** Shown for an address that names no mission. */
   notFound: ReactNode
 }
@@ -114,9 +114,11 @@ export function MissionContainer({
   const [restartOpen, setRestartOpen] = useState(false)
 
   const phase = active.phase ?? 'incident'
-  const verdict = run.verdict ?? active.verdict
   // Every reset of the network starts the story's played steps over.
   const [runs, setRuns] = useState(0)
+  const startedOver = runs > 0
+  // After a reset the saved verdict describes a network that is gone.
+  const verdict = run.verdict ?? (startedOver ? null : active.verdict)
   const storyKey = `${missionId}#${runs}`
   const passed = run.verdict?.passed ?? false
   const story = useStoryStep({ key: storyKey, phase, passed })
@@ -169,10 +171,19 @@ export function MissionContainer({
 
   const chapter = content.game.chapters.find((candidate) => candidate.id === mission.chapter)
   const number = content.game.missionsIn(mission.chapter).findIndex((candidate) => candidate.id === mission.id) + 1
+  // The network is reset whenever the run allows it, the scene included: commands typed while
+  // reading it already change the routers.
+  const restartWait = waitReasonOf(run.phase)
+  const startOver = () => {
+    setRuns((count) => count + 1)
+    void run.startOver()
+  }
   const view: MissionView = {
     run,
     step,
     reviewing: story.reviewing,
+    onEndReview: () => story.review(null),
+    startedOver,
     onNext,
     onSkipToBuild:
       step === 'scene'
@@ -182,6 +193,16 @@ export function MissionContainer({
           }
         : null,
     onStartOver: () => setRestartOpen(true),
+    // As Kernelfall's Replay level: the mission again on the network as it found it. While the
+    // network is busy, the Start over dialog says why it has to wait.
+    onPlayAgain: () => {
+      if (restartWait !== null) {
+        setRestartOpen(true)
+        return
+      }
+      startOver()
+      begin()
+    },
   }
   const lastRunFellShort = verdict !== null && !verdict.passed
 
@@ -238,14 +259,13 @@ export function MissionContainer({
               ]
             : []),
         ],
-        debrief: phase === 'debrief' ? debrief : null,
+        debrief: phase === 'debrief' ? debrief(view) : null,
         restart: {
           open: restartOpen,
-          unavailable: phase === 'incident' ? 'The mission has not begun yet.' : waitReasonOf(run.phase),
+          unavailable: restartWait,
           onConfirm: () => {
             setRestartOpen(false)
-            setRuns((count) => count + 1)
-            void run.startOver()
+            startOver()
           },
           onCancel: () => setRestartOpen(false),
         },

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useGuidePace } from '@features/guide/hooks/pace'
-import type { GuidePace, GuidePresentationProps, GuideStoryBlock } from '@features/guide/types'
+import type { GuidePace, GuidePart, GuidePresentationProps, GuideStoryBlock } from '@features/guide/types'
 import { beatsOf, pacedGuideOf } from '@features/guide/utils/story'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -24,6 +24,9 @@ const BASE: GuidePresentationProps = {
   note: null,
   actions: [],
 }
+
+// An unanswered question, as the pacing hands it over: answerable.
+const withPick = (part: GuidePart): GuidePart => (part.kind === 'predict' ? { ...part, onPick: vi.fn() } : part)
 
 function guide(overrides: Partial<GuidePresentationProps> = {}) {
   const props = { ...BASE, ...overrides }
@@ -103,6 +106,25 @@ describe('GuidePresentation', () => {
       expect(screen.getByRole('group', { name: 'Your call, before zebra answers' })).toBeTruthy()
       expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
       expect(screen.queryByText(/a router knows its own networks/)).toBeNull()
+    })
+
+    it('names the speaker who asked the question, or none for narration', () => {
+      const question = (speaker: string | null): GuideStoryBlock[] => [
+        {
+          kind: 'predict',
+          speaker,
+          text: 'What will happen?',
+          options: [
+            { text: 'One thing', right: true },
+            { text: 'Another', right: false },
+          ],
+        },
+      ]
+      guide({ beats: beatsOf(question('watchfrr')).map((beat) => beat.map(withPick)) })
+      expect(screen.getByRole('group', { name: 'Your call, before watchfrr answers' })).toBeTruthy()
+      cleanup()
+      guide({ beats: beatsOf(question(null)).map((beat) => beat.map(withPick)) })
+      expect(screen.getByRole('group', { name: 'Your call' })).toBeTruthy()
     })
 
     it("marks the player's call beside what happened, once the command has run, never scored", () => {

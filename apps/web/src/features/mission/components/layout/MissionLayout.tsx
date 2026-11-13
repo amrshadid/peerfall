@@ -191,9 +191,8 @@ export function MissionLayout({
           <p>{restart.unavailable} Try again when the network is yours to use.</p>
         ) : (
           <p>
-            The network goes back to how the mission found it: healthy, with its first configuration. Every change you
-            made to the routers is undone. The runs you recorded and the hints you asked for are kept. Retrying is free,
-            and nothing is timed.
+            The network goes back to how the mission found it. Every change you made to the routers is undone. The runs
+            you recorded and the hints you asked for are kept. Retrying is free, and nothing is timed.
           </p>
         )}
       </Dialog>

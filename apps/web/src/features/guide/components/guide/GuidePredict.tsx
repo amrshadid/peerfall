@@ -11,7 +11,7 @@ export function GuidePredict({ predict }: GuidePredictProps) {
   if (onPick !== null) {
     return (
       <fieldset className="guide__predict">
-        <legend>Your call, before zebra answers</legend>
+        <legend>{predict.line.speaker ? `Your call, before ${predict.line.speaker} answers` : 'Your call'}</legend>
         <div className="guide__predict-options">
           {predict.options.map((option, index) => (
             <button key={option.text} type="button" onClick={() => onPick(index)}>

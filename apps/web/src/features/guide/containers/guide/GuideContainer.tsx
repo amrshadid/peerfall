@@ -26,6 +26,10 @@ export interface GuideContainerProps {
   run: Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>
   step: GuideStepId
   reviewing: GuideStepId | null
+  /** Ends a look back at a done step. */
+  onEndReview: () => void
+  /** The network was reset this visit: the verdict saved before it no longer applies. */
+  startedOver: boolean
   onNext: (() => void) | null
   onSkipToBuild: (() => void) | null
   /** Asks before the network goes back to how the mission found it. */
@@ -43,7 +47,16 @@ const NEXT_LABEL: Readonly<Partial<Record<GuideStepId, string>>> = {
  * The mission's story, paced by the player's commands: each one finished at the terminal shows the
  * next beat. Then its objectives, ticking live, its chips, hints and Codex cards, and the run's actions.
  */
-export function GuideContainer({ run, step, reviewing, onNext, onSkipToBuild, onStartOver }: GuideContainerProps) {
+export function GuideContainer({
+  run,
+  step,
+  reviewing,
+  onEndReview,
+  startedOver,
+  onNext,
+  onSkipToBuild,
+  onStartOver,
+}: GuideContainerProps) {
   const { mission, phase, verdict: lastAttempt } = useActiveMission()
   const content = useContent()
   const hints = useHints()
@@ -60,7 +73,7 @@ export function GuideContainer({ run, step, reviewing, onNext, onSkipToBuild, on
   }
 
   // The live verdict is the run's; the saved one is the last the game recorded.
-  const verdict = run.verdict ?? lastAttempt
+  const verdict = run.verdict ?? (startedOver ? null : lastAttempt)
   const paced = pacedGuideOf(beats, pace, reviewing !== null)
   const wait = waitReasonOf(run.phase)
   const onNetwork = step === 'see' || step === 'build' || step === 'watch'
@@ -70,7 +83,11 @@ export function GuideContainer({ run, step, reviewing, onNext, onSkipToBuild, on
 
   // The way on first, then what the mission can do to the network: no probe without traffic, no
   // link to break without a fault. Objectives are judged live, so there is nothing to submit.
+  // A look back offers only the way back, as Kernelfall's Guide does.
   const actions: GuideAction[] = []
+  if (reviewing !== null) {
+    actions.push({ id: 'back', label: `Back to ${stepLabelOf(step)}`, kind: 'primary', onSelect: onEndReview })
+  }
   if (onNext !== null && reviewing === null) {
     actions.push({
       id: 'next',
@@ -83,7 +100,7 @@ export function GuideContainer({ run, step, reviewing, onNext, onSkipToBuild, on
   if (onSkipToBuild !== null && reviewing === null) {
     actions.push({ id: 'skip', label: 'Skip to Build it', kind: 'quiet', onSelect: onSkipToBuild })
   }
-  if (onNetwork) {
+  if (onNetwork && reviewing === null) {
     if (mission.probe) {
       actions.push({
         id: 'probe',

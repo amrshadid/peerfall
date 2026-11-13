@@ -20,7 +20,7 @@ export interface MissionTopBarData {
   /** The Hint shortcut as `aria-keyshortcuts` wants it, e.g. `Alt+H`. */
   readonly hintKeyShortcut: string
   onHint(): void
-  /** Asks to start the mission again from the healthy network. */
+  /** Asks to start the mission again from the network as the mission found it. */
   onRestart(): void
 }
 
@@ -97,12 +97,24 @@ export interface MissionRunView<Run> {
   readonly step: MissionStepId
   /** A done step looked back at; null on the current one. */
   readonly reviewing: MissionStepId | null
+  /** Ends a look back and returns to the current step. */
+  readonly onEndReview: () => void
+  /**
+   * The network was put back to how the mission found it during this visit: the verdict the game
+   * saved before then no longer describes it, so objectives are read from the run alone.
+   */
+  readonly startedOver: boolean
   /** Goes on to the next step of the story; null where the story moves on by itself or ends. */
   readonly onNext: (() => void) | null
   /** Jumps from the scene straight to Build it; null on other steps. */
   readonly onSkipToBuild: (() => void) | null
   /** Asks before the network goes back to how the mission found it. */
   readonly onStartOver: () => void
+  /**
+   * Plays the mission again from See it, without asking: the network goes back to how the mission
+   * found it and the objectives start unmet. The debrief's Play it again.
+   */
+  readonly onPlayAgain: () => void
 }
 
 export interface MissionUnavailable {

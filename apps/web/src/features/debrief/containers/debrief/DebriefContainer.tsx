@@ -1,19 +1,23 @@
 import { useContent } from '@features/content/hooks/content'
 import { DebriefPresentation } from '@features/debrief/components/debrief'
 import { debriefMeasuresOf, debriefVerdictOf } from '@features/debrief/utils/measures'
-import { useActiveMission, useMissionActions, useRunComparison } from '@peerfall/game/hooks'
+import { useActiveMission, useRunComparison } from '@peerfall/game/hooks'
 import { hrefOf, navigateTo } from '@shared/navigation'
+
+export interface DebriefContainerProps {
+  /** Plays the mission again from See it, on the network as the mission found it. */
+  onPlayAgain: () => void
+}
 
 /**
  * After the mission has passed, laid over the workspace as Kernelfall's card is: what the runs
  * measured, the terms it filed in the Codex, and the way on. The Guide beside it tells the
  * debrief and the real world, the end of the mission's story.
  */
-export function DebriefContainer() {
+export function DebriefContainer({ onPlayAgain }: DebriefContainerProps) {
   const { mission, isCompleted } = useActiveMission()
   const { baseline, repaired } = useRunComparison()
   const content = useContent()
-  const { begin } = useMissionActions()
 
   if (!mission) {
     return null
@@ -40,8 +44,8 @@ export function DebriefContainer() {
             }
           : null
       }
-      // Back to the network, as the player left it: every run after the first pass is a free retry.
-      onReplay={begin}
+      // As Kernelfall's Replay level: a fresh play-through, never the network as the player left it.
+      onReplay={onPlayAgain}
       titleHref={hrefOf({ name: 'title' })}
     />
   )
