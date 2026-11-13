@@ -99,7 +99,7 @@ Interface a-c is down
   Parent interface: a-b
 ```
 
-> **zebra:** Read `Shutdown config is Enabled by CLI`. _CLI_ means the command line, vtysh's language. FRR's configuration for `a-c` says `shutdown`, so each time FRR starts, I switch that interface off.
+> **zebra:** Read `Shutdown config is Enabled by CLI`. _CLI_ means the command line, vtysh's language. FRR's configuration for `a-c` says `shutdown`, so each time FRR starts, I switch that interface off. Ignore `Parent interface: a-b`: a known quirk of these virtual cables, wrong here.
 
 ## Build it
 

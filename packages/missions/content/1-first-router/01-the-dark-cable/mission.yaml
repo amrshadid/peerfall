@@ -30,7 +30,7 @@ objectives:
     text: Switch on a's interface to c, so that a's routing table has a route through it.
     check: { kind: route, router: a, prefix: 10.0.2.0/30, protocol: kernel, interface: a-c }
   - id: reaches-c
-    text: Send packets from a to c's address, 10.0.2.2, and see them answered.
+    text: "a reaches c: packets from a to c's address, 10.0.2.2, are answered."
     check: { kind: reaches, from: a, to: 10.0.2.2 }
 
 hints:
@@ -45,8 +45,6 @@ chips:
   - { command: ip route, explain: "show a's routing table" }
   - { command: ping -c 3 10.0.1.2, explain: "send three packets to b and wait for answers" }
   - { command: ping -c 3 10.0.2.2, explain: "send three packets to c and wait for answers" }
-  - { command: ip link set a-c up, explain: "switch on the interface a-c" }
-
 codex:
   - id: router
     term: router

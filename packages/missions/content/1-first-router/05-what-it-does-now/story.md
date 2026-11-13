@@ -4,7 +4,7 @@
 
 ## Scene
 
-> **zebra:** Both of a's cables are lit, and the night is quiet for a moment. Use it. The next engineer on call won't know what a's cables are for, so label them and spare them the guessing. In The Router's Language you changed something in FRR. Tonight you find out where FRR keeps every change, and everything else it is doing.
+> **zebra:** Both of a's cables are lit, and the night is quiet for a moment. Use it. The next engineer on call won't know where a's cable to c goes, so label it and spare them the guessing. In The Router's Language you changed something in FRR. Tonight you find out where FRR keeps every change, and everything else it is doing.
 
 ## See it
 
@@ -93,13 +93,7 @@ a(config-if)#
 
 ---
 
-## Watch it
-
-> **zebra:** You gave `a-c` a description. Is it in `/etc/frr/a/frr.conf`, the file FRR reads when it starts? Answer, then look at both. First `show running-config`.
->
-> - yes, FRR wrote it there
-> - [x] no, the file is unchanged
-> - only once you typed `end`
+> **zebra:** Now `show running-config` again.
 
 ---
 
@@ -127,7 +121,13 @@ end
 
 ---
 
-> **zebra:** Back at the shell: `cat /etc/frr/a/frr.conf`.
+## Watch it
+
+> **zebra:** You gave `a-c` a description, and the running configuration has it. Is it in `/etc/frr/a/frr.conf`, the file FRR reads when it starts? Answer, then look: `cat /etc/frr/a/frr.conf`.
+>
+> - yes, FRR wrote it there
+> - [x] no, the file is unchanged
+> - only once you typed `end`
 
 ---
 

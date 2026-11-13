@@ -128,7 +128,7 @@ vtysh -c "show daemons"
  mgmtd zebra staticd watchfrr
 ```
 
-> **zebra:** Back, and nobody typed a thing: six or seven seconds here. watchfrr is a _watchdog_. It keeps a line open to every daemon and restarts the one that goes silent, though never twice within a minute: `Min Restart Interval: 60`. Think of a night guard on rounds who finds a light out and switches it back on. The picture stops at the cause: watchfrr never finds out why a daemon died, it only starts it again.
+> **zebra:** Back, and nobody typed a thing: about six seconds here. watchfrr is a _watchdog_. It keeps a line open to every daemon and restarts the one that goes silent, though never twice within a minute: `Min Restart Interval: 60`. Think of a night guard on rounds who finds a light out and switches it back on. The picture stops at the cause: watchfrr never finds out why a daemon died, it only starts it again.
 
 ## Debrief
 

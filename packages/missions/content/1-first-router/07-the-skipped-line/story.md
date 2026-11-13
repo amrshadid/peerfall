@@ -52,8 +52,8 @@ interface a-c
 
 ```
 a:~# tail /var/log/frr/a.log
-2026/11/13 20:25:46.760 STATIC: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:01
-2026/11/13 20:25:46.762 STATIC: [G6NKK-8C6DV] end_config: VTY:0xb7a2a5b0, pending SET-CFG: 0
+2026/11/13 21:41:59.055 STATIC: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+2026/11/13 21:41:59.055 STATIC: [G6NKK-8C6DV] end_config: VTY:0xb79fe5a0, pending SET-CFG: 0
 ```
 
 > **zebra:** Each line is a time, the daemon that wrote it, `STATIC:` for staticd, and a code for the message. staticd read the configuration in. Not a word about the bad line.
@@ -64,29 +64,27 @@ a:~# tail /var/log/frr/a.log
 
 ```
 a:~# /usr/lib/frr/frrinit.sh restart a
-watchfrr[569]: [NG1AJ-FP2TQ] Terminating on signal
+watchfrr[571]: [NG1AJ-FP2TQ] Terminating on signal
 Stopped watchfrr
-Stopped staticd
 Stopped zebra
 Stopped mgmtd
+Stopped staticd
 Starting watchfrr with command: '  /usr/lib/frr/watchfrr -N a -d   mgmtd zebra staticd'
-watchfrr[685]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
-watchfrr[685]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
-watchfrr[685]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
-watchfrr[685]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
-watchfrr[685]: [YFT0P-5Q5YX] Forked background command [pid 686]: /usr/lib/frr/watchfrr.sh restart all
-watchfrr[685]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
-watchfrr[685]: [YFT0P-5Q5YX] Forked background command [pid 701]: /usr/lib/frr/watchfrr.sh restart staticd
-watchfrr[685]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
-watchfrr[685]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
-watchfrr[685]: [ZJW5C-1EHNT] restart all process 686 exited with non-zero status 2
-watchfrr[685]: [ZJW5C-1EHNT] restart staticd process 701 exited with non-zero status 2
-watchfrr[685]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
-watchfrr[685]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
+watchfrr[699]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
+watchfrr[699]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
+watchfrr[699]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
+watchfrr[699]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
+watchfrr[699]: [YFT0P-5Q5YX] Forked background command [pid 700]: /usr/lib/frr/watchfrr.sh restart all
+watchfrr[699]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+watchfrr[699]: [ZJW5C-1EHNT] restart all process 700 exited with non-zero status 2
+watchfrr[699]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
+watchfrr[699]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
+watchfrr[699]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
+watchfrr[699]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
 Started watchfrr
 ```
 
-> **watchfrr:** `restart all process 686 exited with non-zero status 2`. The command I ran to start everyone ended with status 2: something went wrong, and that number is all it told me.
+> **watchfrr:** `restart all process` and a number, which changes every start, then `exited with non-zero status 2`. The command I ran to start everyone ended with status 2: something went wrong, and that number is all it told me.
 
 ## Build it
 

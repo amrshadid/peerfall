@@ -82,23 +82,23 @@ log timestamp precision 3
 
 ```
 a:~# /usr/lib/frr/frrinit.sh restart a
-watchfrr[568]: [NG1AJ-FP2TQ] Terminating on signal
+watchfrr[571]: [NG1AJ-FP2TQ] Terminating on signal
 Stopped watchfrr
+Stopped zebra
 Stopped staticd
 Stopped mgmtd
-Stopped zebra
 Starting watchfrr with command: '  /usr/lib/frr/watchfrr -N a -d   mgmtd zebra staticd'
-watchfrr[681]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
-watchfrr[681]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
-watchfrr[681]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
-watchfrr[681]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
-watchfrr[681]: [YFT0P-5Q5YX] Forked background command [pid 682]: /usr/lib/frr/watchfrr.sh restart all
-watchfrr[681]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
-watchfrr[681]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
-watchfrr[681]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
-watchfrr[681]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
+watchfrr[732]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
+watchfrr[732]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
+watchfrr[732]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
+watchfrr[732]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
+watchfrr[732]: [YFT0P-5Q5YX] Forked background command [pid 733]: /usr/lib/frr/watchfrr.sh restart all
+watchfrr[732]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+watchfrr[732]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
+watchfrr[732]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
+watchfrr[732]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
+watchfrr[732]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
 Started watchfrr
-watchfrr[681]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
 ```
 
 > **watchfrr:** `Terminating on signal`: that's me being stopped, then the other three. Then I start again, start them, and have the file read in. Same as every start.
@@ -157,7 +157,7 @@ Note: this version of vtysh never writes vtysh.conf
 Building Configuration...
 Integrated configuration saved to /etc/frr/a/frr.conf
 [OK]
-a# watchfrr[681]: [WFP93-1D146] configuration write completed with exit code 0
+a# watchfrr[732]: [WFP93-1D146] configuration write completed with exit code 0
 ```
 
 > **zebra:** `write memory` copies the whole running configuration into `frr.conf`. The note is about vtysh's own settings file, which it leaves alone. The last line is watchfrr's: vtysh asks watchfrr to do the writing. Leave vtysh with `exit`.
