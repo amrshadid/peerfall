@@ -20,7 +20,7 @@ const CHECK_FIELDS: Readonly<Record<CheckKind, readonly string[]>> = {
   daemons: ['router', 'daemons'],
   route: ['router', 'prefix', 'to', 'protocol', 'via', 'interface'],
   reaches: ['from', 'to', 'minReplies'],
-  config: ['router', 'source', 'block', 'line'],
+  config: ['router', 'source', 'block', 'line', 'absent'],
 }
 
 /** Every FRR process a `daemons` check may name: watchfrr, which starts the others, counts as one. */
@@ -109,6 +109,7 @@ export function readCheck(check: ObjectReader): CheckDefinition {
         source: check.oneOf('source', CONFIG_SOURCES),
         block: check.optional('block', (key) => check.stringList(key)) ?? [],
         line: check.string('line'),
+        ...(check.flag('absent') && { absent: true }),
       }
   }
 }

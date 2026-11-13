@@ -56,7 +56,8 @@ export type CheckDefinition =
   /**
    * The router's configuration has a line inside the blocks of `block` (outermost first; none for
    * a top-level line). `line` is the whole line or its first words: `description` matches any
-   * description, `ip address 10.0.1.1/30` only that address.
+   * description, `ip address 10.0.1.1/30` only that address. With `absent`, the other way round:
+   * the configuration exists and has no such line in those blocks.
    */
   | {
       readonly kind: 'config'
@@ -64,6 +65,8 @@ export type CheckDefinition =
       readonly source: ConfigSource
       readonly block: readonly string[]
       readonly line: string
+      /** Only present, and true, when the line must be gone. */
+      readonly absent?: boolean
     }
 
 export type RunCheckDefinition =
@@ -118,6 +121,10 @@ export const CHECK_FAILURES = {
   wrongRoute: 'wrong_route',
   /** The configuration does not have the line. */
   notConfigured: 'not_configured',
+  /** An `absent` check: the configuration still has the line. */
+  stillConfigured: 'still_configured',
+  /** An `absent` check: there is no such configuration to read (FRR is down, no frr.conf, or never restarted). */
+  noConfig: 'no_config',
 } as const
 
 export type CheckFailure = (typeof CHECK_FAILURES)[keyof typeof CHECK_FAILURES]
@@ -232,7 +239,10 @@ export type CheckResult =
       readonly failure: CheckFailure | null
       readonly router: string
       readonly source: ConfigSource
-      /** The configuration's line that matched, as FRR wrote it; `null` when none did. */
+      /**
+       * The configuration's line that matched, as FRR wrote it; `null` when none did. For an
+       * `absent` check it is the line still there, the reason it failed.
+       */
       readonly found: string | null
     }
 

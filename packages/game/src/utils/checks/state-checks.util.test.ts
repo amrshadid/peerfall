@@ -153,6 +153,37 @@ describe('config', () => {
     expect(judge({ ...saved, source: 'running', block: [], line: 'ip address' }).passed).toBe(false)
   })
 
+  it('with absent, passes only when a configuration exists and the line is gone from its block', () => {
+    const check = {
+      kind: 'config',
+      router: 'a',
+      source: 'started',
+      block: ['interface a-c'],
+      line: 'shutdown',
+      absent: true,
+    } as const
+    const startedFrom = (startedConfig: string | null): MachineState => ({
+      ...STATE,
+      routers: { ...STATE.routers, a: { ...STATE.routers.a, startedConfig } },
+    })
+    expect(judge(check, startedFrom('interface a-c\n ip address 10.0.3.1/30\nexit\n'))).toEqual({
+      kind: 'config',
+      passed: true,
+      failure: null,
+      router: 'a',
+      source: 'started',
+      found: null,
+    })
+    expect(judge(check, startedFrom('interface a-c\n shutdown\nexit\n'))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.stillConfigured,
+      found: 'shutdown',
+    })
+    expect(judge(check, startedFrom('interface a-b\n shutdown\nexit\n')).passed).toBe(true)
+    expect(judge(check, startedFrom(null))).toMatchObject({ passed: false, failure: CHECK_FAILURES.noConfig })
+    expect(judge(check)).toMatchObject({ passed: false, failure: CHECK_FAILURES.notChecked })
+  })
+
   it('fails on a router whose FRR is down: it runs no configuration', () => {
     expect(judge({ kind: 'config', router: 'b', source: 'running', block: [], line: 'hostname' })).toMatchObject({
       passed: false,

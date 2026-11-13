@@ -375,6 +375,17 @@ describe('validateMission', () => {
       ])
     })
 
+    it('reads a config check’s absent flag, kept only when true', () => {
+      const line = { kind: 'config', router: 'a', source: 'started', block: ['interface a-b'], line: 'shutdown' }
+      const checkOf = (fields: Readonly<Record<string, unknown>>) => {
+        const result = validateMission({ ...STATE, objectives: [{ ...FRR_RUNS, check: { ...line, ...fields } }] })
+        return result.ok ? result.value.objectives[0]?.check : result.errors
+      }
+      expect(checkOf({ absent: true })).toEqual({ ...line, absent: true })
+      expect(checkOf({ absent: false })).toEqual(line)
+      expect(checkOf({ absent: 'yes' })).toEqual(['objectives[0].check.absent: expected true or false, got text'])
+    })
+
     it('only lets a state check name a router of the network, and an interface of that router', () => {
       expect(
         stateErrors({

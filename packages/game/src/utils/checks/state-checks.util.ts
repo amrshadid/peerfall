@@ -150,10 +150,17 @@ function checkConfig(check: StateCheck<'config'>, state: MachineState | null): S
   if (text === undefined) {
     return result(CHECK_FAILURES.notChecked, null)
   }
+  if (check.absent && text === null) {
+    // A line missing from a configuration that does not exist proves nothing about it.
+    return result(CHECK_FAILURES.noConfig, null)
+  }
   // No text: FRR is not running, or there is no frr.conf. Either way the line is not there.
   const found = configEntries(text ?? '').find(
     ({ context, line }) => sameBlock(context, check.block) && (line === check.line || line.startsWith(`${check.line} `))
   )
+  if (check.absent) {
+    return result(found ? CHECK_FAILURES.stillConfigured : null, found?.line ?? null)
+  }
   return result(found ? null : CHECK_FAILURES.notConfigured, found?.line ?? null)
 }
 
