@@ -53,7 +53,7 @@ codex:
     term: watchfrr
     deepens: frr-daemon
     simple: FRR's watchdog. It starts the other daemons and starts one again when it dies.
-    deep: "watchfrr keeps a connection open to every daemon it was given. When one closes, `read returned EOF`, it runs its restart command, `/usr/lib/frr/watchfrr.sh restart %s`, as `show watchfrr` lists. At a start, the same command starts every daemon and has `frr.conf` read into them: `Configuration Read in`. On the Machine its messages appear in the terminal. It never learns why a daemon died; it only starts it again."
+    deep: "watchfrr keeps a connection open to every daemon it was given. When one closes, `read returned EOF`, it runs its restart command about five seconds later, `/usr/lib/frr/watchfrr.sh restart %s`, as `show watchfrr` lists. At a start, the same command starts every daemon and has `frr.conf` read into them: `Configuration Read in`. On the Machine its messages appear in the terminal. It never learns why a daemon died; it only starts it again."
     sources: [watchfrr/watchfrr.c, watchfrr/watchfrr_vty.c, tools/watchfrr.sh.in]
     docs: https://docs.frrouting.org/en/latest/watchfrr.html
     tryIt: vtysh -c "show watchfrr"

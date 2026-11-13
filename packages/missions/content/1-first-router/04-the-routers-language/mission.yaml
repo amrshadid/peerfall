@@ -4,7 +4,7 @@ title: The Router's Language
 summary: Ask vtysh for its own words with ?, Tab and short words, and switch an interface on in the mode it belongs to.
 minutes: 20
 chapter: first-router
-objective: Router a's interface to c is switched on again, its kernel routes through it, and a reaches c.
+objective: Router a's interface to c is switched on again, a's routing table has a route through it, and a reaches c.
 prerequisites: [the-silent-router]
 teaches: [cli-help, cli-modes, interface-shutdown]
 names: [running-config]
@@ -31,7 +31,7 @@ network:
 
 objectives:
   - id: cable-lit
-    text: Switch a's interface to c back on, so that a's kernel routes through it.
+    text: Switch a's interface to c back on, so that a's routing table has a route through it.
     check: { kind: route, router: a, prefix: 10.0.2.0/30, protocol: kernel, interface: a-c }
   - id: reaches-c
     text: Reach c's address, 10.0.2.2, from a.
@@ -71,8 +71,8 @@ codex:
     tryIt: "`vtysh`, then `configure terminal`, then `?`"
   - id: interface-shutdown
     term: shutdown
-    simple: "An interface setting in FRR: zebra keeps the interface down while the configuration says `shutdown`. `no shutdown` undoes it."
-    deep: "`show interface a-c` reports it as `Shutdown config is Enabled by CLI`. zebra applies it when the configuration is read, so a restart from a `frr.conf` that says `shutdown` takes the interface down again, even after Linux brought it up with `ip link set a-c up`."
+    simple: "An interface setting in FRR: zebra switches the interface off when the setting is applied, as at every start. `no shutdown` switches it on."
+    deep: "`show interface a-c` reports it as `Shutdown config is Enabled by CLI`. zebra applies it when the configuration is read, not afterwards: Linux can still switch the interface on, and the setting stays. So a restart from a `frr.conf` that says `shutdown` takes the interface down again, even after Linux brought it up with `ip link set a-c up`."
     deepens: interface
     sources: [zebra/zebra_cli.c, zebra/interface.c]
     docs: https://docs.frrouting.org/en/latest/zebra.html

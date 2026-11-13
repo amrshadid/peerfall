@@ -4,7 +4,7 @@
 
 ## Scene
 
-> **zebra:** Linux moved the packets in The Dark Cable, but it can only follow routes. It can't ask other routers where an address is, so without help every route is typed by hand, on every router. That is FRR's work: the routing software that runs on Linux. On router a, FRR isn't running. I'm talking to you from router b, where I still am.
+> **zebra:** Linux moved the packets in The Dark Cable, but it can only follow routes. It can't ask other routers where an address is, so without help every route beyond a router's own cables is typed by hand, on every router. That is FRR's work: the routing software that runs on Linux. On router a, FRR isn't running. I'm talking to you from router b, where I still am.
 
 ## See it
 
@@ -17,7 +17,7 @@ a:~# vtysh
 Exiting: failed to connect to any daemons.
 ```
 
-> **zebra:** vtysh is only a console. It doesn't route anything itself: it passes your words to FRR's programs and prints their answers, and on a, none is running. FRR isn't one program but several _daemons_: programs that run in the background, without a window, each with one job. One knows the interfaces and talks to Linux. Another keeps the routes typed by hand. Each routing protocol has one of its own. Look at FRR's files for a: `ls /etc/frr/a`.
+> **zebra:** vtysh is only a console. It doesn't route anything itself: it passes your words to FRR's programs and prints their answers, and on a, none is running. FRR isn't one program but several _daemons_: programs that run in the background, without a window, each with one job. One knows the interfaces and talks to Linux. Another keeps the routes typed by hand. Each _routing protocol_, a set of rules routers follow to tell each other where addresses are, has one of its own. Look at FRR's files for a: `ls /etc/frr/a`.
 
 ---
 
@@ -65,7 +65,7 @@ a# show daemons
 
 > **zebra:** One daemon: me. Will I see the same cables Linux showed you? Answer, then type `show interface brief`.
 >
-> - [x] yes, the same interfaces and addresses
+> - [x] yes, the same interfaces
 > - no, FRR keeps interfaces of its own
 > - none, until someone configures them
 

@@ -68,6 +68,7 @@ a-b             up      default         10.0.1.1/30
                                         fe80::7cb9:e5ff:fe42:593b/64
 a-c             down    default         10.0.2.1/30
 lo              up      default         10.255.0.1/32
+
 ```
 
 > **zebra:** That is `show interface brief`, said short, and `a-c` is `down`. A misspelt word is refused: `show interfaces brief` gets `% Unknown command`. A line that stops too early, such as `s` alone, gets `% Command incomplete`. Now ask about the one interface: `show interface a-c`.
@@ -94,7 +95,7 @@ Interface a-c is down
   Parent interface: a-b
 ```
 
-> **zebra:** Read `Shutdown config is Enabled by CLI`. _CLI_ means the command line, vtysh's language. FRR's configuration for `a-c` says `shutdown`, and while it does, I hold that interface down.
+> **zebra:** Read `Shutdown config is Enabled by CLI`. _CLI_ means the command line, vtysh's language. FRR's configuration for `a-c` says `shutdown`, so each time FRR starts, I switch that interface off.
 
 ## Build it
 
@@ -159,6 +160,7 @@ a-b             up      default         10.0.1.1/30
 a-c             up      default         10.0.2.1/30
                                         fe80::50c0:e9ff:fe97:59ec/64
 lo              up      default         10.255.0.1/32
+
 ```
 
 > **zebra:** `a-c` is `up`. To go back, `exit` steps out one mode at a time, and `end` goes straight to `a#`.

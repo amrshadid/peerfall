@@ -6,7 +6,7 @@
 
 The pager goes off after midnight. Every router here has lost its peers, the routers it talks to. The cables still carry light, and nothing gets across.
 
-> **zebra:** You're the engineer on call? Good. I'm zebra, and I live on these routers. We start with one: router a, and its neighbours b and c. a reaches b. It can't reach c. Lines already on a's screen, above where you type, are its routing software starting; they wait for Nobody Answers.
+> **zebra:** You're the engineer on call? Good. I'm zebra, and I live on these routers. We start with one: router a, and its neighbours b and c. a reaches b. It can't reach c. Lines already on a's screen, above where you type, are its routing software starting; they wait for The Silent Router.
 
 ## See it
 
@@ -94,7 +94,7 @@ a:~# ip route
 10.0.2.0/30 dev a-c proto kernel scope link src 10.0.2.1
 ```
 
-> **zebra:** A second line, and nobody typed it. `proto kernel` says Linux added it itself, the moment `a-c` came up with its address: whatever is in c's network can be reached straight out of that cable. A route works like a signpost: this way for those addresses. Unlike a signpost, it shows only the next step, never the whole way, and only its own router reads it. Ping c again.
+> **zebra:** A second line, and nobody typed it. `proto kernel` says Linux added it itself, the moment `a-c` came up with its address: whatever is in c's network can be reached straight out of that cable. A route works like a signpost: this way for those addresses. Unlike a signpost, only its own router reads it, and every router along the way needs its own. Ping c again.
 
 ---
 
