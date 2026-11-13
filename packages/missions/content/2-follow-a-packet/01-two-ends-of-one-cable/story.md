@@ -27,7 +27,11 @@ a:~# ping -c 2 10.0.1.2
 ping: connect: Network unreachable
 ```
 
-> **zebra:** The Dark Cable's refusal: no route covers b's address, so Linux won't even send. Now ask me. Type `vtysh`, then `show interface brief`.
+> **zebra:** The Dark Cable's refusal: no route covers b's address, so Linux won't even send. Now ask me: type `vtysh`.
+
+---
+
+> **zebra:** At `a#`, type `show interface brief`.
 
 ---
 
@@ -49,11 +53,27 @@ a# show ip route
 a# 
 ```
 
-> **zebra:** Nothing at all, and `ip route` in Linux prints nothing either. With no address on `a-b`, a has no network on that cable, so there is no route into it. What the cable lacks is a number at each end that packets can be sent to and from.
+> **zebra:** Nothing at all, and `ip route` in Linux prints nothing either. With no address on `a-b`, a has no network on that cable, so there is no route into it. What the cable lacks is an _address_ at each end: a number that names one interface, for packets to be sent to and from. An address is 32 bits, written as four numbers.
 
 ## Build it
 
-> **zebra:** An _address_ names one interface, and it is a setting of that interface, typed in its mode. `configure terminal`, `interface a-b`, then `ip address 10.0.1.1/30`, then `end`. Then `show ip route` again.
+> **zebra:** An address is a setting of its interface, typed in that interface's mode. Type `configure terminal`.
+
+---
+
+> **zebra:** Now `interface a-b`.
+
+---
+
+> **zebra:** Give it its address: `ip address 10.0.1.1/30`.
+
+---
+
+> **zebra:** Back to `a#` with `end`.
+
+---
+
+> **zebra:** Then `show ip route` again.
 
 ---
 
@@ -71,20 +91,11 @@ C>* 10.0.1.0/30 is directly connected, a-b, weight 1, 00:00:00
 L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:00
 ```
 
-> **zebra:** Two routes from one line. An address is 32 bits, written as four numbers. `/30` is the _prefix length_: the first 30 bits name the network, so a's network is `10.0.1.0/30`, the four addresses `.0` to `.3`. The first names the network and the last reaches all of it at once, so `.1` and `.2` are left for the two ends. `C` is the _connected route_: all of `10.0.1.0/30` is straight out of `a-b`. `L`, the local route, is a's own address. `>` and `*` wait for later in this stage. Linux has its copy too: `exit`, then `ip route`.
+> **zebra:** Two routes from one line. `C` is the _connected route_: all of a's network `10.0.1.0/30` is straight out of `a-b`. `L`, the local route, is a's own address. `>` and `*` wait for later in this stage. Leave vtysh with `exit`.
 
 ---
 
-```
-a:~# ip route
-10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1 
-```
-
-> **zebra:** `proto kernel`: Linux added it itself, as in The Dark Cable.
-
-## Watch it
-
-> **zebra:** Only a has its address. You ping b again: what happens?
+> **zebra:** Only a has its address. You ping b: `ping -c 3 10.0.1.2`. What happens?
 >
 > - `Network unreachable`, as before
 > - [x] a tries, and nobody answers
@@ -104,7 +115,25 @@ From 10.0.1.1 icmp_seq=3 Destination Host Unreachable
 pipe 3
 ```
 
-> **zebra:** With a route, a asks on the cable who owns `10.0.1.2`. Nobody does, so the pings never leave: a itself reports `Destination Host Unreachable`. Now click b in the topology: the terminal moves to b's shell, `b:~#`. Give `b-a` the address `10.0.1.2/30` the same way, then click a and ping b again.
+> **zebra:** With a route, a asks on the cable who owns `10.0.1.2`. Nobody does, so a itself reports `Destination Host Unreachable`. Click b in the topology: the terminal moves to b's shell, `b:~#`. Type `vtysh` there.
+
+---
+
+> **zebra:** `configure terminal`.
+
+---
+
+> **zebra:** `interface b-a`.
+
+---
+
+> **zebra:** `ip address 10.0.1.2/30`, the other end of a's network.
+
+---
+
+## Watch it
+
+> **zebra:** Click a, and ping b again: `ping -c 3 10.0.1.2`.
 
 ---
 
@@ -129,7 +158,16 @@ a:~# ip neigh
 10.0.1.2 dev a-b lladdr f2:c8:83:fc:92:be REACHABLE 
 ```
 
-> **zebra:** `lladdr` is b's MAC address. a needs it before it can put a packet for b on the cable.
+> **zebra:** `lladdr` is b's MAC address. a needs it before it can put a packet for b on the cable. Linux has its copy of the connected route too: `ip route`.
+
+---
+
+```
+a:~# ip route
+10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1 
+```
+
+> **zebra:** `proto kernel`: Linux added it itself, as in The Dark Cable. `/30` is the _prefix length_: the first 30 bits name the network, so `10.0.1.0/30` holds `.0` to `.3`. The first names the network and the last reaches all of it at once, so `.1` and `.2` are left for the two ends.
 
 ## Debrief
 

@@ -97,7 +97,7 @@ watchfrr global phase: Idle
 
 ## Watch it
 
-> **watchfrr:** Go on, stop one. `pkill staticd` ends staticd. What happens next?
+> **watchfrr:** Go on: `pkill staticd` stops staticd. What happens next?
 >
 > - staticd stays gone until you start it
 > - [x] watchfrr starts it again by itself
@@ -108,11 +108,18 @@ watchfrr global phase: Idle
 ```
 a:~# pkill staticd
 watchfrr[591]: [HD38Q-0HBRT][EC 268435457] staticd state -> down : read returned EOF
+```
+
+> **watchfrr:** `read returned EOF`: staticd hung up on me. Ask: `vtysh -c "show daemons"`.
+
+---
+
+```
 a:~# vtysh -c "show daemons"
  mgmtd zebra watchfrr
 ```
 
-> **watchfrr:** `read returned EOF`: staticd hung up on me. Ask again in a few seconds.
+> **watchfrr:** Ask again in a few seconds.
 
 ---
 

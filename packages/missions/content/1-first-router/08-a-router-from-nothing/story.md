@@ -10,13 +10,20 @@
 
 ## See it
 
-> **zebra:** Read the router before you touch it. Does FRR run? Nobody Answers and The Silent Router asked that two ways.
+> **zebra:** Read the router before you touch it. Does FRR run? Ask its console first, as in Nobody Answers.
 
 ---
 
 ```
 a:~# vtysh
 Exiting: failed to connect to any daemons.
+```
+
+> **zebra:** vtysh found no daemon to talk to. Now ask FRR's script, as in The Silent Router.
+
+---
+
+```
 a:~# /usr/lib/frr/frrinit.sh status a
 Status of watchfrr: FAILED
 Status of mgmtd: FAILED
@@ -24,7 +31,7 @@ Status of zebra: FAILED
 Status of staticd: FAILED
 ```
 
-> **zebra:** Nothing runs. vtysh found no daemon to talk to, and `FAILED` is the script's word for not running. I'm not even awake on a yet: the zebra talking to you is b's. Now the interfaces, as The Dark Cable read them, and the saved file, as Gone After the Restart read it.
+> **zebra:** Nothing runs: `FAILED` is the script's word for not running. I'm not even awake on a yet: the zebra talking to you is b's. Now the interfaces, as The Dark Cable read them.
 
 ---
 
@@ -33,6 +40,13 @@ a:~# ip -br link
 lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
 a-b@if2          UP             92:9a:57:30:e6:d2 <BROADCAST,MULTICAST,UP,LOWER_UP> 
 a-c@if2          UP             6e:76:3a:2c:f4:63 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+```
+
+> **zebra:** Both interfaces are up: with FRR stopped, only Linux runs them. Now the saved file, as Gone After the Restart read it.
+
+---
+
+```
 a:~# cat /etc/frr/a/frr.conf
 frr defaults traditional
 hostname a
@@ -44,12 +58,20 @@ interface a-c
 !
 ```
 
-> **zebra:** Both interfaces are up: with FRR stopped, only Linux runs them. The file has its own idea about `a-c`: `shutdown`, the setting you met in The Router's Language, which has zebra hold an interface down. Before FRR reads it, is every line sound? The Skipped Line showed you how to ask.
+> **zebra:** The file has its own idea about `a-c`: `shutdown`, the setting you met in The Router's Language, which has zebra hold an interface down. Before FRR reads it, is every line sound? The Skipped Line showed you how to ask.
 
 ---
 
 ```
 a:~# vtysh -C -f /etc/frr/a/frr.conf
+a:~# 
+```
+
+> **zebra:** Not a word. And how did that command end?
+
+---
+
+```
 a:~# echo $?
 0
 ```
@@ -77,7 +99,39 @@ a-b@if2          UP             92:9a:57:30:e6:d2 <BROADCAST,MULTICAST,UP,LOWER_
 a-c@if2          DOWN           6e:76:3a:2c:f4:63 <BROADCAST,MULTICAST> 
 ```
 
-> **zebra:** Down. FRR applied the file, and the file says `shutdown`. Switching it on from Linux, as in The Dark Cable, would last only until the next start reads the same file. Make the change in FRR, in `a-c`'s own mode, as in The Router's Language. Give the interface its description while you are there, as in What It Does Now. Then save, as in Gone After the Restart, and read the file again.
+> **zebra:** Down. FRR applied the file, and the file says `shutdown`. Switching it on from Linux, as in The Dark Cable, would last only until the next start. Make the change in FRR: open its console.
+
+---
+
+> **zebra:** Into configure mode.
+
+---
+
+> **zebra:** Into `a-c`'s own mode, as in The Router's Language.
+
+---
+
+> **zebra:** Undo the `shutdown` there.
+
+---
+
+> **zebra:** Give the interface its description, as in What It Does Now.
+
+---
+
+> **zebra:** Back to `a#`.
+
+---
+
+> **zebra:** Save, as in Gone After the Restart.
+
+---
+
+> **zebra:** Leave the console.
+
+---
+
+> **zebra:** Read the file again.
 
 ---
 
@@ -96,11 +150,13 @@ exit
 !
 ```
 
-> **zebra:** No `shutdown` left. Undoing a setting removes its line, and the file was written from what is running.
+> **zebra:** No `shutdown` left. Undoing a setting removes its line, and the file was written from what is running. Now the test the Peerfall failed: restart FRR with its script.
+
+---
 
 ## Watch it
 
-> **zebra:** Now the test that counts, the one the Peerfall failed. Restart FRR with its script, then read the interfaces and the routing table, and ping c.
+> **watchfrr:** Stopped, started, every daemon back. Now read the interfaces.
 
 ---
 
@@ -109,9 +165,25 @@ a:~# ip -br link
 lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
 a-b@if2          UP             92:9a:57:30:e6:d2 <BROADCAST,MULTICAST,UP,LOWER_UP> 
 a-c@if2          UP             6e:76:3a:2c:f4:63 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+```
+
+> **watchfrr:** The cable to c stayed up. Nobody had to touch it after me.
+>
+> **zebra:** `a-c` is `UP`. Now the routing table.
+
+---
+
+```
 a:~# ip route
 10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1 
 10.0.2.0/30 dev a-c proto kernel scope link src 10.0.2.1 
+```
+
+> **zebra:** Its second line is back, the one Linux adds for c's network. Ping c.
+
+---
+
+```
 a:~# ping -c 3 10.0.2.2
 PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 64 bytes from 10.0.2.2: icmp_seq=1 ttl=64 time=4.17 ms
@@ -123,9 +195,7 @@ PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.425/1.673/4.167/1.763 ms
 ```
 
-> **watchfrr:** Stopped, started, every daemon back, and the cable to c stayed up. Nobody had to touch it after me.
->
-> **zebra:** `a-c` is `UP`, the routing table has its second line again, the one Linux adds for c's network, and c answers three times out of three. The restart read your file, and your file is right. That is a router you can leave alone for the night, and the first one the Peerfall has given back.
+> **zebra:** c answers three times out of three. The restart read your file, and your file is right. That is a router you can leave alone for the night, and the first one the Peerfall has given back.
 
 ## Debrief
 

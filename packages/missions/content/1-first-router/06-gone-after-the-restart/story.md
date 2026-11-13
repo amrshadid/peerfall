@@ -10,15 +10,36 @@
 
 ## See it
 
-> **zebra:** Do what they did. Short words are fine in vtysh: `conf t`, `int lo`, `descr loopback of router a`, `end`. Then `show running-config`.
+> **zebra:** Do what they did, one line at a time. Open `vtysh`.
+
+---
+
+> **zebra:** Short words are fine in vtysh: `conf t`.
 
 ---
 
 ```
 a# conf t
-a(config)# int lo
-a(config-if)# descr loopback of router a
-a(config-if)# end
+a(config)# 
+```
+
+> **zebra:** Configure mode. Now `int lo`.
+
+---
+
+> **zebra:** In `lo`'s mode: `descr loopback of router a`.
+
+---
+
+> **zebra:** Then `end`, back to `a#`.
+
+---
+
+> **zebra:** Now `show running-config`.
+
+---
+
+```
 a# show running-config
 Building configuration...
 
@@ -38,7 +59,11 @@ exit
 end
 ```
 
-> **zebra:** There it is, in the running configuration. Now leave vtysh and read the file FRR starts from: `cat /etc/frr/a/frr.conf`.
+> **zebra:** There it is, in the running configuration. Leave vtysh with `exit`.
+
+---
+
+> **zebra:** Read the file FRR starts from: `cat /etc/frr/a/frr.conf`.
 
 ---
 
@@ -102,7 +127,27 @@ end
 
 ## Build it
 
-> **zebra:** That file is the _saved configuration_, and the change has to reach it. In vtysh, give `lo` its description again, then type `write memory` at `a#`.
+> **zebra:** That file is the _saved configuration_, and the change has to reach it. Give `lo` its description again, the same way. First `vtysh`.
+
+---
+
+> **zebra:** `conf t`.
+
+---
+
+> **zebra:** `int lo`.
+
+---
+
+> **zebra:** `descr loopback of router a`.
+
+---
+
+> **zebra:** `end`.
+
+---
+
+> **zebra:** Now copy it into the file: `write memory`.
 
 ---
 
@@ -115,7 +160,11 @@ Integrated configuration saved to /etc/frr/a/frr.conf
 a# watchfrr[681]: [WFP93-1D146] configuration write completed with exit code 0
 ```
 
-> **zebra:** `write memory` copies the whole running configuration into `frr.conf`. The note is about vtysh's own settings file, which it leaves alone. The last line is watchfrr's: vtysh asks watchfrr to do the writing. Leave vtysh and read the result: `cat /etc/frr/a/frr.conf`, then `ls /etc/frr/a`.
+> **zebra:** `write memory` copies the whole running configuration into `frr.conf`. The note is about vtysh's own settings file, which it leaves alone. The last line is watchfrr's: vtysh asks watchfrr to do the writing. Leave vtysh with `exit`.
+
+---
+
+> **zebra:** Read the result: `cat /etc/frr/a/frr.conf`.
 
 ---
 
@@ -132,15 +181,15 @@ interface lo
  description loopback of router a
 exit
 !
-a:~# ls /etc/frr/a
-daemons       frr.conf      frr.conf.sav  vtysh.conf
 ```
 
-> **zebra:** The file now holds what was running, block for block. `frr.conf.sav` is the file as it was before, kept in case you want it back. Think of a notebook beside a busy desk: the desk is lost each night, and the notebook is what the morning starts from. The picture stops at the writing: `write memory` never adds one line to the notebook, it writes the whole desk into a fresh one.
+> **zebra:** The file now holds what was running, block for block. Think of a notebook beside a busy desk: the desk is lost each night, and the notebook is what the morning starts from. The picture stops at the writing: `write memory` never adds one line to the notebook, it writes the whole desk into a fresh one. Restart FRR once more: `/usr/lib/frr/frrinit.sh restart a`.
+
+---
 
 ## Watch it
 
-> **zebra:** Restart FRR on a once more, then ask again with `vtysh -c "show running-config"`. What comes back?
+> **zebra:** Ask what came back: `vtysh -c "show running-config"`. What will it hold?
 >
 > - nothing, a restart starts empty
 > - [x] everything in `frr.conf`, the description too

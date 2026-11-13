@@ -8,7 +8,11 @@
 
 ## See it
 
-> **zebra:** In vtysh, type `show running-config`.
+> **zebra:** Open vtysh: type `vtysh`.
+
+---
+
+> **zebra:** At `a#`, type `show running-config`.
 
 ---
 
@@ -49,50 +53,53 @@ lo              up      up
 
 ## Build it
 
-> **zebra:** A _description_ is a label for an interface, for people only: FRR does nothing else with it. Type `configure terminal`, then `description link to router c`.
+> **zebra:** A _description_ is a label for an interface, for people only: FRR does nothing else with it. Type `configure terminal`.
+
+---
+
+> **zebra:** At `a(config)#`, type `description link to router c`.
 
 ---
 
 ```
-a# configure terminal
 a(config)# description link to router c
 % Unknown command: description link to router c
 ```
 
-> **zebra:** Refused, and you know why from The Router's Language. Configure mode is for the router as a whole, and a description belongs to one interface. Go into it with `interface a-c`. Not sure what follows the word? Ask: `description ?`.
+> **zebra:** Refused, and you know why from The Router's Language. Configure mode is for the router as a whole, and a description belongs to one interface. Go into it: `interface a-c`.
+
+---
+
+> **zebra:** Not sure what follows the word? Type `description ?`, then Continue.
 
 ---
 
 ```
-a(config)# interface a-c
 a(config-if)# description 
   LINE  Characters describing this interface
 a(config-if)# description 
 ```
 
-> **zebra:** `LINE` means any words you like, spaces and all, up to the end of the line. Finish it: `link to router c`, then Enter, then `end`.
+> **zebra:** `LINE` means any words you like, spaces and all, up to the end of the line. Finish it: `link to router c`, then Enter.
 
 ---
 
 ```
 a(config-if)# description link to router c
-a(config-if)# end
-a# 
+a(config-if)# 
 ```
 
-> **zebra:** Not a word back. When a change works, vtysh says nothing. An interface has one label: a second `description` replaces the first, and `no description` takes it away.
+> **zebra:** Not a word back. When a change works, vtysh says nothing. A second `description` replaces the first, and `no description` takes it away. Type `end`, back to `a#`.
+
+---
 
 ## Watch it
 
-> **zebra:** You gave `a-c` a description. Is it in `/etc/frr/a/frr.conf`, the file FRR reads when it starts?
+> **zebra:** You gave `a-c` a description. Is it in `/etc/frr/a/frr.conf`, the file FRR reads when it starts? Answer, then look at both. First `show running-config`.
 >
 > - yes, FRR wrote it there
 > - [x] no, the file is unchanged
 > - only once you typed `end`
-
----
-
-> **zebra:** Look at both. First `show running-config`.
 
 ---
 
@@ -116,7 +123,11 @@ exit
 end
 ```
 
-> **zebra:** Your label, in a block of its own that ends with `exit`. Now leave vtysh with `exit` and type `cat /etc/frr/a/frr.conf`.
+> **zebra:** Your label, in a block of its own that ends with `exit`. Now leave vtysh with `exit`.
+
+---
+
+> **zebra:** Back at the shell: `cat /etc/frr/a/frr.conf`.
 
 ---
 

@@ -8,7 +8,11 @@
 
 ## See it
 
-> **zebra:** Type `vtysh`, then a single `?` at `a#`. No Enter needed.
+> **zebra:** Type `vtysh`.
+
+---
+
+> **zebra:** The prompt is `a#`: vtysh waits for you. Type a single `?`, with no Enter, then Continue.
 
 ---
 
@@ -43,7 +47,7 @@ a#
 a# 
 ```
 
-> **zebra:** Every command vtysh knows at `a#`, each with a line of help. `?` runs nothing: it shows what could come next and leaves your line as it was. It works after a word too. Type `show i?`.
+> **zebra:** Every command vtysh knows at `a#`, each with a line of help. `?` runs nothing: it shows what could come next and leaves your line as it was. It works after a word too. Type `show i?`, then Continue.
 
 ---
 
@@ -108,12 +112,20 @@ a# configure terminal
 a(config)# 
 ```
 
-> **zebra:** `a(config)#` is configure mode, for the router as a whole. Here `inter?` shows `interface  Select an interface to configure`. One interface's settings are changed inside that interface: type `interface a-c`, then `?`.
+> **zebra:** `a(config)#` is configure mode, for the router as a whole. One interface's settings are changed inside that interface: type `interface a-c`.
 
 ---
 
 ```
 a(config)# interface a-c
+a(config-if)# 
+```
+
+> **zebra:** `a(config-if)#` is interface mode, for `a-c` alone. Type `?`, then Continue.
+
+---
+
+```
 a(config-if)# 
   babel        Babel interface commands
   bandwidth    Set bandwidth informational parameter
@@ -146,12 +158,20 @@ a(config-if)#
 a(config-if)# 
 ```
 
-> **zebra:** `a(config-if)#` is interface mode, for `a-c` alone. These are the words an interface can be given: a `description`, settings for protocols of later stages such as `ospf`, and `shutdown`. `no` before a setting undoes it. Type `no shutdown`, then `do show interface brief`: `do` runs a command of `a#` from any mode.
+> **zebra:** The words an interface can be given: a `description`, settings for later stages such as `ospf`, and `shutdown`. `no` before a setting undoes it. Type `no shutdown`.
 
 ---
 
 ```
 a(config-if)# no shutdown
+a(config-if)# 
+```
+
+> **zebra:** Look without leaving: `do show interface brief`. `do` runs a command of `a#` from any mode.
+
+---
+
+```
 a(config-if)# do show interface brief
 Interface       Status  VRF             Addresses
 ---------       ------  ---             ---------
@@ -167,7 +187,11 @@ lo              up      default         10.255.0.1/32
 
 ## Watch it
 
-> **zebra:** Type `end`. Back at `a#`, you type `no shutdown` again. What does vtysh do?
+> **zebra:** Type `end`.
+
+---
+
+> **zebra:** Back at `a#`, you type `no shutdown` again. What does vtysh do?
 >
 > - switches `a-c` on a second time
 > - [x] refuses it
@@ -180,7 +204,11 @@ a# no shutdown
 % Unknown command: no shutdown
 ```
 
-> **zebra:** Refused: at `a#`, `shutdown` isn't a word at all. Each mode has its own words, and the prompt tells you which ones you have. Now leave vtysh with `exit`, and ask Linux: `ip -br link`, then `ping -c 3 10.0.2.2`.
+> **zebra:** Refused: at `a#`, `shutdown` isn't a word at all. Each mode has its own words. Leave vtysh with `exit`.
+
+---
+
+> **zebra:** Back at the shell. Ask Linux: `ip -br link`.
 
 ---
 
@@ -189,6 +217,13 @@ a:~# ip -br link
 lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
 a-b@if2          UP             7e:b9:e5:42:59:3b <BROADCAST,MULTICAST,UP,LOWER_UP> 
 a-c@if2          UP             52:c0:e9:97:59:ec <BROADCAST,MULTICAST,UP,LOWER_UP> 
+```
+
+> **zebra:** `UP` for Linux too. Ping c: `ping -c 3 10.0.2.2`.
+
+---
+
+```
 a:~# ping -c 3 10.0.2.2
 PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 64 bytes from 10.0.2.2: icmp_seq=1 ttl=64 time=1.09 ms
@@ -200,7 +235,7 @@ PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.449/0.677/1.094/0.295 ms
 ```
 
-> **zebra:** Up, and c answers. Now read the file FRR starts from: `cat /etc/frr/a/frr.conf`.
+> **zebra:** c answers. Now read the file FRR starts from: `cat /etc/frr/a/frr.conf`.
 
 ---
 

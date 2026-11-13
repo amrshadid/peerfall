@@ -109,13 +109,41 @@ a:~# echo $?
 2
 ```
 
-> **zebra:** `2`, the same number watchfrr passed on. You could fix the file by hand, and mistype again. vtysh is safer: it refuses a word it doesn't know the moment you type it, as you saw in The Router's Language, so a line it accepts will be read at the next start too. Type the description properly, in `a-c`'s own mode, and save it with `write memory`.
+> **zebra:** `2`, the same number watchfrr passed on. You could fix the file by hand, and mistype again. vtysh refuses a word it doesn't know the moment you type it, so a line it accepts will be read at the next start too. Type the line there, in `a-c`'s own mode. Open `vtysh`.
+
+---
+
+> **zebra:** `conf t`.
+
+---
+
+> **zebra:** `int a-c`.
+
+---
+
+> **zebra:** `description link to router c`.
+
+---
+
+> **zebra:** `end`.
+
+---
+
+> **zebra:** Save it: `write memory`.
+
+---
+
+> **zebra:** Leave with `exit`.
+
+---
+
+> **watchfrr:** Now restart me: `/usr/lib/frr/frrinit.sh restart a`.
 
 ---
 
 ## Watch it
 
-> **zebra:** `write memory` saved your line. What happened to the misspelt one? Read the file: `cat /etc/frr/a/frr.conf`.
+> **zebra:** `write memory` saved your line, and the restart read the file. What happened to the misspelt one? Read the file: `cat /etc/frr/a/frr.conf`.
 >
 > - it is still there, beside yours
 > - [x] it is gone: the file was written from the running configuration
@@ -138,17 +166,25 @@ exit
 !
 ```
 
-> **zebra:** Gone. The running configuration never held it, so the new file doesn't either. The old file waits in `frr.conf.sav`. Check the new one with `vtysh -C -f /etc/frr/a/frr.conf`, then `echo $?`.
+> **zebra:** Gone. The running configuration never held it, so the new file doesn't either. The old file waits in `frr.conf.sav`. Check the new one: `vtysh -C -f /etc/frr/a/frr.conf`.
 
 ---
 
 ```
 a:~# vtysh -C -f /etc/frr/a/frr.conf
+a:~# 
+```
+
+> **zebra:** Not a word. Now `echo $?`.
+
+---
+
+```
 a:~# echo $?
 0
 ```
 
-> **watchfrr:** Clean, and not a word. Restart me, then ask for the descriptions with `vtysh -c "show interface description"`.
+> **watchfrr:** Clean. Ask for the descriptions: `vtysh -c "show interface description"`.
 
 ---
 
