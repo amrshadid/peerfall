@@ -33,7 +33,7 @@ export interface SpeakerInfo {
   /** The real thing they are, e.g. "FRR's core daemon". */
   readonly term: string
   /** Which portrait to draw, or null for a voice without one. */
-  readonly portrait: 'zebra' | 'watchfrr' | null
+  readonly portrait: 'zebra' | 'watchfrr' | 'bfdd' | null
 }
 
 /** A line of the Guide's transcript; `speaker` is the name as the story wrote it. */
@@ -100,6 +100,8 @@ export interface GuideHint {
 }
 
 export interface GuideHints {
+  /** Who gives them: the stage's guide, such as zebra. */
+  readonly by: string
   /** The hints asked for so far, in order. */
   readonly revealed: readonly GuideHint[]
   /** How many are still to ask for. */

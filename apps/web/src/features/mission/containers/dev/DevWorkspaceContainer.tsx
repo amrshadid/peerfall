@@ -191,6 +191,7 @@ export function DevWorkspaceContainer() {
                 },
               }))}
               hints={{
+                by: 'zebra',
                 revealed: HINTS.slice(0, hints),
                 left: HINTS.length - hints,
                 onReveal: hints < HINTS.length ? revealHint : null,

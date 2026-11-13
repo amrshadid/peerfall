@@ -1,5 +1,6 @@
 // The Section 2 kit: paper, ink, one signal red. Props in, callbacks out.
 export { Banner, type BannerProps } from './Banner'
+export { BfddPortrait } from './BfddPortrait'
 export { Button, type ButtonProps } from './Button'
 export { ButtonLink, type ButtonLinkProps } from './ButtonLink'
 export { Checklist, type ChecklistItem, type ChecklistProps } from './Checklist'

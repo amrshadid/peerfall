@@ -162,7 +162,7 @@ export function GuidePresentation({
         {(hints.revealed.length > 0 || hints.left > 0) && (
           <section aria-labelledby="guide-hints-h" className="guide__hints">
             <SectionHead id="guide-hints-h" aside={hints.left > 0 ? `${hints.left} left` : 'none left'}>
-              zebra's hints
+              {hints.by}'s hints
             </SectionHead>
             {hints.revealed.length > 0 ? (
               <ol aria-live="polite">

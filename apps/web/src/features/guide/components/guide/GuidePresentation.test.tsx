@@ -18,7 +18,7 @@ const BASE: GuidePresentationProps = {
   showObjectives: true,
   objectives: OBJECTIVES,
   chips: [],
-  hints: { revealed: [], left: 3, onReveal: vi.fn() },
+  hints: { by: 'zebra', revealed: [], left: 3, onReveal: vi.fn() },
   codex: [],
   codexOpen: false,
   note: null,
@@ -160,9 +160,14 @@ describe('GuidePresentation', () => {
       expect(within(hints).getByText(/a nudge first, then the concept, then the spot/)).toBeTruthy()
     })
 
+    it("names them after the stage's guide", () => {
+      guide({ hints: { by: 'bfdd', revealed: [], left: 3, onReveal: vi.fn() } })
+      expect(screen.getByRole('region', { name: /bfdd's hints/ })).toBeTruthy()
+    })
+
     it('shows them one at a time, each named by its tier', () => {
       const onReveal = vi.fn()
-      guide({ hints: { revealed: HINTS.slice(0, 1), left: 2, onReveal } })
+      guide({ hints: { by: 'zebra', revealed: HINTS.slice(0, 1), left: 2, onReveal } })
       const hints = screen.getByRole('region', { name: /hints/ })
       expect(within(hints).getAllByRole('listitem')).toHaveLength(1)
       expect(within(hints).getByText('Hint 1, a nudge')).toBeTruthy()
@@ -172,7 +177,7 @@ describe('GuidePresentation', () => {
 
     it("lets the third hint's command be copied", () => {
       const onCopy = vi.fn()
-      guide({ hints: { revealed: HINTS, left: 0, onReveal: null, onCopy } })
+      guide({ hints: { by: 'zebra', revealed: HINTS, left: 0, onReveal: null, onCopy } })
       const hints = screen.getByRole('region', { name: /hints/ })
       expect(within(hints).getByText('Hint 3, the spot')).toBeTruthy()
       expect(within(hints).getByText('none left')).toBeTruthy()

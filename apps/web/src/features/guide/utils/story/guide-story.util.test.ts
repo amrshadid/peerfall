@@ -19,7 +19,7 @@ describe('speakerOf', () => {
   it('names the cast with the real part of FRR they are', () => {
     expect(speakerOf('zebra')).toMatchObject({ portrait: 'zebra', term: "FRR's core daemon, keeper of the routes" })
     expect(speakerOf('watchfrr')).toMatchObject({ portrait: 'watchfrr' })
-    expect(speakerOf('bfdd')).toMatchObject({ term: "FRR's BFD daemon", portrait: null })
+    expect(speakerOf('bfdd')).toMatchObject({ term: "FRR's BFD daemon", portrait: 'bfdd' })
   })
 
   it('lets narration and unknown names speak without a portrait', () => {

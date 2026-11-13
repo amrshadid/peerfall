@@ -36,6 +36,9 @@ export interface GuideContainerProps {
   onStartOver: () => void
 }
 
+// The guide of a stage that names none: zebra, who guides the first ones.
+const DEFAULT_GUIDE = 'zebra'
+
 const NEXT_LABEL: Readonly<Partial<Record<GuideStepId, string>>> = {
   scene: 'Next: See it',
   see: 'Next: Build it',
@@ -136,6 +139,7 @@ export function GuideContainer({
           : []
       }
       hints={{
+        by: content.game.chapters.find((chapter) => chapter.id === mission.chapter)?.guide ?? DEFAULT_GUIDE,
         revealed: hintsOf(hints.revealed, hints.revealed.length),
         left: hints.left,
         onReveal: onNetwork && hints.next !== null ? () => void hints.reveal() : null,
