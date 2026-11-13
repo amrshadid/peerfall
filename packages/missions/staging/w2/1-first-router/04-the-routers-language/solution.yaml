@@ -8,9 +8,13 @@ runs:
   - id: wrong-mode
     passes: false
     changes:
+      # vtysh stops at a refused line, so each refusal ends a change of its own.
       - router: a
-        lines: [no shutdown, configure terminal, no shutdown]
-        refused: true # FRR refuses no shutdown in both modes
+        lines: [no shutdown]
+        refused: true
+      - router: a
+        lines: [configure terminal, no shutdown]
+        refused: true
   - id: no-shutdown
     passes: true
     changes:
