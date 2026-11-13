@@ -7,6 +7,40 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+### Added
+
+- **Stage 1, First router, in eight missions:** The Dark Cable (a router as plain Linux
+  shows it: interfaces and routes), Nobody Answers (FRR's daemons and vtysh), The Silent
+  Router (FRR's init script and watchfrr), The Router's Language (vtysh's help and modes,
+  `shutdown`), What It Does Now (the running configuration), Gone After the Restart (the
+  saved configuration and `write memory`), The Skipped Line (FRR's log and `vtysh -C -f`),
+  and the capstone A Router from Nothing.
+- **Stage 2, Follow a packet, in six missions:** Two Ends of One Cable (addresses and
+  connected routes), One Hop Further (static routes and next hops), The Reply That Never
+  Came Back (the way back, TTL and `traceroute`), Written but Not Used (zebra's table and
+  the kernel's, next-hop resolution), The Backup Path (administrative distance, floating
+  static routes, equal-cost paths), and the capstone Bring the Line Up.
+- **A paced Guide.** Each mission is told step by step (scene, see it, build it, watch it,
+  debrief), and the Guide waits for the player's command before it goes on. Three staged
+  hints, and command chips that explain a command before it is typed.
+- **Live checking.** Objectives are judged from the network as it is, after each command
+  the player finishes and whenever routing settles; no button to press.
+- **The Codex and the Field Guide.** A card for each idea a mission teaches, deepened by
+  later missions, a title page for each stage, and one Field Guide entry for each command,
+  from the mission it is first met in.
+- **New checks:** a route in zebra's routing table, selected or waiting (`rib`), and a
+  configuration line that must be gone (`config` with `absent: true`).
+- **`pnpm content:report`** measures every mission against the word budgets, the
+  vocabulary and the chain of concepts.
+
+### Changed
+
+- **Stages 1 and 2 rewritten from zero** for players who start knowing nothing: The Silent
+  Router, Gone After the Restart, Two Ends of One Cable and The Reply That Never Came Back
+  keep their ids and are retold; every word is explained next to the output that shows it.
+- **The Link That Never Went Down** has a new story, hints, chips and Codex cards; its
+  network, checks and golden runs are unchanged.
+
 ## [0.1.0-alpha.2] - 2026-11-12
 
 The game now starts from the beginning: stages 1 and 2 each have two missions.
