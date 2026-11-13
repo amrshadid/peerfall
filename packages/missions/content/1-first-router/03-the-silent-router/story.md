@@ -47,23 +47,21 @@ Status of staticd: FAILED
 ```
 a:~# /usr/lib/frr/frrinit.sh start a
 Starting watchfrr with command: '  /usr/lib/frr/watchfrr -N a -d   mgmtd zebra staticd'
-watchfrr[591]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
-watchfrr[591]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
-watchfrr[591]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
-watchfrr[591]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
-watchfrr[591]: [YFT0P-5Q5YX] Forked background command [pid 592]: /usr/lib/frr/watchfrr.sh restart all
-watchfrr[591]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
-watchfrr[591]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
-watchfrr[591]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
-watchfrr[591]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
+watchfrr[609]: [T83RR-8SM5G] watchfrr 10.6.1 starting: vty@0
+watchfrr[609]: [ZCJ3S-SPH5S] mgmtd state -> down : initial connection attempt failed
+watchfrr[609]: [ZCJ3S-SPH5S] zebra state -> down : initial connection attempt failed
+watchfrr[609]: [ZCJ3S-SPH5S] staticd state -> down : initial connection attempt failed
+watchfrr[609]: [YFT0P-5Q5YX] Forked background command [pid 610]: /usr/lib/frr/watchfrr.sh restart all
+watchfrr[609]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
+watchfrr[609]: [QDG3Y-BY5TN] mgmtd state -> up : connect succeeded
+watchfrr[609]: [QDG3Y-BY5TN] zebra state -> up : connect succeeded
+watchfrr[609]: [QDG3Y-BY5TN] staticd state -> up : connect succeeded
+watchfrr[609]: [KWE5Q-QNGFC] all daemons up, doing startup-complete notify
 Started watchfrr
-a:~# watchfrr[591]: [VTVCM-Y2NW3] Configuration Read in Took: 00:00:00
-watchfrr[591]: [RKHTV-CNGEG] Daemon: mgmtd: is in Up state but expected it to be in DAEMON_DOWN state
-watchfrr[591]: [RKHTV-CNGEG] Daemon: zebra: is in Up state but expected it to be in DAEMON_DOWN state
-watchfrr[591]: [RKHTV-CNGEG] Daemon: staticd: is in Up state but expected it to be in DAEMON_DOWN state
+a:~#
 ```
 
-> **watchfrr:** That's me talking. `initial connection attempt failed`: I knocked on each daemon and nobody was there. `restart all`: so I started them. `connect succeeded`: all three answered. Then, after the prompt, `Configuration Read in`: `frr.conf` was read into them. `expected it to be in DAEMON_DOWN state` only means they answered before my command finished. The prompt still waits under my lines.
+> **watchfrr:** That's me talking. `initial connection attempt failed`: I knocked on each daemon and nobody was there. `restart all`: so I started them. `Configuration Read in`: `frr.conf` was read into them. `connect succeeded`: all three answered. The order of my lines can change from one start to the next.
 >
 > **zebra:** Check from vtysh. `vtysh -c "show daemons"` runs one command and comes back to the shell.
 
