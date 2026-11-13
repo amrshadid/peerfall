@@ -1,0 +1,79 @@
+id: the-dark-cable
+version: 1
+title: The Dark Cable
+summary: Meet a router through plain Linux, find the interface that is switched off, and see a route appear when it comes up.
+minutes: 15
+chapter: first-router
+objective: Router a's interface to c is up, a's routing table has a route through it, and a reaches c.
+prerequisites: [] # none: the first mission of the journey
+teaches: [router, interface, route]
+names: [ip-address, prefix, connected-route, frr-daemon, zebra, interface-shutdown, peer]
+uses: []
+
+# Stage 1's three routers. FRR runs on a, started by its init script, and its frr.conf holds
+# a-c down with `shutdown`: the player switches it on from Linux. Mission 1.4 reveals why it was down.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: watchfrr
+      config: "interface a-c\n shutdown\n!\n"
+    - { name: b, daemons: [], config: "" }
+    - { name: c, daemons: [], config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: cable-lit
+    text: Switch on a's interface to c, so that a's routing table has a route through it.
+    check: { kind: route, router: a, prefix: 10.0.2.0/30, protocol: kernel, interface: a-c }
+  - id: reaches-c
+    text: Send packets from a to c's address, 10.0.2.2, and see them answered.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+
+hints:
+  - text: "Each chip is a command. Run `ip -br link` and read the second column for each interface."
+  - text: "An interface that is `DOWN` sends nothing, and Linux adds a route for an interface's network only while the interface is up."
+  - text: "Switch on the interface named `a-c`."
+    command: ip link set a-c up
+
+chips:
+  - { command: ip -br link, explain: "list a's interfaces and whether each is up" }
+  - { command: ip -br addr, explain: "list a's interfaces with their addresses" }
+  - { command: ip route, explain: "show a's routing table" }
+  - { command: ping -c 3 10.0.1.2, explain: "send three packets to b and wait for answers" }
+  - { command: ping -c 3 10.0.2.2, explain: "send three packets to c and wait for answers" }
+  - { command: ip link set a-c up, explain: "switch on the interface a-c" }
+
+codex:
+  - id: router
+    term: router
+    simple: A computer that passes packets from one network to another. Router a is a Linux computer with three interfaces.
+    deep: "A packet carries a source and a destination address. A router reads the destination, looks it up in its routing table and sends the packet out of the interface the route names, usually to another router. Any Linux computer forwards packets once `net.ipv4.ip_forward` is 1, as on every router of the Machine; routing software such as FRR decides which routes the table holds."
+    sources: [zebra/rt_netlink.c]
+    docs: https://docs.frrouting.org/en/latest/introduction.html
+    tryIt: sysctl net.ipv4.ip_forward
+  - id: interface
+    term: interface
+    simple: "One of a router's connections to a network. `a-c` is a's end of the cable to c; it is up or down."
+    deep: "Linux names each interface and keeps its state. `UP` in `ip -br link` means switched on and connected; `DOWN` with no `UP` flag means switched off; `NO-CARRIER`, as on c's end of a dark cable, means switched on with nothing alive at the other end. `lo`, the loopback, is the router's own interface with no cable. On the Machine every cable is a veth pair, two interfaces joined back to back."
+    sources: [zebra/interface.c, zebra/if_netlink.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: ip -br link
+  - id: route
+    term: route
+    simple: "One line of a routing table: packets for this network leave by this interface. `ip route` shows a's."
+    deep: "Linux looks up every packet's destination in its routing table and uses the most specific line that covers it. With no line, it refuses to send: `ping: connect: Network unreachable`. A route `proto kernel` was added by Linux itself for the network of an interface's address, the moment the interface came up. Stage 2 writes routes by hand and follows them from FRR into Linux."
+    sources: [zebra/rt_netlink.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: ip route get 10.0.2.2
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

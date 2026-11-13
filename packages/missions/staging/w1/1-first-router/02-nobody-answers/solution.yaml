@@ -1,0 +1,23 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `shell` lines are typed at that router's shell, `lines` into its vtysh.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Started without the router's name: zebra runs, and vtysh -N a cannot reach it.
+  - id: zebra-without-name
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/zebra -d]
+  - id: zebra-by-hand
+    passes: true
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/zebra -d -N a]
+  # FRR's script also starts zebra: the outcome is the same.
+  - id: init-script
+    passes: true
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]

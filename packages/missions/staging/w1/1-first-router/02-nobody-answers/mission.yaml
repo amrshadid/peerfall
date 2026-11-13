@@ -1,0 +1,83 @@
+id: nobody-answers
+version: 1
+title: Nobody Answers
+summary: Meet FRR on a router where none of it runs, start its core daemon zebra by hand, and talk to it in vtysh.
+minutes: 15
+chapter: first-router
+objective: zebra runs on router a, started for that router, and answers in vtysh.
+prerequisites: [] # after the-dark-cable
+teaches: [frr-daemon, zebra, vtysh]
+names: [pathspace, saved-config, daemons-file, frr-init-script]
+uses: [router, interface]
+
+# Stage 1's three routers. FRR is installed and configured on a, and nothing of it runs:
+# both of a's cables are up, since no FRR holds one down. b and c run zebra and mgmtd.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: none
+      config: ""
+    - { name: b, daemons: [], config: "" }
+    - { name: c, daemons: [], config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: zebra-answers
+    text: Start zebra on router a, so that vtysh reaches it.
+    check: { kind: daemons, router: a, daemons: [zebra] }
+
+hints:
+  - text: "Type `vtysh` and read what it answers. Who is it trying to reach?"
+  - text: "FRR's daemons are programs in `/usr/lib/frr`. A daemon started with `-d` runs in the background, and `-N a` tells it which router it belongs to."
+  - text: Start the daemon named zebra, for router a.
+    command: /usr/lib/frr/zebra -d -N a
+
+chips:
+  - { command: vtysh, explain: "open FRR's console on this router" }
+  - { command: ls /etc/frr/a, explain: "list FRR's files for router a" }
+  - { command: /usr/lib/frr/zebra -d -N a, explain: "start zebra in the background, for router a" }
+  - { command: show daemons, explain: "in vtysh: list the daemons that answered" }
+  - { command: show interface brief, explain: "in vtysh: list the interfaces FRR knows" }
+  - { command: exit, explain: "leave vtysh, back to the shell" }
+
+codex:
+  - id: frr-daemon
+    term: FRR and its daemons
+    simple: "FRR is routing software made of daemons: background programs with one job each. zebra, mgmtd and staticd always start."
+    deep: "Each routing protocol is a daemon of its own, ospfd, bgpd and bfdd among them, and all of them talk to zebra, which talks to the Linux kernel. One daemon can stop and start without the others. FRR's programs live in `/usr/lib/frr` on the Machine, and its files for router a in `/etc/frr/a`: `frr.conf`, `daemons`, `vtysh.conf`."
+    sources: [lib/libfrr.c, zebra/main.c]
+    docs: https://docs.frrouting.org/en/latest/introduction.html
+    tryIt: ls /usr/lib/frr
+  - id: zebra
+    term: zebra
+    simple: FRR's core daemon. It learns the interfaces from Linux and hands routes to the kernel. Every router runs its own.
+    deep: "zebra asks the kernel for every interface and address over netlink, and keeps listening, so FRR sees a change as soon as Linux makes it. Every other daemon connects to zebra to offer routes; zebra picks the best for each network and installs it in the kernel. Started by hand on the Machine it prints `Disabling MPLS support (no kernel support)`: this kernel lacks MPLS, which stage 9 needs."
+    sources: [zebra/main.c, zebra/if_netlink.c, zebra/zebra_mpls.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show interface brief"
+  - id: vtysh
+    term: vtysh
+    simple: FRR's console. It passes what you type to the running daemons; with none running it has nobody to talk to.
+    deep: 'vtysh connects to each daemon''s socket and merges their answers into one console. With none it prints `Exiting: failed to connect to any daemons.` and exits with status 1. `vtysh -c "<command>"` runs one command and returns to the shell. `show daemons` names the daemons that answered.'
+    sources: [vtysh/vtysh_main.c, vtysh/vtysh.c]
+    docs: https://docs.frrouting.org/en/latest/vtysh.html
+    tryIt: vtysh -c "show version"
+  - id: pathspace
+    term: one Machine, many routers
+    simple: "Every router here lives in one Linux computer. FRR's `-N a` keeps a's daemons, sockets and files apart from b's."
+    deep: "Each router is a Linux network namespace: its own interfaces and routing table inside one kernel. FRR's `-N`, its pathspace, puts the router's name into every path: `/etc/frr/a`, `/run/frr/a`. On a router that is a computer of its own you leave `-N` out and the files are in `/etc/frr`. In a's terminal here, `vtysh` already means `vtysh -N a`."
+    sources: [lib/libfrr.c]
+    docs: https://docs.frrouting.org/en/latest/setup.html
+    tryIt: ls /run/frr/a
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

@@ -1,0 +1,21 @@
+entries:
+  - {
+      name: vtysh,
+      kind: shell,
+      what: "open FRR's console on this router; it needs FRR's daemons running",
+      firstMet: nobody-answers,
+    }
+  - {
+      name: /usr/lib/frr/zebra -d -N a,
+      kind: shell,
+      what: "start the daemon zebra by hand, in the background, for router a",
+      firstMet: nobody-answers,
+    }
+  - { name: show daemons, kind: vtysh, what: "name the daemons that answered vtysh", firstMet: nobody-answers }
+  - {
+      name: show interface brief,
+      kind: vtysh,
+      what: "list the interfaces zebra knows, up or down, with their addresses",
+      firstMet: nobody-answers,
+    }
+  - { name: exit, kind: vtysh, what: "leave vtysh and go back to the shell", firstMet: nobody-answers }

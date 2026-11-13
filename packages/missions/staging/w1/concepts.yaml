@@ -1,0 +1,22 @@
+# Staging: the concepts missions 1.1 to 1.3 teach, name or use (docs/missions/concepts.md).
+# concepts.md's parts network, cli and config are not parts the schema knows yet; they are
+# mapped here to foundations, frr and frr.
+concepts:
+  - { id: router, term: router, part: foundations, codex: router }
+  - { id: interface, term: interface, part: linux, codex: interface }
+  - { id: route, term: route and routing table, part: routing, codex: route }
+  - { id: frr-daemon, term: FRR and its daemons, part: frr, codex: frr-daemon }
+  - { id: zebra, term: zebra, part: frr, codex: zebra }
+  - { id: vtysh, term: vtysh, part: frr, codex: vtysh }
+  - { id: watchfrr, term: watchfrr, part: frr, codex: watchfrr }
+  - { id: frr-init-script, term: FRR's init script, part: frr, codex: frr-init-script }
+  - { id: daemons-file, term: the daemons file, part: frr, codex: daemons-file }
+  - { id: interface-shutdown, term: shutdown, part: frr }
+  - { id: saved-config, term: saved configuration, part: frr }
+  - { id: ip-address, term: IPv4 address, part: foundations }
+  - { id: prefix, term: network and prefix length, part: foundations }
+  - { id: connected-route, term: connected route, part: forwarding }
+  - { id: pathspace, term: "one Machine, many routers", part: frr, codex: pathspace }
+  - { id: peer, term: peer, part: foundations }
+  - { id: mgmtd, term: mgmtd, part: frr }
+  - { id: staticd, term: staticd, part: frr }

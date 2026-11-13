@@ -1,0 +1,1 @@
+{"mission":"the-silent-router","version":2,"run":"by-hand-then-init-script","passes":true,"events":[],"state":{"routers":{"a":{"daemons":["mgmtd","zebra","staticd","watchfrr"]}},"pings":[]}}
