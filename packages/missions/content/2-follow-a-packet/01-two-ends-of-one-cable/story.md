@@ -18,7 +18,7 @@ lo               UNKNOWN        127.0.0.1/8 ::1/128
 a-b@if2          UP             fe80::d47e:63ff:feb5:6a1a/64 
 ```
 
-> **zebra:** `a-b` is `UP`, and it has no address like the `10.0.1.1` you saw in The Dark Cable. The long `fe80::` one is an IPv6 address Linux gives every interface by itself; IPv6 waits for later. Try to reach b anyway: `ping -c 2 10.0.1.2`.
+> **zebra:** `a-b` is `UP`, and it has no address like the `10.0.1.1` you saw in The Dark Cable. The long `fe80::` one is an IPv6 address Linux gives each interface on a cable by itself; IPv6 waits for later. Try to reach b anyway: `ping -c 2 10.0.1.2`.
 
 ---
 
@@ -87,7 +87,7 @@ a:~# ip route
 > **zebra:** Only a has its address. You ping b again: what happens?
 >
 > - `Network unreachable`, as before
-> - [x] packets leave, and nobody answers
+> - [x] a tries, and nobody answers
 > - b answers
 
 ---
@@ -104,7 +104,7 @@ From 10.0.1.1 icmp_seq=3 Destination Host Unreachable
 pipe 3
 ```
 
-> **zebra:** a has a route now, so the packets leave. Nobody owns `10.0.1.2` yet, so a itself reports `Destination Host Unreachable`. Each router knows only its own end. Select b on the topology and give `b-a` the address `10.0.1.2/30`, the same way. Then ping b from a again.
+> **zebra:** With a route, a asks on the cable who owns `10.0.1.2`. Nobody does, so the pings never leave: a itself reports `Destination Host Unreachable`. Now click b in the topology: the terminal moves to b's shell, `b:~#`. Give `b-a` the address `10.0.1.2/30` the same way, then click a and ping b again.
 
 ---
 

@@ -1,5 +1,5 @@
 id: two-ends-of-one-cable
-version: 2
+version: 3
 title: Two Ends of One Cable
 summary: Give both ends of a new cable their addresses, and watch the connected route appear in FRR and in Linux.
 minutes: 15
@@ -22,12 +22,14 @@ network:
         - { router: b, address: 10.0.1.2/30, unaddressed: true }
 
 objectives:
+  # Each end's own address, as zebra's local route (L): a route to the network alone would also
+  # be met with the ends swapped, and a would then answer its own ping.
   - id: a-connected
-    text: Give a's interface a-b the address 10.0.1.1/30, so a's kernel has the route to 10.0.1.0/30.
-    check: { kind: route, router: a, prefix: 10.0.1.0/30, protocol: kernel, interface: a-b }
+    text: Give a's interface a-b its own address, 10.0.1.1, which brings a's connected route.
+    check: { kind: rib, router: a, prefix: 10.0.1.1/32, protocol: local }
   - id: b-connected
-    text: Give b's interface b-a the address 10.0.1.2/30.
-    check: { kind: route, router: b, prefix: 10.0.1.0/30, protocol: kernel, interface: b-a }
+    text: Give b's interface b-a its own address, 10.0.1.2, which brings b's connected route.
+    check: { kind: rib, router: b, prefix: 10.0.1.2/32, protocol: local }
   - id: a-reaches-b
     text: Reach b's address from a.
     check: { kind: reaches, from: a, to: 10.0.1.2 }
@@ -52,7 +54,7 @@ codex:
   - id: ip-address
     term: An address
     simple: A number that names one interface, such as 10.0.1.1. A router has one on each cable it routes over.
-    deep: "An IPv4 address is 32 bits, written as four numbers from 0 to 255. Configured in FRR, zebra hands it to Linux, which puts it on the interface and answers for it. Linux also gives every interface an IPv6 address of its own, the fe80:: one. To send to a neighbour on the cable, a router first learns the neighbour's MAC address, which ip neigh lists."
+    deep: "An IPv4 address is 32 bits, written as four numbers from 0 to 255. Configured in FRR, zebra hands it to Linux, which puts it on the interface and answers for it. Linux also gives each interface on a cable an IPv6 address of its own, the fe80:: one. To send to a neighbour on the cable, a router first learns the neighbour's MAC address, which ip neigh lists."
     sources: [zebra/interface.c, zebra/if_netlink.c]
     docs: https://docs.frrouting.org/en/latest/zebra.html
     tryIt: vtysh -c "show interface brief"
