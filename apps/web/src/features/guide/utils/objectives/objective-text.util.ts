@@ -82,7 +82,7 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
         : `The configuration does not have that line yet. ${TERMS.configuration}`
     case 'still_configured':
       return result.kind === 'config' && result.found
-        ? `Router ${result.router}'s ${result.source} configuration still has ${code(result.found)}. ${TERMS.configuration}`
+        ? `Router ${result.router}'s ${result.source} configuration still has ${code(result.found.trim())}. ${TERMS.configuration}`
         : `The configuration still has that line. ${TERMS.configuration}`
     case 'no_config':
       return result.kind === 'config'
