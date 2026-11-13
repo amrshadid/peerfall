@@ -134,13 +134,13 @@ describe('MissionContainer', () => {
     expect(mocks.start).not.toHaveBeenCalled()
   })
 
-  it("puts the terminal in the mission's first router once the network is ready, and not before", () => {
+  it("puts the terminal in the mission's first router once its routers are built, and not before", () => {
     mocks.active = activeAt('play')
     mocks.router = null
-    mocks.run = runAt('settling')
+    mocks.run = runAt('building')
     const { rerender } = mount()
     expect(mocks.select).not.toHaveBeenCalled()
-    mocks.run = runAt('ready')
+    mocks.run = runAt('settling')
     rerender(
       <MissionContainer
         missionId={MISSION_ID}

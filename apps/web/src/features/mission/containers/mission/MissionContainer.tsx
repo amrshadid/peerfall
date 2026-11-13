@@ -96,13 +96,15 @@ export function MissionContainer({
   // A network starts with the terminal in the Machine's own shell, which belongs to no router: a
   // newcomer would type every command there, see nothing work and get no sign why. So the
   // terminal goes into the router the mission starts from (the probe's, else the first one) as
-  // soon as the network is ready, and again after Start over brings that shell back.
+  // soon as its namespaces exist (settling comes right after they are built: waiting for ready let
+  // the first commands land in the Machine's shell), and again after Start over brings that shell back.
   const firstRouter = mission?.probe?.from ?? mission?.network.routers[0]?.name ?? null
+  const routersBuilt = run.phase === 'settling' || run.phase === 'ready'
   useEffect(() => {
-    if (run.phase === 'ready' && router === null && firstRouter !== null) {
+    if (routersBuilt && router === null && firstRouter !== null) {
       void select(firstRouter)
     }
-  }, [run.phase, router, firstRouter, select])
+  }, [routersBuilt, router, firstRouter, select])
   const chrome = useScreenChrome()
   const { sizes, setPanelSize } = usePanelSizes()
   const showAll = useShowAllPanels()
