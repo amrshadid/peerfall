@@ -1,4 +1,4 @@
-import type { KernelRoute, MachineState, RouterStatePart, StateRequest } from '@peerfall/machine/types'
+import type { KernelRoute, MachineState, RibRoute, RouterStatePart, StateRequest } from '@peerfall/machine/types'
 import { configEntries } from '@peerfall/machine/utils'
 import {
   CHECK_FAILURES,
@@ -34,12 +34,14 @@ const CONFIG_PARTS = {
   started: 'startedConfig',
 } as const satisfies Record<ConfigSource, RouterStatePart>
 
-const partOf = (check: StateCheck<'daemons' | 'route' | 'config'>): RouterStatePart => {
+const partOf = (check: StateCheck<'daemons' | 'route' | 'rib' | 'config'>): RouterStatePart => {
   switch (check.kind) {
     case 'daemons':
       return 'daemons'
     case 'route':
       return 'routes'
+    case 'rib':
+      return 'rib'
     case 'config':
       return CONFIG_PARTS[check.source]
   }
@@ -121,6 +123,27 @@ function checkRoute(check: StateCheck<'route'>, state: MachineState | null): Sta
   return result(isRouteAsked(check, route) ? null : CHECK_FAILURES.wrongRoute, route)
 }
 
+const isRibRouteAsked = (check: StateCheck<'rib'>, route: RibRoute): boolean =>
+  (check.protocol === undefined || route.protocol === check.protocol) &&
+  // One route of zebra's carries every equal-distance next hop: being one of them is enough.
+  (check.via === undefined || route.nextHops.some((hop) => hop.via === check.via)) &&
+  (check.selected === undefined || route.selected === check.selected)
+
+function checkRib(check: StateCheck<'rib'>, state: MachineState | null): StateResult<'rib'> {
+  const rib = state?.routers[check.router]?.rib
+  const result = (failure: StateResult<'rib'>['failure'], routes: readonly RibRoute[], found: RibRoute | null) =>
+    ({ kind: 'rib', passed: failure === null, failure, router: check.router, routes, found }) as const
+  if (rib === undefined) {
+    return result(CHECK_FAILURES.notChecked, [], null)
+  }
+  const routes = rib.filter((route) => samePrefix(route.prefix, check.prefix))
+  if (routes.length === 0) {
+    return result(CHECK_FAILURES.noRibRoute, routes, null)
+  }
+  const found = routes.find((route) => isRibRouteAsked(check, route)) ?? null
+  return result(found ? null : CHECK_FAILURES.wrongRibRoute, routes, found)
+}
+
 function checkReaches(check: StateCheck<'reaches'>, state: MachineState | null): StateResult<'reaches'> {
   const ping = state?.pings.find(({ from, to }) => from === check.from && to === check.to)
   const result = (failure: StateResult<'reaches'>['failure']) =>
@@ -171,6 +194,8 @@ export function evaluateStateCheck(check: StateCheck, state: MachineState | null
       return checkDaemons(check, state)
     case 'route':
       return checkRoute(check, state)
+    case 'rib':
+      return checkRib(check, state)
     case 'reaches':
       return checkReaches(check, state)
     case 'config':

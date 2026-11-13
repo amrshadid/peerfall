@@ -31,6 +31,7 @@ export {
   PING_MAX_COUNT,
   type PingRequest,
   type PingResult,
+  type RibRoute,
   ROUTER_STATE_PARTS,
   type RouterState,
   type RouterStatePart,

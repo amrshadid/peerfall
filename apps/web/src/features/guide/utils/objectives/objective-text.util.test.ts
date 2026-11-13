@@ -188,6 +188,46 @@ describe('checks that read the routers as they are', () => {
     ).toContain("Router a's saved configuration has `ip route 10.255.0.3/32 10.0.2.2`.")
   })
 
+  it('names what zebra holds for the prefix, selected or waiting, when it is not the route asked for', () => {
+    const backup: CheckDefinition = {
+      kind: 'rib',
+      router: 'a',
+      prefix: '10.255.0.3/32',
+      protocol: 'static',
+      via: '10.0.1.2',
+      selected: false,
+    }
+    const throughB = {
+      prefix: '10.255.0.3/32',
+      protocol: 'static',
+      distance: 1,
+      metric: 0,
+      selected: true,
+      installed: true,
+      nextHops: [{ via: '10.0.1.2', interface: 'a-b' }],
+    }
+    const selected: CheckResult = {
+      kind: 'rib',
+      passed: false,
+      failure: 'wrong_rib_route',
+      router: 'a',
+      routes: [throughB],
+      found: null,
+    }
+    const text = failureText(backup, selected, NAMES)
+    expect(text).toContain(
+      "Router a's zebra holds `10.255.0.3/32 from static via 10.0.1.2 distance 1 selected`, but not the route this objective asks for."
+    )
+    expect(text).toContain('only the selected route goes into the kernel')
+    expect(failureText(backup, { ...selected, failure: 'no_rib_route', routes: [] }, NAMES)).toContain(
+      "Router a's zebra has no route for `10.255.0.3/32`."
+    )
+    const waiting = { ...throughB, distance: 10, selected: false, installed: false }
+    expect(
+      evidenceText({ ...selected, passed: true, failure: null, routes: [waiting], found: waiting }, NAMES)
+    ).toContain("Router a's zebra holds `10.255.0.3/32 from static via 10.0.1.2 distance 10 not selected`.")
+  })
+
   it('says which line is still there, or that there is no configuration yet, when a line must be gone', () => {
     const still: CheckResult = {
       kind: 'config',

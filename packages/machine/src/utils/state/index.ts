@@ -2,6 +2,7 @@ export {
   parseDaemons,
   parseKernelRoutes,
   parsePing,
+  parseRibRoutes,
   parseRouterState,
   pingLine,
   routerStateLine,

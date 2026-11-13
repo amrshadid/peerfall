@@ -266,7 +266,7 @@ describe('validateMission', () => {
         ],
       })
       expect(errors).toEqual([
-        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, reaches, config, got "typed"',
+        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, rib, reaches, config, got "typed"',
         'objectives[1].check: expected "before", "after" or both: the interface traffic must leave through',
         'objectives[2].check.within: unknown field (expected one of: kind, via, withinMs)',
         'objectives[2].check.withinMs: expected a number from 1 to 9007199254740991, got 0',
@@ -372,6 +372,33 @@ describe('validateMission', () => {
         'objectives[6].check.source: expected one of running, saved, started, got "startup"',
         'objectives[6].check.block: expected a list, got text',
         'objectives[6].check.line: expected non-empty text, got empty text',
+      ])
+    })
+
+    it('reads a rib check, each narrowing field only when given', () => {
+      const checkOf = (check: Readonly<Record<string, unknown>>) => {
+        const result = validateMission({ ...STATE, objectives: [{ ...FRR_RUNS, check }] })
+        return result.ok ? result.value.objectives[0]?.check : result.errors
+      }
+      const backup = {
+        kind: 'rib',
+        router: 'a',
+        prefix: '10.255.0.3/32',
+        protocol: 'static',
+        via: '10.0.1.2',
+        selected: false,
+      }
+      expect(checkOf(backup)).toEqual(backup)
+      expect(checkOf({ kind: 'rib', router: 'a', prefix: '10.0.1.0/30' })).toEqual({
+        kind: 'rib',
+        router: 'a',
+        prefix: '10.0.1.0/30',
+      })
+      expect(checkOf({ ...backup, prefix: '10.255.0.3', via: 'b', selected: 'no', distance: 10 })).toEqual([
+        'objectives[0].check.distance: unknown field (expected one of: kind, router, prefix, protocol, via, selected)',
+        'objectives[0].check.via: expected an address like 10.0.1.2, got "b"',
+        'objectives[0].check.selected: expected true or false, got text',
+        'objectives[0].check.prefix: expected a prefix like 10.0.1.0/30, got "10.255.0.3"',
       ])
     })
 

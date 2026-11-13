@@ -1,4 +1,4 @@
-import type { KernelRoute } from '@peerfall/machine/types'
+import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
 import type { ObjectiveId } from '#types/definitions/mission'
 
 /** The two things FRR can notice a dead neighbor by, under the names of the Machine's events. */
@@ -10,7 +10,7 @@ export type DetectionEvent = (typeof DETECTION_EVENTS)[number]
 export const RUN_CHECK_KINDS = ['reachable', 'path', 'recovery', 'outage', 'detected-by'] as const
 
 /** Checks that read the Machine as it is when the player's work is checked: no fault is needed. */
-export const STATE_CHECK_KINDS = ['daemons', 'route', 'reaches', 'config'] as const
+export const STATE_CHECK_KINDS = ['daemons', 'route', 'rib', 'reaches', 'config'] as const
 
 export const CHECK_KINDS = [...RUN_CHECK_KINDS, ...STATE_CHECK_KINDS] as const
 
@@ -50,6 +50,20 @@ export type CheckDefinition =
       readonly protocol?: string
       readonly via?: string
       readonly interface?: string
+    }
+  /**
+   * Zebra's routing table (the RIB) holds a route for exactly `prefix`, from `protocol`, with
+   * `via` among its next hops, selected or not as `selected` says. Each is left out to accept
+   * any. The RIB also holds the routes zebra did not select, which the kernel never sees: a
+   * backup that waits shows only here.
+   */
+  | {
+      readonly kind: 'rib'
+      readonly router: string
+      readonly prefix: string
+      readonly protocol?: string
+      readonly via?: string
+      readonly selected?: boolean
     }
   /** At least `minReplies` of the few packets sent from the router to the address are answered. */
   | { readonly kind: 'reaches'; readonly from: string; readonly to: string; readonly minReplies: number }
@@ -121,6 +135,10 @@ export const CHECK_FAILURES = {
   wrongRoute: 'wrong_route',
   /** The configuration does not have the line. */
   notConfigured: 'not_configured',
+  /** Zebra's routing table holds no route for the prefix at all. */
+  noRibRoute: 'no_rib_route',
+  /** Zebra holds routes for the prefix, but none from that protocol, via that next hop, selected or not as asked. */
+  wrongRibRoute: 'wrong_rib_route',
   /** An `absent` check: the configuration still has the line. */
   stillConfigured: 'still_configured',
   /** An `absent` check: there is no such configuration to read (FRR is down, no frr.conf, or never restarted). */
@@ -223,6 +241,16 @@ export type CheckResult =
       readonly router: string
       /** The kernel's route for the prefix or the address; `null` when it has none. */
       readonly route: KernelRoute | null
+    }
+  | {
+      readonly kind: 'rib'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      /** Every route zebra holds for the prefix, in the order FRR lists them; empty when none. */
+      readonly routes: readonly RibRoute[]
+      /** The one that is what the check asks for; `null` when none is. */
+      readonly found: RibRoute | null
     }
   | {
       readonly kind: 'reaches'

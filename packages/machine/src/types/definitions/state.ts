@@ -8,8 +8,29 @@ export interface KernelRoute {
   readonly nextHops: readonly { readonly via: string | null; readonly interface: string }[]
 }
 
+/**
+ * One route of zebra's routing table (the RIB), as `show ip route json` prints it. Unlike the
+ * kernel's table it holds every route zebra knows, also those it did not select: a backup with a
+ * higher distance waits here and never reaches the kernel.
+ */
+export interface RibRoute {
+  /** As FRR writes it, always with its length: `10.255.0.3/32`. */
+  readonly prefix: string
+  /** Who gave zebra the route, in FRR's words: `static`, `connected`, `local`, `kernel`, `ospf`… */
+  readonly protocol: string
+  /** The administrative distance: for one prefix zebra selects the lowest. */
+  readonly distance: number
+  readonly metric: number
+  /** Zebra chose it for this prefix (the `>` of `show ip route`). */
+  readonly selected: boolean
+  /** It is in the kernel's table (the `*` of `show ip route`). */
+  readonly installed: boolean
+  /** `via` is null for a directly connected route; `interface` is null when FRR names none. */
+  readonly nextHops: readonly { readonly via: string | null; readonly interface: string | null }[]
+}
+
 /** What a mission may ask about one router. Each part is a command of its own, so only what is needed is read. */
-export const ROUTER_STATE_PARTS = ['daemons', 'routes', 'runningConfig', 'savedConfig', 'startedConfig'] as const
+export const ROUTER_STATE_PARTS = ['daemons', 'routes', 'rib', 'runningConfig', 'savedConfig', 'startedConfig'] as const
 
 export type RouterStatePart = (typeof ROUTER_STATE_PARTS)[number]
 
@@ -18,6 +39,8 @@ export interface RouterState {
   /** The FRR daemons that answered vtysh, as `show daemons` names them; empty when none did. */
   readonly daemons?: readonly string[]
   readonly routes?: readonly KernelRoute[]
+  /** Zebra's IPv4 routes, selected or not; empty when zebra did not answer. */
+  readonly rib?: readonly RibRoute[]
   /** `show running-config` as text; `null` when no daemon answered. */
   readonly runningConfig?: string | null
   /** The router's `frr.conf` as it is on disk: what FRR starts with. `null` when there is none. */

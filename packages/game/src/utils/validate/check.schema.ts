@@ -19,6 +19,7 @@ const CHECK_FIELDS: Readonly<Record<CheckKind, readonly string[]>> = {
   'detected-by': ['event'],
   daemons: ['router', 'daemons'],
   route: ['router', 'prefix', 'to', 'protocol', 'via', 'interface'],
+  rib: ['router', 'prefix', 'protocol', 'via', 'selected'],
   reaches: ['from', 'to', 'minReplies'],
   config: ['router', 'source', 'block', 'line', 'absent'],
 }
@@ -30,6 +31,22 @@ const ADDRESS: StringRule = { pattern: IPV4, expected: 'an address like 10.0.1.2
 const PREFIX: StringRule = { pattern: IPV4_WITH_PREFIX, expected: 'a prefix like 10.0.1.0/30' }
 // As `ip route` names who installed a route: kernel, static, ospf…
 const PROTOCOL: StringRule = { pattern: /^[a-z][a-z0-9]*$/, expected: 'a protocol as ip route names it, like static' }
+// As zebra names a route's source in `show ip route json`: connected, local, static, ospf…
+const RIB_PROTOCOL: StringRule = { pattern: /^[a-z][a-z0-9-]*$/, expected: 'a protocol as FRR names it, like static' }
+
+function readRib(check: ObjectReader): Extract<CheckDefinition, { kind: 'rib' }> {
+  const protocol = check.optional('protocol', (key) => check.string(key, RIB_PROTOCOL))
+  const via = check.optional('via', (key) => check.string(key, ADDRESS))
+  const selected = check.optional('selected', (key) => check.flag(key))
+  return {
+    kind: 'rib',
+    router: check.string('router'),
+    prefix: check.string('prefix', PREFIX),
+    ...(protocol !== undefined && { protocol }),
+    ...(via !== undefined && { via }),
+    ...(selected !== undefined && { selected }),
+  }
+}
 
 function readRoute(check: ObjectReader): Extract<CheckDefinition, { kind: 'route' }> {
   const prefix = check.optional('prefix', (key) => check.string(key, PREFIX))
@@ -94,6 +111,8 @@ export function readCheck(check: ObjectReader): CheckDefinition {
     }
     case 'route':
       return readRoute(check)
+    case 'rib':
+      return readRib(check)
     case 'reaches':
       return {
         kind,
@@ -130,6 +149,7 @@ export function checkRouter(check: CheckDefinition): { readonly field: string; r
   switch (check.kind) {
     case 'daemons':
     case 'route':
+    case 'rib':
     case 'config':
       return { field: 'router', name: check.router }
     case 'reaches':

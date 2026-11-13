@@ -126,6 +126,15 @@ function describeObjective({ result }: MissionVerdict['objectives'][number]): st
       return result.route
         ? `${result.router}: ${result.route.prefix} proto ${result.route.protocol} ${result.route.nextHops.map((hop) => `${hop.via ? `via ${hop.via} ` : ''}dev ${hop.interface}`).join(', ')}`
         : `${result.router}: no route`
+    case 'rib':
+      return `${result.router} zebra: ${
+        result.routes
+          .map(
+            (route) =>
+              `${route.prefix} ${route.protocol} [${route.distance}/${route.metric}] ${route.nextHops.map((hop) => hop.via ?? hop.interface).join(',')}${route.selected ? ' selected' : ''}`
+          )
+          .join('; ') || 'no route'
+      }`
     case 'reaches':
       return `${result.from} → ${result.to}: ${result.received} of ${result.sent} answered`
     case 'config':

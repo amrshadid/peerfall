@@ -192,6 +192,86 @@ describe('config', () => {
   })
 })
 
+describe('rib', () => {
+  // Router a of The Backup Path, as zebra held 10.255.0.3/32 on the Machine at each step.
+  const THROUGH_B = {
+    prefix: '10.255.0.3/32',
+    protocol: 'static',
+    distance: 1,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: '10.0.1.2', interface: 'a-b' }],
+  }
+  const DIRECT = { ...THROUGH_B, nextHops: [{ via: '10.0.2.2', interface: 'a-c' }] }
+  const SHARED = { ...THROUGH_B, nextHops: [...THROUGH_B.nextHops, ...DIRECT.nextHops] }
+  const WAITING = { ...THROUGH_B, distance: 10, selected: false, installed: false }
+  const CONNECTED = {
+    prefix: '10.0.1.0/30',
+    protocol: 'connected',
+    distance: 0,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: null, interface: 'a-b' }],
+  }
+  const withRib = (...rib: (typeof THROUGH_B | typeof CONNECTED)[]): MachineState => ({
+    routers: { a: { rib } },
+    pings: [],
+  })
+  const backup = {
+    kind: 'rib',
+    router: 'a',
+    prefix: '10.255.0.3/32',
+    protocol: 'static',
+    via: '10.0.1.2',
+    selected: false,
+  } as const
+
+  it('passes when the route through b waits in zebra’s table, not selected', () => {
+    expect(judge(backup, withRib(CONNECTED, WAITING, DIRECT))).toEqual({
+      kind: 'rib',
+      passed: true,
+      failure: null,
+      router: 'a',
+      routes: [WAITING, DIRECT],
+      found: WAITING,
+    })
+  })
+
+  it('fails while that route is selected, alone or sharing the traffic, and once it is gone', () => {
+    expect(judge(backup, withRib(CONNECTED, THROUGH_B))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.wrongRibRoute,
+      routes: [THROUGH_B],
+      found: null,
+    })
+    expect(judge(backup, withRib(SHARED)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge(backup, withRib(DIRECT)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge(backup, withRib(CONNECTED))).toMatchObject({ failure: CHECK_FAILURES.noRibRoute, routes: [] })
+  })
+
+  it('takes either state when selected is left out, and narrows by protocol', () => {
+    const { selected: _, ...anyState } = backup
+    expect(judge(anyState, withRib(THROUGH_B)).passed).toBe(true)
+    expect(judge(anyState, withRib(WAITING)).passed).toBe(true)
+    expect(judge({ ...anyState, protocol: 'ospf' }, withRib(THROUGH_B)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge({ kind: 'rib', router: 'a', prefix: '10.0.1.0/30' }, withRib(CONNECTED)).passed).toBe(true)
+  })
+
+  it('is not checked before zebra’s table was read, and finds nothing on a router whose zebra is down', () => {
+    expect(judge(backup).failure).toBe(CHECK_FAILURES.notChecked)
+    expect(judge(backup, withRib()).failure).toBe(CHECK_FAILURES.noRibRoute)
+  })
+
+  it('asks for zebra’s table of the router it names', () => {
+    expect(stateRequestOf({ objectives: [{ id: 'backup', text: '', check: backup }] })).toEqual({
+      routers: { a: ['rib'] },
+      pings: [],
+    })
+  })
+})
+
 describe('before the state is read', () => {
   it('every state check is not checked yet', () => {
     const checks: CheckDefinition[] = [

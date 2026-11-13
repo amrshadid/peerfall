@@ -8,7 +8,7 @@ import type {
   ObjectiveDefinition,
   RouteHop,
 } from '@peerfall/game/types'
-import type { KernelRoute } from '@peerfall/machine/types'
+import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
 import { DETECTOR_NAMES, NOT_CHECKED, NOT_TESTED, TERMS } from './objective-text.constants'
 
 const MS_PER_SECOND = 1000
@@ -41,6 +41,20 @@ const kernelRouteText = (route: KernelRoute): string => {
   return [route.prefix, ...(route.protocol === '' ? [] : [`from ${route.protocol}`]), hops.join(' and ')]
     .filter((part) => part !== '')
     .join(' ')
+}
+
+/** A route of zebra's in one line, with its distance and whether zebra selected it. */
+const ribRouteText = (route: RibRoute): string => {
+  const hops = route.nextHops.map((hop) =>
+    hop.via === null ? `on ${hop.interface ?? 'its interface'}` : `via ${hop.via}`
+  )
+  return [
+    route.prefix,
+    `from ${route.protocol}`,
+    ...hops,
+    `distance ${route.distance}`,
+    route.selected ? 'selected' : 'not selected',
+  ].join(' ')
 }
 
 const packets = (count: number): string => (count === 1 ? '1 packet' : `${count} packets`)
@@ -76,6 +90,14 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
       return result.kind === 'route' && result.route
         ? `Router ${result.router} has a route there, but not the one asked for: ${code(kernelRouteText(result.route))}. ${TERMS.route}`
         : `The router has a route there, but not the one this objective asks for. ${TERMS.route}`
+    case 'no_rib_route':
+      return check.kind === 'rib'
+        ? `Router ${check.router}'s zebra has no route for ${code(check.prefix)}. ${TERMS.rib}`
+        : `Zebra has no route there. ${TERMS.rib}`
+    case 'wrong_rib_route':
+      return result.kind === 'rib' && result.routes.length > 0
+        ? `Router ${result.router}'s zebra holds ${result.routes.map((route) => code(ribRouteText(route))).join(' and ')}, but not the route this objective asks for. ${TERMS.rib}`
+        : `Zebra has a route there, but not the one this objective asks for. ${TERMS.rib}`
     case 'not_configured':
       return result.kind === 'config'
         ? `Router ${result.router}'s ${result.source} configuration does not have that line yet. ${TERMS.configuration}`
@@ -167,6 +189,10 @@ export function evidenceText(result: CheckResult, names: ProbeNames): string | n
     case 'route':
       return result.route
         ? `Router ${result.router}'s kernel has ${code(kernelRouteText(result.route))}. ${TERMS.route}`
+        : null
+    case 'rib':
+      return result.found
+        ? `Router ${result.router}'s zebra holds ${code(ribRouteText(result.found))}. ${TERMS.rib}`
         : null
     case 'reaches':
       return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
