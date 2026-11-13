@@ -233,6 +233,22 @@ A change is one of `lines` (typed into the router's vtysh, one after another), `
 (typed at the router's shell: its namespace and hostname, as the terminal's) or
 `restart: true`. A line may not contain a single quote.
 
+A `lines` change that FRR turns down fails the recording, unless it is marked
+`refused: true`: for a run whose point is that FRR refuses a line, such as a command typed
+in the wrong mode. The recorder then expects vtysh to refuse, logs what FRR said
+(`% Unknown command: no shutdown`), and plays on; a change marked `refused: true` that FRR
+accepts in full is an error. vtysh stops at the line it refuses: the lines after it in the
+same change are not typed, so put them in a change of their own.
+
+```yaml
+- id: wrong-mode
+  passes: false
+  changes:
+    - router: a
+      lines: [configure terminal, no shutdown] # outside interface mode: FRR refuses it
+      refused: true
+```
+
 ```sh
 pnpm --filter @peerfall/missions vm:golden                # every mission, several minutes
 pnpm --filter @peerfall/missions vm:golden <mission-id>   # only that mission

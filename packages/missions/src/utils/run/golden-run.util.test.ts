@@ -26,6 +26,29 @@ describe('validateSolution', () => {
     expect(validateSolution({ runs: RUNS })).toEqual({ ok: true, value: RUNS })
   })
 
+  it('reads a vtysh change marked as refused, and only a vtysh change', () => {
+    const refused = { router: 'a', lines: ['configure terminal', 'no shutdown'], refused: true }
+    const result = validateSolution({ runs: [...RUNS, { id: 'wrong-mode', passes: false, changes: [refused] }] })
+    expect(result.ok ? result.value.at(-1)?.changes : result.errors).toEqual([refused])
+    const errors = validateSolution({
+      runs: [
+        ...RUNS,
+        {
+          id: 'wrong',
+          passes: false,
+          changes: [
+            { ...refused, refused: false },
+            { router: 'a', shell: ['ls'], refused: true },
+          ],
+        },
+      ],
+    })
+    expect(errors.ok ? [] : errors.errors).toEqual([
+      'runs[3].changes[0].refused: expected true: leave it out when FRR accepts every line',
+      'runs[3].changes[1].refused: only a "lines" change can be refused: vtysh is what refuses',
+    ])
+  })
+
   it('wants the mission as it starts, a wrong solution and the reference', () => {
     const [start, wrong, reference] = RUNS
     const errors = (runs: unknown) => {
@@ -66,7 +89,7 @@ describe('validateSolution', () => {
         'runs[1].changes[0]: expected one of "lines" (vtysh), "shell" or "restart: true"',
         'runs[1].changes[1].restart: expected true',
         "runs[1].changes[2].shell[0]: expected a line without a single quote ('), got \"echo 'quoted'\"",
-        'runs[1].changes[3].vtysh: unknown field (expected one of: router, lines, shell, restart)',
+        'runs[1].changes[3].vtysh: unknown field (expected one of: router, lines, shell, restart, refused)',
         'runs[1].changes[3]: expected one of "lines" (vtysh), "shell" or "restart: true"',
         'runs: "reference" appears more than once',
       ],

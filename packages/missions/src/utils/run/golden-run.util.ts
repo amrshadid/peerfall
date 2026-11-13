@@ -4,8 +4,12 @@ import { frrRestartLine, inRouter } from '@peerfall/machine/utils'
 
 /** One thing a scripted player does on a router. */
 export type GoldenChange =
-  /** Lines typed into the router's vtysh, one after another. */
-  | { readonly router: string; readonly lines: readonly string[] }
+  /**
+   * Lines typed into the router's vtysh, one after another. `refused` marks a change whose point is
+   * that FRR turns down one of its lines (a command typed in the wrong mode): the recorder then
+   * expects vtysh to refuse, and a change it accepts in full is an error.
+   */
+  | { readonly router: string; readonly lines: readonly string[]; readonly refused?: true }
   /** Lines typed at the router's shell: its namespace and its hostname, as the terminal's. */
   | { readonly router: string; readonly shell: readonly string[] }
   /** FRR restarted on the router, from its saved frr.conf. */
@@ -23,12 +27,21 @@ const RUN_ID = { pattern: /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/, expected: 'a kebab-ca
 const QUOTE_FREE = { pattern: /^[^']+$/, expected: "a line without a single quote (')" }
 
 function readChange(change: ObjectReader): GoldenChange {
-  change.rejectUnknownKeys(['router', 'lines', 'shell', 'restart'])
+  change.rejectUnknownKeys(['router', 'lines', 'shell', 'restart', 'refused'])
   const router = change.string('router')
   const given = ['lines', 'shell', 'restart'].filter((key) => change.has(key))
   if (given.length !== 1) {
     change.issues.add(change.path, 'expected one of "lines" (vtysh), "shell" or "restart: true"')
     return { router, lines: [] }
+  }
+  if (change.has('refused')) {
+    if (change.value('refused') !== true) {
+      change.issues.add(change.pathOf('refused'), 'expected true: leave it out when FRR accepts every line')
+    } else if (!change.has('lines')) {
+      change.issues.add(change.pathOf('refused'), 'only a "lines" change can be refused: vtysh is what refuses')
+    } else {
+      return { router, lines: change.stringList('lines', QUOTE_FREE), refused: true }
+    }
   }
   if (change.has('restart')) {
     if (change.value('restart') !== true) {

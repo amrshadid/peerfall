@@ -170,10 +170,19 @@ async function playMission(mission: MissionDefinition, folder: string): Promise<
   for (const run of solution) {
     await session.restoreHealthy(START_SLOT)
     for (const change of run.changes) {
+      const refusedOnPurpose = 'lines' in change && change.refused === true
       for (const line of changeLines(change)) {
         const reply = await session.control(line, CHANGE_TIMEOUT_MS)
-        if (reply.status !== 0) {
-          failures.push(`${mission.id}/${run.id}: ${change.router} refused the change: ${reply.output.trim()}`)
+        const said = reply.output.trim()
+        if (refusedOnPurpose) {
+          // vtysh exits non-zero when it turns down a line: that refusal is what the run shows.
+          if (reply.status === 0) {
+            failures.push(`${mission.id}/${run.id}: ${change.router} accepted every line of a change marked refused`)
+          } else {
+            log(`${mission.id}/${run.id}: ${change.router} refused, as expected: ${said}`)
+          }
+        } else if (reply.status !== 0) {
+          failures.push(`${mission.id}/${run.id}: ${change.router} refused the change: ${said}`)
         }
       }
     }
