@@ -7,6 +7,13 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-11-14
+
+Stages 1 and 2 are retold for a player who starts knowing nothing, in fourteen missions, with
+a Guide that waits for each command, objectives that tick by themselves, and the Codex.
+Every mission was fact-checked on the Machine by a reviewer who did not write it, and
+played end to end in the app.
+
 ### Added
 
 - **Stage 1, First router, in eight missions:** The Dark Cable (a router as plain Linux
@@ -40,6 +47,30 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   keep their ids and are retold; every word is explained next to the output that shows it.
 - **The Link That Never Went Down** has a new story, hints, chips and Codex cards; its
   network, checks and golden runs are unchanged.
+- **Build it waits for the player.** Once every objective is met, "Next: Watch it" appears;
+  Build it no longer moves on by itself and hides its last lines.
+
+### Fixed
+
+- Every output in the stories matches what the Machine prints in the browser, and every
+  claim was checked against FRR 10.6.1, its source and its docs.
+- A mission starts with the terminal in its first router, and the terminal stays locked
+  until the routers have found each other, so Start over goes back to the network as the
+  mission found it.
+- The Peer Map shows a link down when one of its ends has no carrier.
+- Pinging a router's own address no longer counts as reaching another router, and Two
+  Ends of One Cable judges each end by its own address.
+- The editor opens only in missions that use it, and stays inside its column.
+- "Back to" a step after looking at an earlier one, Start over during the scene, and
+  "Play it again" on the debrief resets the network.
+- The timeline calls a run "Repaired" only when it met the objectives, and the Predict
+  and the hints name the stage's own guide.
+
+### Known gaps
+
+- Stage 3 has no mission, so the journey goes from stage 2 to stage 4.
+- The Guide moves on after any finished command, a wrong one too.
+- The terminal wraps at 80 columns and clips its right edge on narrow panels.
 
 ## [0.1.0-alpha.2] - 2026-11-12
 
@@ -114,6 +145,7 @@ The first public pre-release.
 - The first visit downloads the Linux image; its size has not been measured yet.
 - The game does not work offline yet beyond what the browser has already cached.
 
-[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.2...HEAD
+[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.3...HEAD
+[0.1.0-alpha.3]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.1
