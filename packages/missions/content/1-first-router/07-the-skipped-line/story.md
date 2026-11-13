@@ -178,6 +178,6 @@ sudo vtysh -C -f /etc/frr/frr.conf; echo $?   # check the file, apply nothing
 sudo vtysh -c "show logging"                  # where each daemon writes its log
 ```
 
-Then `tail` the file that `show logging` names.
+Then read the log it names: a `filename` with `sudo tail`, or syslog with `journalctl -u frr`.
 
 A file FRR has never started from is worth checking before the next restart reads it.

@@ -60,7 +60,7 @@ codex:
   - id: config-check
     term: Checking a file
     simple: vtysh -C -f reads a configuration file, applies nothing, and names each line FRR would refuse.
-    deep: -C is a dry run. Each line is matched against vtysh's commands as if typed, in its mode. A refused line is reported with its number and the number of the mode it was read in, line 7 and 21 for interface mode, and vtysh ends with status 2. A clean file prints nothing and ends with 0. At start FRR skips the same lines and applies the rest.
+    deep: -C is a dry run. Each line is matched against vtysh's commands as if typed, in its mode. A refused line is reported with its line number and, in brackets, the number of the mode it was read in, such as [21] for interface mode, and vtysh ends with status 2. A clean file prints nothing and ends with 0. At start FRR skips the same lines and applies the rest.
     deepens: saved-config
     sources: [vtysh/vtysh.c, vtysh/vtysh_main.c, vtysh/vtysh_config.c]
     docs: https://docs.frrouting.org/en/latest/vtysh.html

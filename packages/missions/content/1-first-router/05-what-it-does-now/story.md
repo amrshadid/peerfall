@@ -148,5 +148,5 @@ description uplink to the core
 end
 show interface description
 exit
-cat /etc/frr/frr.conf
+sudo cat /etc/frr/frr.conf
 ```

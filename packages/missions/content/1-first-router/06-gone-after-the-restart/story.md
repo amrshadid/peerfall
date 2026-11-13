@@ -188,7 +188,7 @@ description loopback of this router
 end
 write memory
 exit
-cat /etc/frr/frr.conf
+sudo cat /etc/frr/frr.conf
 sudo systemctl restart frr
 sudo vtysh -c "show running-config"
 ```

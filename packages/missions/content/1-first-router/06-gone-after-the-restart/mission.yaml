@@ -46,7 +46,7 @@ hints:
 
 chips:
   - { command: write memory, explain: "in vtysh: save the running configuration in frr.conf" }
-  - { command: frrinit.sh restart, explain: "at the shell: stop FRR and start it again from the file" }
+  - { command: /usr/lib/frr/frrinit.sh restart a, explain: "at the shell: stop FRR and start it again from the file" }
   - { command: cat, explain: "at the shell: show a file, such as /etc/frr/a/frr.conf" }
 
 codex:
