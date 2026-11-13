@@ -80,6 +80,14 @@ describe('TimelineContainer', () => {
     expect(screen.getAllByText('noticed by c on c-a')).toHaveLength(2)
   })
 
+  it('calls a later run that fell short the latest attempt, never repaired', () => {
+    mocks.baseline = BASELINE
+    mocks.repaired = saved('attempt', summary('ospf_dead_timer_expired', 30_700), false)
+    render(<TimelineContainer />)
+    expect(screen.getByText('Latest attempt: traffic was lost for 30.7 s, over the 2.00 s target.')).toBeTruthy()
+    expect(screen.queryByText(/^Repaired/)).toBeNull()
+  })
+
   it('draws a first run live, where the baseline will be', () => {
     mocks.events = ONGOING_EVENTS
     render(<TimelineContainer />)

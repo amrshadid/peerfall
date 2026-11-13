@@ -1,4 +1,11 @@
-export { liveRunOf, type RunSetting, type TimelineLanes, timelineLanesOf, timelineRunOfSummary } from './saved-run.util'
+export {
+  attemptLabelOf,
+  liveRunOf,
+  type RunSetting,
+  type TimelineLanes,
+  timelineLanesOf,
+  timelineRunOfSummary,
+} from './saved-run.util'
 export {
   DETECTION_LABELS,
   LIVE_RUN_LABEL,

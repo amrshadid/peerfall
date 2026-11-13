@@ -50,4 +50,5 @@ export const MAX_AXIS_TICKS = 6
 /** An axis with nothing on it still shows a second, so the lanes have a scale. */
 export const EMPTY_AXIS_SECONDS = 1
 
-export const RUN_LABELS = { baseline: 'Baseline', repaired: 'Repaired' } as const
+/** "Repaired" only for a run that met the mission's objectives; one that fell short is the latest attempt. */
+export const RUN_LABELS = { baseline: 'Baseline', repaired: 'Repaired', attempt: 'Latest attempt' } as const
