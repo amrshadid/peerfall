@@ -15,7 +15,10 @@
   border-bottom: var(--rule);
 }
 
+/* A flex item keeps its content's width unless told otherwise: without min-width the tabs pushed
+   Reset and Apply past the column, and the column scrolled to show them. */
 .config-editor__bar .pf-tabs {
+  min-width: 0;
   overflow-x: auto;
 }
 

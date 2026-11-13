@@ -62,23 +62,29 @@
   /* Never past the cell: an auto track keeps xterm's opening width and paints it over the network dock. */
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, var(--editor-share, 50%)) 2px minmax(0, 1fr);
-  overflow: hidden;
+  /* Clip, not hidden: a hidden box still scrolls to bring a focused control into view, and shifted
+     the editor and the terminal off its left edge together. */
+  overflow: clip;
 }
 
 .mission-workspace--terminal-only {
   grid-template-rows: minmax(0, 1fr);
 }
 
+/* The editor never grows past its column: its tab bar scrolls inside it instead. */
 .mission-workspace__editor {
   min-height: 0;
+  min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: clip;
 }
 
 .mission-terminal {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: var(--panel-head) minmax(0, 1fr);
-  overflow: hidden;
+  overflow: clip;
   background: var(--soft);
   min-height: 0;
 }
@@ -103,10 +109,12 @@
   font-weight: 500;
 }
 
+/* At the smallest type an 80-column terminal can still be wider than its box: it scrolls sideways
+   there, where the player can scroll it back, and never moves the column around it. */
 .mission-terminal__slot {
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: auto hidden;
   font-family: var(--mono);
   font-size: 0.875rem;
 }
