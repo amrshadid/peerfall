@@ -187,6 +187,21 @@ describe('checks that read the routers as they are', () => {
       evidenceText({ ...result, passed: true, failure: null, found: ' ip route 10.255.0.3/32 10.0.2.2' }, NAMES)
     ).toContain("Router a's saved configuration has `ip route 10.255.0.3/32 10.0.2.2`.")
   })
+
+  it('says which line is still there, or that there is no configuration yet, when a line must be gone', () => {
+    const still: CheckResult = {
+      kind: 'config',
+      passed: false,
+      failure: 'still_configured',
+      router: 'a',
+      source: 'started',
+      found: ' shutdown',
+    }
+    expect(failureText(CONFIG, still, NAMES)).toContain("Router a's started configuration still has `shutdown`.")
+    expect(failureText(CONFIG, { ...still, failure: 'no_config', found: null }, NAMES)).toContain(
+      'Router a has no started configuration to read yet.'
+    )
+  })
 })
 
 describe('evidenceText', () => {

@@ -80,6 +80,14 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
       return result.kind === 'config'
         ? `Router ${result.router}'s ${result.source} configuration does not have that line yet. ${TERMS.configuration}`
         : `The configuration does not have that line yet. ${TERMS.configuration}`
+    case 'still_configured':
+      return result.kind === 'config' && result.found
+        ? `Router ${result.router}'s ${result.source} configuration still has ${code(result.found)}. ${TERMS.configuration}`
+        : `The configuration still has that line. ${TERMS.configuration}`
+    case 'no_config':
+      return result.kind === 'config'
+        ? `Router ${result.router} has no ${result.source} configuration to read yet. ${TERMS.configuration}`
+        : `There is no configuration to read yet. ${TERMS.configuration}`
     case 'unreachable': {
       if (result.kind === 'reaches') {
         return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
