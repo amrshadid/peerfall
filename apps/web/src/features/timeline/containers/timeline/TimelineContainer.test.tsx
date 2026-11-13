@@ -108,7 +108,7 @@ describe('TimelineContainer', () => {
     expect(screen.getByText('What each moment means')).toBeTruthy()
     expect(screen.getByText(/BFD, when it runs on both ends, checks the link several times a second\./)).toBeTruthy()
     // No adjacency change in this run, so that term is not brought up yet.
-    expect(screen.queryByText(/OSPF stops treating the two routers as neighbors/)).toBeNull()
+    expect(screen.queryByText(/OSPF stops treating the two routers as neighbours/)).toBeNull()
   })
 
   it('draws nothing when no mission is being played', () => {

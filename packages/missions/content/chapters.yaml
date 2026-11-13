@@ -34,7 +34,7 @@ chapters:
     summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.
     story: A link stopped passing packets while both its ends stayed up, and the network took half a minute to notice. Failures are measured here, and made shorter.
     guide: bfdd
-    standsFor: bfdd and the routing protocols it tells about a dead neighbor
+    standsFor: bfdd and the routing protocols it tells about a dead neighbour
     outcomes:
       - measure an outage from a probe's replies
       - tell which event noticed a failure first
