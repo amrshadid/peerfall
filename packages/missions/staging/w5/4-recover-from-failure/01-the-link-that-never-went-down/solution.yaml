@@ -1,0 +1,26 @@
+# The golden runs: what a player might configure, and whether the mission must pass.
+# Each change is typed into that router's vtysh, one line after another.
+runs:
+  - id: baseline
+    passes: false
+    changes: []
+  - id: bfd-one-end
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, ip ospf bfd]
+  - id: bfd-both-ends
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, ip ospf bfd]
+      - router: c
+        lines: [configure terminal, interface c-a, ip ospf bfd]
+  # The same script again: a second run reaches the same verdict.
+  - id: bfd-both-ends-again
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, ip ospf bfd]
+      - router: c
+        lines: [configure terminal, interface c-a, ip ospf bfd]

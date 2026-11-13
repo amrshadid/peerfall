@@ -1,0 +1,6 @@
+# Field Guide entries this mission introduces.
+entries:
+  - name: ip route <network> <next hop> <distance>
+    kind: vtysh
+    what: "In configure mode: a static route with its administrative distance. A higher distance than the other routes makes it a backup that waits."
+    firstMet: the-backup-path
