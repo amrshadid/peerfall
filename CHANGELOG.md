@@ -14,6 +14,8 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   Next mission, Replay mission and Back to the map. A stage's last mission closes the stage
   with what you can now do. The top bar goes back to the Peer Map.
 - **Alt+P looks at the previous step**, as in Kernelfall.
+- **A reload on the debrief brings it back**, with every step clickable, as Kernelfall brings
+  back its level card; leaving through one of its buttons closes it.
 
 ## [0.1.0-alpha.3] - 2026-11-14
 
