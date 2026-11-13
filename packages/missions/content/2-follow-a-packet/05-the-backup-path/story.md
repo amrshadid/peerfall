@@ -8,7 +8,11 @@
 
 ## See it
 
-> **zebra:** Start with what a has now. In vtysh, type `show ip route`.
+> **zebra:** Start with what a has now. Open `vtysh`.
+
+---
+
+> **zebra:** Then `show ip route`.
 
 ---
 
@@ -37,7 +41,11 @@ Routing entry for 10.255.0.3/32
 
 > **zebra:** `best` is my choice, and `Status: Installed` means the route is in the kernel's table. Keep this command in mind: it also lists the routes I know and did not choose.
 
-> **zebra:** Now follow a packet. Back in the shell, type `traceroute -n 10.255.0.3`.
+> **zebra:** Now follow a packet. Type `exit` to go back to the shell.
+
+---
+
+> **zebra:** Then `traceroute -n 10.255.0.3`.
 
 ---
 
@@ -51,7 +59,19 @@ traceroute to 10.255.0.3 (10.255.0.3), 30 hops max, 46 byte packets
 
 ## Build it
 
-> **zebra:** Add the direct route, through c's address on that cable. In configure mode, type `ip route 10.255.0.3/32 10.0.2.2`, then `show ip route` again.
+> **zebra:** Add the direct route, through c's address on that cable. Open `vtysh`.
+
+---
+
+> **zebra:** Then `configure terminal`.
+
+---
+
+> **zebra:** Now `ip route 10.255.0.3/32 10.0.2.2`.
+
+---
+
+> **zebra:** Look with `do show ip route`.
 
 ---
 
@@ -64,22 +84,34 @@ S>* 10.255.0.3/32 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:02
 
 ---
 
+> **zebra:** And look again.
+
+---
+
 ```
 S   10.255.0.3/32 [10/0] via 10.0.1.2, a-b, weight 1, 00:00:02
 S>* 10.255.0.3/32 [1/0] via 10.0.2.2, a-c, weight 1, 00:00:02
 ```
 
-> **zebra:** The new distance replaced the old line. The route through b is still in my table, without `>*`: known, not selected, not in the kernel. A backup like this is a _floating static route_. Now the test: in `a-c`'s interface mode, type `shutdown`, then `show ip route`.
-
----
+> **zebra:** The new distance replaced the old line. The route through b is still in my table, without `>*`: known, not selected, not in the kernel. A backup like this is a _floating static route_.
 
 ## Watch it
 
-> **zebra:** You shut the direct cable. What happens to a's way to c?
+> **zebra:** Now the test. You are about to shut the direct cable. What happens to a's way to c?
 >
 > - c is unreachable until someone changes the routes
 > - [x] the route through b takes over by itself
 > - both routes go
+
+> **zebra:** Type `interface a-c`.
+
+---
+
+> **zebra:** Then `shutdown`.
+
+---
+
+> **zebra:** And `do show ip route`.
 
 ---
 
@@ -89,17 +121,11 @@ L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:01:07
 S>* 10.255.0.3/32 [10/0] via 10.0.1.2, a-b, weight 1, 00:00:08
 ```
 
-> **zebra:** With `a-c` down, its connected route left my table, and the direct route's next hop could no longer be reached. The backup was the best route left, so I selected it and put it in the kernel. Ping c: `ping -c 3 10.255.0.3`.
+> **zebra:** With `a-c` down, its connected route left my table, and the direct route's next hop could no longer be reached. The backup was the best route left, so I selected it and put it in the kernel. a still reaches c, through b, and nobody touched a route. Type `no shutdown`.
 
 ---
 
-```
-64 bytes from 10.255.0.3: icmp_seq=1 ttl=63 time=0.554 ms
-64 bytes from 10.255.0.3: icmp_seq=2 ttl=63 time=0.632 ms
-64 bytes from 10.255.0.3: icmp_seq=3 ttl=63 time=0.578 ms
-```
-
-> **zebra:** `ttl=63`: one router on the way, b, and nobody touched a route. Type `no shutdown` in the same mode, then `show ip route`.
+> **zebra:** And `do show ip route`.
 
 ---
 

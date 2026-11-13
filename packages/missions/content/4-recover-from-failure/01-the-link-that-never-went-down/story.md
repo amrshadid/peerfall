@@ -10,7 +10,11 @@
 
 ## See it
 
-> **bfdd:** First, who OSPF talks to. In a's vtysh, type `show ip ospf neighbor`.
+> **bfdd:** First, who OSPF talks to. On a, open `vtysh`.
+
+---
+
+> **bfdd:** Then `show ip ospf neighbor`.
 
 ---
 
@@ -39,11 +43,27 @@ Routing entry for 10.255.0.3/32
 
 ## Build it
 
-> **bfdd:** First, the failure. Press **Send probe**: a sends packets to c's loopback again and again, replies on the timeline. Then press **Break the link**: the cable between a and c drops every packet, both ways, while both interfaces stay up.
+> **bfdd:** First, the failure. Press **Send probe**: a pings c's loopback every 50 ms.
 
 ---
 
-> **bfdd:** The timeline shows replies back through b only once OSPF's dead timer ran out: 30 to 39 seconds of loss in three runs on the Machine, depending on when the last hello arrived. Turn me on: in `a-c`'s interface mode, type `ip ospf bfd`, then `show bfd peers`.
+> **bfdd:** Now press **Break the link**: the a–c cable drops every packet, its two interfaces still up.
+
+---
+
+> **bfdd:** On the timeline, replies came back through b only once OSPF's dead timer ran out. Turn me on: `configure terminal`.
+
+---
+
+> **bfdd:** Then `interface a-c`.
+
+---
+
+> **bfdd:** And `ip ospf bfd`.
+
+---
+
+> **bfdd:** Look: `do show bfd peers`.
 
 ---
 
@@ -56,7 +76,11 @@ BFD Peers:
 		Status: down
 ```
 
-> **bfdd:** A _session_ to c, `down`, and `Remote ID: 0`: nobody answers. BFD, Bidirectional Forwarding Detection, is a conversation between the two ends of a cable. Do the same on c for `c-a`, then look again on a.
+> **bfdd:** A _session_ to c, `down`, `Remote ID: 0`: nobody answers. BFD, Bidirectional Forwarding Detection, needs both ends of the cable. Click c and give `c-a` the same line.
+
+---
+
+> **bfdd:** Once c has it, click a and look again: `vtysh -c "show bfd peers"`.
 
 ---
 
@@ -80,30 +104,19 @@ BFD Peers:
 			Detection timeout: 900ms
 ```
 
-> **bfdd:** `up`. Each end now sends a packet every 300 ms, and `Detection timeout: 900ms` is three of them missed. Press **Break the link** again.
-
----
-
-## Watch it
-
-> **bfdd:** How long until a's traffic to c is back, through b?
+> **bfdd:** `up`: each end sends every 300 ms, and `Detection timeout: 900ms` is three missed. Break the link again: how long until a's traffic is back?
 >
 > - about as long as before, half a minute
 > - [x] about a second
 > - it never comes back
 
----
-
-> **bfdd:** About a second: between 0.82 and 0.96 s in six runs on the Machine. Read what a's log says about me: `grep BFD /var/log/frr/a.log`.
+> **bfdd:** Press **Break the link**.
 
 ---
 
-```
-2026/11/13 20:35:59.071 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Up
-2026/11/13 20:36:15.070 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Down
-```
+## Watch it
 
-> **bfdd:** That is ospfd writing what I told it: the session came up, then went down. ospfd dropped c at once instead of waiting for its dead timer. The order is the same as the first time: noticed, peer dropped, new route, replies back. Only the first step got shorter.
+> **bfdd:** About a second: between 0.82 and 1.04 s in ten runs on the Machine, against 31 to 38 seconds without me in five. On the timeline, what noticed the fault now reads "BFD session down", not "OSPF dead timer expired". The first end to miss three of my packets told its ospfd, and ospfd dropped the peer at once instead of waiting for its dead timer. The order is the same as the first time: noticed, peer dropped, new route, replies back. Only the first step got shorter.
 
 ## Debrief
 

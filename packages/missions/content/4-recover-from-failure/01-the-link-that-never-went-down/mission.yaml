@@ -126,16 +126,17 @@ hints:
 
 chips:
   - { command: show ip ospf neighbor, explain: "OSPF's peers on this router, their state and their dead timer" }
-  - { command: show ip ospf interface, explain: "OSPF on one interface, with its hello and dead timers" }
+  - { command: show ip ospf interface, explain: "OSPF on each interface, with its hello and dead timers" }
   - { command: show ip route, explain: "zebra's table; OSPF's routes are marked O" }
   - { command: ip ospf bfd, explain: "in interface mode: ask bfdd to watch every OSPF peer on this interface" }
   - { command: show bfd peers, explain: "bfdd's sessions, their state and timers" }
+  - { command: do show bfd peers, explain: "the same from interface mode, where a show needs do" }
 
 codex:
   - id: ospf-dead-interval
     term: OSPF hellos and the dead timer
     simple: OSPF peers send each other a hello every 10 seconds. A peer silent for 40 seconds, the dead interval, is dropped.
-    deep: "Both are set per interface: show ip ospf interface a-c prints Hello 10s, Dead 40s. The countdown starts again at every hello, so how long a silent cable goes unnoticed depends on when the last hello arrived: 30 to 39 seconds in three runs on the Machine. The log then says Timer (Inactivity timer expire), and the peer goes from Full to Deleted. Only then does OSPF work out new routes."
+    deep: "Both are set per interface: show ip ospf interface a-c prints Hello 10s, Dead 40s. The countdown starts again at every hello, so how long a silent cable goes unnoticed depends on when the last hello arrived: 31 to 38 seconds in five runs on the Machine. With debug ospf nsm on, the log then says Timer (Inactivity timer expire), and the peer goes from Full to Deleted. Only then does OSPF work out new routes."
     sources: [ospfd/ospf_nsm.c, ospfd/ospf_interface.c]
     docs: https://docs.frrouting.org/en/latest/ospfd.html
     tryIt: vtysh -c "show ip ospf interface"

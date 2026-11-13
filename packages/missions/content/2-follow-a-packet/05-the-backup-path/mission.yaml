@@ -8,7 +8,7 @@ objective: Router a sends to c's loopback over the direct cable, and keeps the r
 prerequisites: [written-but-not-used]
 teaches: [administrative-distance, floating-static, ecmp]
 names: []
-uses: [static-route, next-hop, rib, fib, interface-shutdown, ttl]
+uses: [static-route, next-hop, rib, fib, interface-shutdown, cli-modes]
 
 # A triangle. Only c has a loopback: the address a wants to reach. a starts with the long way,
 # through b; b and c have the routes that make the way through b work in both directions.
@@ -56,6 +56,7 @@ hints:
 
 chips:
   - { command: show ip route, explain: "zebra's table: every route, its distance, and which one is selected" }
+  - { command: do show ip route, explain: "the same from configure or interface mode, where a show needs do" }
   - { command: traceroute -n, explain: "the routers a packet passes through, one line each" }
   - { command: ping -c 3, explain: "send three packets and count the replies" }
   - { command: ip route, explain: "in configure mode: a static route; a number after the next hop is its distance" }

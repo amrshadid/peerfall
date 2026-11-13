@@ -52,13 +52,25 @@ L>* 10.0.2.1/32 is directly connected, b-c, weight 1, 00:00:48
 
 ## Build it
 
-> **zebra:** A route you write yourself is a _static route_. It names a network and a _next hop_: the address of a neighbour closer to that network. Here that is b's `10.0.1.2`, on a's own cable. Click a, open `vtysh`, type `configure terminal`, then `ip route 10.0.2.0/30 10.0.1.2`, then `end`.
+> **zebra:** A route you write yourself is a _static route_. It names a network and a _next hop_: the address of a neighbour closer to that network. Here that is b's `10.0.1.2`, on a's own cable. Click a, and type `vtysh`.
+
+---
+
+> **zebra:** Then `configure terminal`.
+
+---
+
+> **zebra:** Now the route: `ip route 10.0.2.0/30 10.0.1.2`.
 
 ---
 
 > **staticd:** That one's mine to keep. I'm staticd, the daemon that holds the routes written by hand. Once zebra tells me it can reach the next hop, I offer zebra the route.
 >
-> **zebra:** And I put it in my table. Type `show ip route`.
+> **zebra:** And I put it in my table. Type `end`.
+
+---
+
+> **zebra:** Back in exec mode, `show ip route`.
 
 ---
 
@@ -77,7 +89,11 @@ L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:01:24
 S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:02
 ```
 
-> **zebra:** `S` is static. `via 10.0.1.2` is the next hop, and `a-b` the interface I found for it, because b's address is in a's connected network. Type `exit`, then `ip route`.
+> **zebra:** `S` is static. `via 10.0.1.2` is the next hop, and `a-b` the interface I found for it, because b's address is in a's connected network. Type `exit` to leave vtysh.
+
+---
+
+> **zebra:** At the shell, `ip route`.
 
 ---
 
@@ -91,7 +107,7 @@ a:~# ip route
 
 ## Watch it
 
-> **zebra:** Before you try: you ping c now. What happens?
+> **zebra:** Before you try: you ping c now, `ping -c 3 10.0.2.2`. What happens?
 >
 > - no answer: b drops the packets
 > - [x] c answers, three times

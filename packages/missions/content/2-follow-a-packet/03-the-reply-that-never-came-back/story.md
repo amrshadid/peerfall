@@ -35,11 +35,11 @@ PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 ```
 c:~# nstat -az IcmpInEchos IcmpOutEchoReps
 #kernel
-IcmpInEchos                     3                  0.0
+IcmpInEchos                     9                  0.0
 IcmpOutEchoReps                 0                  0.0
 ```
 
-> **zebra:** The middle column is each count; the last is a rate you can leave aside. A ping sends echo requests and waits for echo replies. `IcmpInEchos` counts the requests that reached c since the network started, yours and any others. `IcmpOutEchoReps` counts the replies c sent: `0`. The packets got all the way to c, and c never answered.
+> **zebra:** The middle column is each count; the last is a rate you can leave aside. A ping sends echo requests and waits for echo replies. `IcmpInEchos` counts the requests that reached c since the network started: your three, and three more each time the objective "Reach c's address" is checked: once at the start, then after every command. `IcmpOutEchoReps` counts the replies c sent: `0`. The packets got all the way to c, and c never answered.
 
 ## Build it
 
@@ -52,7 +52,23 @@ c:~# ip route get 10.0.1.1
 RTNETLINK answers: Network unreachable
 ```
 
-> **zebra:** The refusal you saw on a in One Hop Further, only now on c, where a couldn't see it: no error travels back, and a just waits for replies that never come. c has its connected route, `10.0.2.0/30`, and nothing else. Give c the way back. Open `vtysh`, type `configure terminal`, then `ip route 10.0.1.0/30 10.0.2.1`, whose next hop is b's address on c's own cable. Then `end`, and `show ip route`.
+> **zebra:** The refusal you saw on a in One Hop Further, only now on c, where a couldn't see it: no error travels back, and a just waits for replies that never come. c has its connected route, `10.0.2.0/30`, and nothing else. Give c the way back. Open `vtysh`.
+
+---
+
+> **zebra:** Then `configure terminal`.
+
+---
+
+> **zebra:** Now `ip route 10.0.1.0/30 10.0.2.1`, whose next hop is b's address on c's own cable.
+
+---
+
+> **zebra:** Type `end`.
+
+---
+
+> **zebra:** And `show ip route`.
 
 ---
 

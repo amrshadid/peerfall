@@ -10,14 +10,21 @@
 
 ## See it
 
-> **zebra:** This time I only say where to look. Start on a: `ip -br addr`, then `ping -c 2 10.0.2.2`.
+> **zebra:** This time I only say where to look. Start on a: `ip -br addr`.
 
 ---
 
 ```
 a:~# ip -br addr
 lo               UNKNOWN        127.0.0.1/8 ::1/128 
-a-b@if2          UP             fe80::dc4e:95ff:fe5c:9f11/64 
+a-b@if2          UP             fe80::98ea:bdff:feb4:762c/64 
+```
+
+> **zebra:** Then `ping -c 2 10.0.2.2`.
+
+---
+
+```
 a:~# ping -c 2 10.0.2.2
 ping: connect: Network unreachable
 ```
@@ -36,14 +43,14 @@ ping: connect: Network unreachable
 
 ```
 --- 10.0.2.2 ping statistics ---
-3 packets transmitted, 0 received, 100% packet loss, time 2030ms
+3 packets transmitted, 0 received, 100% packet loss, time 2065ms
 ```
 
-> **zebra:** If you see this, no error, only silence: the packets reached c, and its replies had nowhere to go. You have met it before. Write c's way back, then ping again until c answers.
+> **zebra:** When a's ping shows this, no error, only silence: the packets reached c, and its replies had nowhere to go. You have met it before. Write c's way back, then ping again until c answers.
 
 ---
 
-> **zebra:** Everything works now, and all of it lives in three running configurations, which a restart forgets. Save each one with `write memory`, on a, on b and on c, as in Gone After the Restart.
+> **zebra:** Once c answers, everything works, and all of it lives in three running configurations, which a restart forgets. Save each one with `write memory`, on a, on b and on c, as in Gone After the Restart.
 
 ---
 
@@ -53,15 +60,16 @@ Note: this version of vtysh never writes vtysh.conf
 Building Configuration...
 Integrated configuration saved to /etc/frr/c/frr.conf
 [OK]
+c# watchfrr[599]: [WFP93-1D146] configuration write completed with exit code 0
 ```
 
-> **zebra:** `Integrated configuration saved to /etc/frr/c/frr.conf`: that file is what watchfrr reads. Now prove it. Restart FRR on each router with its init script: `/usr/lib/frr/frrinit.sh restart a`, and the same on b and on c, each with its own name. Then read a's routes, `vtysh -c "show ip route"`, and ping c.
+> **zebra:** `Integrated configuration saved to /etc/frr/c/frr.conf`: that file is what watchfrr reads. Now prove it. Restart FRR on each router with its init script: `/usr/lib/frr/frrinit.sh restart a`, and the same on b and on c, each with its own name.
 
 ---
 
 ## Watch it
 
-> **zebra:** While they come back, one question. An address given in FRR and never saved: FRR restarts. Is the address still on the interface?
+> **zebra:** One question first. An address given in FRR and never saved: FRR restarts. Is the address still on the interface?
 >
 > - no, gone from Linux and from FRR
 > - [x] Linux still has it, and FRR's running configuration doesn't
@@ -69,26 +77,32 @@ Integrated configuration saved to /etc/frr/c/frr.conf
 
 ---
 
-> **zebra:** From another run of this network, with a's address given and nothing saved, then a restart:
+> **zebra:** From another run, with a's address given, never saved, then a restart:
 
 ```
 a:~# ip -br addr
 lo               UNKNOWN        127.0.0.1/8 ::1/128 
-a-b@if2          UP             10.0.1.1/30 fe80::dc4e:95ff:fe5c:9f11/64 
+a-b@if2          UP             10.0.1.1/30 fe80::c007:81ff:fe8a:8dae/64 
 ```
 
-> **zebra:** Linux keeps an address until someone removes it. FRR came back knowing only `frr.conf`, with no `interface a-b` at all. Your routers were saved:
+> **zebra:** Linux keeps an address until someone removes it. I still see it, but the running configuration came back from `frr.conf` alone, with no `interface a-b` at all. Your routers were saved. On a, read the routes: `vtysh -c "show ip route"`.
+
+---
 
 ```
-C>* 10.0.1.0/30 is directly connected, a-b, weight 1, 00:00:07
-L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:07
-S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:06
+C>* 10.0.1.0/30 is directly connected, a-b, weight 1, 00:00:32
+L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:32
+S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:31
 ```
 
+> **zebra:** And ping c: `ping -c 3 10.0.2.2`.
+
+---
+
 ```
-64 bytes from 10.0.2.2: icmp_seq=1 ttl=63 time=0.742 ms
-64 bytes from 10.0.2.2: icmp_seq=2 ttl=63 time=1.28 ms
-64 bytes from 10.0.2.2: icmp_seq=3 ttl=63 time=0.597 ms
+64 bytes from 10.0.2.2: icmp_seq=1 ttl=63 time=0.656 ms
+64 bytes from 10.0.2.2: icmp_seq=2 ttl=63 time=0.614 ms
+64 bytes from 10.0.2.2: icmp_seq=3 ttl=63 time=0.791 ms
 ```
 
 > **zebra:** Everything came back from the saved files: the address, its connected route, the static route through b, and replies with `ttl=63`.

@@ -65,8 +65,8 @@ codex:
     tryIt: vtysh -c "show ip route static"
   - id: next-hop
     term: The next hop
-    simple: The neighbour's address a route hands packets to. It must be on one of the router's own networks.
-    deep: "Each router decides one step only: a hands the packet to b, and b looks the destination up again in its own table. In S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, via names the next hop and a-b the interface zebra found for it. A next hop that no connected network covers is not used: Written but Not Used shows why."
+    simple: The neighbour's address a route hands packets to. The router must already have a route to it, usually the connected route of a shared cable.
+    deep: "Each router decides one step only: a hands the packet to b, and b looks the destination up again in its own table. In S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, via names the next hop and a-b the interface zebra found for it. A next hop that no route of the router covers is not used: Written but Not Used shows why."
     sources: [staticd/static_nht.c, zebra/zebra_rnh.c]
     docs: https://docs.frrouting.org/en/latest/static.html
     tryIt: ip route get 10.0.2.2

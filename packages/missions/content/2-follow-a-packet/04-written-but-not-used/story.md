@@ -19,7 +19,11 @@ a:~# ping -c 2 10.0.2.2
 ping: connect: Network unreachable
 ```
 
-> **zebra:** Linux has no route for c's address. Now the configuration: open `vtysh` and type `show running-config`.
+> **zebra:** Linux has no route for c's address. Now the configuration: open `vtysh`.
+
+---
+
+> **zebra:** Then `show running-config`.
 
 ---
 
@@ -72,7 +76,11 @@ a# show ip route 10.0.2.0/30
 % Network not in table
 ```
 
-> **zebra:** I never received it. And the kernel? Type `exit`, then `ip route`.
+> **zebra:** I never received it. And the kernel? Type `exit`.
+
+---
+
+> **zebra:** Then `ip route`.
 
 ---
 
@@ -85,7 +93,11 @@ a:~# ip route
 
 ## Build it
 
-> **zebra:** staticd offers me a route only once I tell it the route's next hop can be reached. Ask me which next hops I'm tracking for it: in `vtysh`, `show ip nht`, for next-hop tracking.
+> **zebra:** staticd offers me a route only once I tell it the route's next hop can be reached. Ask me which next hops I'm tracking: open `vtysh`.
+
+---
+
+> **zebra:** Then `show ip nht`, for next-hop tracking.
 
 ---
 
@@ -98,7 +110,23 @@ VRF default:
  Client list: static(fd 32)
 ```
 
-> **zebra:** The first two lines say which of my tables I search; read the lines below them. `10.0.2.1` is `unresolved`: no route of mine covers it. It is b's address, but on b's far cable, towards c. A next hop must be reachable through a route a already has, and b's near address, `10.0.1.2`, is in a's connected network. Replace the route. In `configure terminal`, type `no ip route 10.0.2.0/30 10.0.2.1`, since `no` in front of a line removes it. Then `ip route 10.0.2.0/30 10.0.1.2`, then `end`, then `show ip nht` again.
+> **zebra:** The first two lines name my table and one of its settings; read the lines below them. `10.0.2.1` is `unresolved`: no route of mine covers it. It is b's address, but on b's far cable, towards c. A next hop must be reachable through a route a already has, and b's near address, `10.0.1.2`, is in a's connected network. Replace the route. Type `configure terminal`.
+
+---
+
+> **zebra:** Then `no ip route 10.0.2.0/30 10.0.2.1`: `no` in front of a line removes it.
+
+---
+
+> **zebra:** Now `ip route 10.0.2.0/30 10.0.1.2`.
+
+---
+
+> **zebra:** Type `end`.
+
+---
+
+> **zebra:** And `show ip nht` again.
 
 ---
 
@@ -135,7 +163,11 @@ L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:28
 S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:02
 ```
 
-> **zebra:** In my table now: the RIB, Routing Information Base. `>` says I selected this route for its network. `*` says it is in the kernel's table: the FIB, Forwarding Information Base. Type `exit`, then `ip route`.
+> **zebra:** In my table now: the RIB, Routing Information Base. `>` says I selected this route for its network. `*` says it is in the kernel's table: the FIB, Forwarding Information Base. Type `exit`.
+
+---
+
+> **zebra:** Then `ip route`.
 
 ---
 
