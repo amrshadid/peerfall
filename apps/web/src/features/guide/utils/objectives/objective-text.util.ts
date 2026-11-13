@@ -118,6 +118,10 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
       const needed = check.kind === 'reachable' ? ` It takes ${check.minReplies}.` : ''
       return `${got === 0 ? 'No reply' : `Only ${replies(got)}`} came back from ${names.destination}.${needed} ${TERMS.reply}`
     }
+    case 'own_address':
+      return result.kind === 'reaches'
+        ? `${result.to} is router ${result.from}'s own address: ${result.from} answered itself, not another router. ${TERMS.reply}`
+        : `That address is the router's own: it answered itself. ${TERMS.reply}`
     case 'no_route':
       return result.kind === 'route'
         ? `Router ${result.router} has no route there. ${TERMS.route}`

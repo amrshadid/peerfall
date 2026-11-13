@@ -171,6 +171,21 @@ describe('checks that read the routers as they are', () => {
     )
   })
 
+  it('says when the router answered its own address', () => {
+    const result: CheckResult = {
+      kind: 'reaches',
+      passed: false,
+      failure: 'own_address',
+      from: 'a',
+      to: '10.0.1.2',
+      sent: 3,
+      received: 3,
+    }
+    expect(failureText(REACHES, result, NAMES)).toContain(
+      "10.0.1.2 is router a's own address: a answered itself, not another router."
+    )
+  })
+
   it('tells the running configuration from the saved one', () => {
     const result: CheckResult = {
       kind: 'config',

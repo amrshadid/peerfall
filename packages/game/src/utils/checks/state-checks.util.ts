@@ -54,6 +54,10 @@ const partOf = (check: StateCheck<'daemons' | 'route' | 'rib' | 'config'>): Rout
 export function stateRequestOf(mission: Pick<MissionDefinition, 'objectives'>): StateRequest | null {
   const routers: Record<string, RouterStatePart[]> = {}
   const pings: { from: string; to: string; count: number }[] = []
+  const ask = (router: string, part: RouterStatePart) => {
+    const parts = routers[router] ?? []
+    routers[router] = parts.includes(part) ? parts : [...parts, part]
+  }
   for (const { check } of mission.objectives) {
     if (!isStateCheck(check)) {
       continue
@@ -62,11 +66,11 @@ export function stateRequestOf(mission: Pick<MissionDefinition, 'objectives'>): 
       if (!pings.some((ping) => ping.from === check.from && ping.to === check.to)) {
         pings.push({ from: check.from, to: check.to, count: REACH_PACKETS })
       }
+      // zebra's table tells whether the address is the sender's own.
+      ask(check.from, 'rib')
       continue
     }
-    const part = partOf(check)
-    const parts = routers[check.router] ?? []
-    routers[check.router] = parts.includes(part) ? parts : [...parts, part]
+    ask(check.router, partOf(check))
   }
   return Object.keys(routers).length === 0 && pings.length === 0 ? null : { routers, pings }
 }
@@ -158,6 +162,14 @@ function checkReaches(check: StateCheck<'reaches'>, state: MachineState | null):
     }) as const
   if (!ping) {
     return result(CHECK_FAILURES.notChecked)
+  }
+  // A router answers a ping to its own address itself. With zebra down the table is empty, and the
+  // ping alone decides.
+  const own = state?.routers[check.from]?.rib?.some(
+    (route) => route.protocol === 'local' && samePrefix(route.prefix, `${check.to}/32`)
+  )
+  if (own) {
+    return result(CHECK_FAILURES.ownAddress)
   }
   return result(ping.received >= check.minReplies ? null : CHECK_FAILURES.unreachable)
 }

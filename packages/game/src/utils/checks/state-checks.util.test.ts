@@ -112,6 +112,44 @@ describe('reaches', () => {
       received: 0,
     })
   })
+
+  // Two Ends of One Cable with the ends swapped: a holds 10.0.1.2 itself, as zebra showed it.
+  const OWN = {
+    prefix: '10.0.1.2/32',
+    protocol: 'local',
+    distance: 0,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: null, interface: 'a-b' }],
+  }
+  const swapped = (rib: (typeof OWN)[]): MachineState => ({
+    routers: { a: { rib } },
+    pings: [{ from: 'a', to: '10.0.1.2', sent: 3, received: 3 }],
+  })
+
+  it('fails when the address is the sending router’s own: it answered itself', () => {
+    expect(judge({ kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 }, swapped([OWN]))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.ownAddress,
+      received: 3,
+    })
+  })
+
+  it('judges by the ping alone when zebra’s table is empty or holds the address from elsewhere', () => {
+    const check = { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 } as const
+    expect(judge(check, swapped([])).passed).toBe(true)
+    expect(judge(check, swapped([{ ...OWN, protocol: 'connected', prefix: '10.0.1.0/30' }])).passed).toBe(true)
+    expect(judge(check, swapped([{ ...OWN, protocol: 'static' }])).passed).toBe(true)
+  })
+
+  it('asks for zebra’s table of the router that pings', () => {
+    const check = { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 } as const
+    expect(stateRequestOf({ objectives: [{ id: 'reaches', text: '', check }] })).toEqual({
+      routers: { a: ['rib'] },
+      pings: [{ from: 'a', to: '10.0.1.2', count: 3 }],
+    })
+  })
 })
 
 describe('config', () => {
@@ -300,7 +338,8 @@ describe('what a mission needs read', () => {
     expect(hasStateChecks(mission)).toBe(true)
     expect(hasRunChecks(mission)).toBe(false)
     expect(stateRequestOf(mission)).toEqual({
-      routers: { a: ['daemons', 'routes', 'savedConfig'], c: ['routes'] },
+      // zebra's table on a, the router that pings: a ping to a's own address proves nothing.
+      routers: { a: ['daemons', 'routes', 'rib', 'savedConfig'], c: ['routes'] },
       pings: [{ from: 'a', to: '10.0.2.2', count: 3 }],
     })
   })

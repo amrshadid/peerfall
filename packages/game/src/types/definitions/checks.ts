@@ -118,6 +118,8 @@ export const CHECK_FAILURES = {
   noFault: 'no_fault',
   /** Too few replies before the fault. */
   unreachable: 'unreachable',
+  /** A `reaches` check: the address is the sending router's own, so the router answered itself. */
+  ownAddress: 'own_address',
   /** No route to the probe's destination was seen when one was needed. */
   noRoute: 'no_route',
   wrongPath: 'wrong_path',
