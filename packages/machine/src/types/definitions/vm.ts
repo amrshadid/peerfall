@@ -94,13 +94,28 @@ export interface VmEventUpdate {
   readonly events: readonly StampedMachineEvent[]
 }
 
+/**
+ * The player's terminal as the Machine sees it, sent whenever either part changes: the router its
+ * shell is in, and how many commands the player has finished there since the Machine started.
+ */
+export interface VmShellUpdate {
+  /** The router the terminal's shell is in; null for the Machine itself. */
+  readonly router: string | null
+  /**
+   * Counts each return to a prompt (bash's or vtysh's) after the player pressed Enter: a command
+   * line that ran, in the shell or in vtysh. Never goes back, not even on a restore.
+   */
+  readonly commandsFinished: number
+}
+
 /** One Linux VM: the terminal goes out as bytes, keys come in as text, root has a channel of its own. */
 export interface VmSession {
   start(
     options: VmStartOptions,
     onOutput: (bytes: Uint8Array) => void,
     onStatus: (status: VmStatus) => void,
-    onEvents?: (update: VmEventUpdate) => void
+    onEvents?: (update: VmEventUpdate) => void,
+    onShell?: (update: VmShellUpdate) => void
   ): Promise<void>
   /** Keys for the terminal. Held while the Machine is being set up or restored. */
   input(text: string): void

@@ -7,7 +7,7 @@ import type { MachineEndpoint } from '#types/definitions/endpoint'
 import type { ProbeDefinition } from '#types/definitions/event'
 import { type LinkDefinition, type NetworkDefinition, ROUTER_NAME } from '#types/definitions/network'
 import type { MachineState, StateRequest } from '#types/definitions/state'
-import type { ControlReply, VmEventUpdate, VmSession, VmStatus } from '#types/definitions/vm'
+import type { ControlReply, VmEventUpdate, VmSession, VmShellUpdate, VmStatus } from '#types/definitions/vm'
 
 interface VmConnection {
   readonly endpoint: MachineEndpoint
@@ -27,7 +27,8 @@ const NOT_RUNNING: Validated<null> = { ok: false, errors: ['The Machine is not r
 /** The first user starts the VM in its worker. */
 export function connectVm(
   onStatus: (status: VmStatus) => void,
-  onEvents: (update: VmEventUpdate) => void
+  onEvents: (update: VmEventUpdate) => void,
+  onShell: (update: VmShellUpdate) => void = () => {}
 ): { started: boolean } {
   users++
   if (connection !== null) {
@@ -53,6 +54,11 @@ export function connectVm(
     proxy((update: VmEventUpdate) => {
       if (connection === started) {
         onEvents(update)
+      }
+    }),
+    proxy((update: VmShellUpdate) => {
+      if (connection === started) {
+        onShell(update)
       }
     })
   )

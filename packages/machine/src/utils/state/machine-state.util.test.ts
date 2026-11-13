@@ -110,6 +110,14 @@ describe('one router’s state', () => {
     expect(parseRouterState(output)).toEqual({ daemons: [], runningConfig: null, savedConfig: null })
   })
 
+  it('reads the frr.conf FRR last started from, and has none before FRR was started with its init script', () => {
+    expect(routerStateLine('a', ['startedConfig'])).toBe(
+      'echo __PF_STATE__ startedConfig; cat /run/pf-started-a.conf 2>/dev/null; true'
+    )
+    expect(parseRouterState(`__PF_STATE__ startedConfig\n${SAVED}`)).toEqual({ startedConfig: SAVED })
+    expect(parseRouterState('__PF_STATE__ startedConfig\n')).toEqual({ startedConfig: null })
+  })
+
   it('leaves out the parts that were not asked for', () => {
     expect(parseRouterState(`__PF_STATE__ daemons\n${DAEMONS_UP}`)).toEqual({
       daemons: ['mgmtd', 'zebra', 'staticd', 'watchfrr'],

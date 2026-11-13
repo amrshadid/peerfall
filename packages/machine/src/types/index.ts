@@ -51,6 +51,7 @@ export {
   type VmManifest,
   type VmPhase,
   type VmSession,
+  type VmShellUpdate,
   type VmStartOptions,
   type VmStatus,
 } from '#types/definitions/vm'

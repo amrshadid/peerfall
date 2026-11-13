@@ -10,6 +10,7 @@ import {
   type StateRequest,
 } from '#types/definitions/state'
 import { configReadLine, runningConfigText } from '#utils/config/config-diff.util'
+import { startedConfigPath } from '#utils/network/network-script.util'
 
 /** Printed before each part of a router's state, so one control line can read several. */
 const PART_MARK = '__PF_STATE__'
@@ -51,6 +52,7 @@ const PART_COMMANDS: Readonly<Record<RouterStatePart, (router: string) => string
   routes: (router) => `ip -n ${router} -o route show 2>&1`,
   runningConfig: (router) => `${configReadLine(router)} 2>&1`,
   savedConfig: (router) => `cat /etc/frr/${router}/frr.conf 2>/dev/null`,
+  startedConfig: (router) => `cat ${startedConfigPath(router)} 2>/dev/null`,
 }
 
 /** Root's line that reads the asked parts of one router, each after a line that names it. */
@@ -120,6 +122,7 @@ export function parseRouterState(output: string): RouterState {
   const routes = sections.get('routes')
   const running = sections.get('runningConfig')
   const saved = sections.get('savedConfig')
+  const started = sections.get('startedConfig')
   return {
     ...(daemons !== undefined && { daemons: parseDaemons(daemons) }),
     ...(routes !== undefined && { routes: parseKernelRoutes(routes) }),
@@ -128,6 +131,7 @@ export function parseRouterState(output: string): RouterState {
       runningConfig: running.includes('Current configuration:') ? runningConfigText(running) : null,
     }),
     ...(saved !== undefined && { savedConfig: saved.trim() === '' ? null : saved }),
+    ...(started !== undefined && { startedConfig: started.trim() === '' ? null : started }),
   }
 }
 

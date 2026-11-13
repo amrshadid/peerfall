@@ -23,6 +23,13 @@ const OSPF_ADJACENCY = /^AdjChg: Nbr (\S+), NbrIP (\S+) \(\S+\) on ([^:\s]+):\S+
 const ROUTE_LINE = /^\[(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)\.(\d{6})\] (Deleted )?(\S+)(.*)$/
 const NEXT_HOP = /(?:via (\S+) )?dev (\S+)/g
 const PROTOCOL = /proto (\S+)/
+// reads iproute2 ip/iproute.c: print_route(): a route that is not unicast starts with its type.
+// `local` and `broadcast` (and the others in the local table) come with every address given to
+// an interface: `local 10.0.1.2 dev b-a table local proto kernel scope host src 10.0.1.2`. They
+// say where the router itself answers, not where it forwards, so they are no route change.
+const LOCAL_TABLE_TYPES = new Set(['local', 'broadcast', 'anycast', 'multicast'])
+// These forward nowhere: the prefix follows the type, and there is no next hop to install.
+const NOWHERE_TYPES = new Set(['blackhole', 'unreachable', 'prohibit', 'throw'])
 
 // `[1794504832.282240] 64 bytes from 10.255.0.3: icmp_seq=15 ttl=64 time=0.375 ms`, or with ping's
 // -O, `[1794504832.697922] no answer yet for icmp_seq=16`.
@@ -103,9 +110,17 @@ function parseRoute(router: string, line: string): TimedEvent | null {
     return null
   }
   const timeMs = utcMs(match.slice(1, 7), Number(match[7]) / 1000)
-  const prefix = match[9] ?? ''
+  const firstWord = match[9] ?? ''
+  if (LOCAL_TABLE_TYPES.has(firstWord)) {
+    return null
+  }
+  const typed = NOWHERE_TYPES.has(firstWord)
+  const prefix = typed ? ((match[10] ?? '').trimStart().split(/\s/)[0] ?? '') : firstWord
   if (match[8]) {
-    return { timeMs, event: { type: 'fib_remove', router, prefix } }
+    return prefix === '' ? null : { timeMs, event: { type: 'fib_remove', router, prefix } }
+  }
+  if (typed) {
+    return null
   }
   const rest = match[10] ?? ''
   const nextHops = [...rest.matchAll(NEXT_HOP)].map((hop) => ({ via: hop[1] ?? null, interface: hop[2] ?? '' }))

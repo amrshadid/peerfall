@@ -15,4 +15,6 @@ export {
   probeStopLine,
   routerLogPath,
   stampedFaultLine,
+  startedConfigPath,
+  startedConfigWatchLine,
 } from '#utils/network/network-script.util'
