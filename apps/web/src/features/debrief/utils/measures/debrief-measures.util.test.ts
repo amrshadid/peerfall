@@ -1,6 +1,6 @@
 import type { RunSummary } from '@peerfall/game/types'
 import { describe, expect, it } from 'vitest'
-import { debriefMeasuresOf, debriefVerdictOf } from './debrief-measures.util'
+import { debriefMeasuresOf, debriefResultOf } from './debrief-measures.util'
 
 const TARGET_MS = 2000
 
@@ -51,24 +51,22 @@ describe('debriefMeasuresOf', () => {
   })
 })
 
-describe('debriefVerdictOf', () => {
-  it('rests a pass on the measured recovery', () => {
-    expect(debriefVerdictOf(true, run('bfd_session_down', 796), TARGET_MS)).toEqual({
-      passed: true,
-      text: 'Passed: traffic was back in 0.80 s, inside the 2.00 s target.',
-    })
-    expect(debriefVerdictOf(true, null, TARGET_MS).text).toBe('Passed: traffic was back inside the 2.00 s target.')
+describe('debriefResultOf', () => {
+  it("writes the result as Kernelfall's card does, with the measured recovery in a timed mission", () => {
+    expect(debriefResultOf(true, 3, run('bfd_session_down', 796), TARGET_MS)).toBe(
+      'Mission complete · 3 of 3 objectives met · traffic back in 0.80 s, inside 2.00 s'
+    )
+    expect(debriefResultOf(true, 3, null, TARGET_MS)).toBe(
+      'Mission complete · 3 of 3 objectives met · traffic back inside 2.00 s'
+    )
   })
 
-  it('says what is still asked for when the mission has not passed', () => {
-    expect(debriefVerdictOf(false, null, TARGET_MS)).toEqual({
-      passed: false,
-      text: 'Not passed yet: traffic has to be back in under 2.00 s.',
-    })
+  it('says so when the mission has not passed', () => {
+    expect(debriefResultOf(false, 3, null, TARGET_MS)).toBe('Not passed yet: an objective is still open.')
   })
 
   it('speaks of objectives, not of traffic, in a mission that times nothing', () => {
-    expect(debriefVerdictOf(true, null, null).text).toBe('Passed: every objective is met.')
+    expect(debriefResultOf(true, 2, null, null)).toBe('Mission complete · 2 of 2 objectives met')
     expect(debriefMeasuresOf(null, null, null)).toEqual([])
     expect(debriefMeasuresOf(null, { ...run('bfd_session_down', null), faultAtMs: null }, null)).toEqual([])
   })

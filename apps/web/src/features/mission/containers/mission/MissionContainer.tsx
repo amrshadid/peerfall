@@ -13,7 +13,7 @@ import {
   openPanelsKey,
   panelsFor,
 } from '@features/mission/utils/layout'
-import { panelsOfStep } from '@features/mission/utils/steps'
+import { panelsOfStep, previousStepOf } from '@features/mission/utils/steps'
 import { useShortcut } from '@features/shortcuts/hooks/keys'
 import { formatSeconds } from '@features/timeline/utils/runs'
 import { useTourScreen } from '@features/tour/hooks/tour'
@@ -142,6 +142,18 @@ export function MissionContainer({
             ? showDebrief
             : null
   useShortcut('next-step', () => onNext?.(), mission !== null && onNext !== null)
+  // As Kernelfall's: each press looks one done step further back, as clicking it on the rail does.
+  const doneSteps = MISSION_STEPS.slice(0, Math.max(0, stepIndex)).map((entry) => entry.id)
+  useShortcut(
+    'previous-step',
+    () => {
+      const previous = previousStepOf(doneSteps, story.reviewing)
+      if (previous !== null) {
+        story.review(previous)
+      }
+    },
+    mission !== null
+  )
   // Hints are for the steps played on the network, one at a time: a nudge, the concept, the spot.
   const hintEnabled = phase === 'play' && hints.next !== null
   const revealHint = () => {
@@ -220,7 +232,7 @@ export function MissionContainer({
         page: `${mission.title}(${chapter?.stage ?? 0}.${number})`,
         volume: chapter ? `${APP_MANUAL} · ${chapter.title}` : APP_MANUAL,
         bar: {
-          titleHref: hrefOf({ name: 'title' }),
+          mapHref: hrefOf({ name: 'map' }),
           heading: mission.title,
           subheading: chapter ? `Stage ${chapter.stage} · ${chapter.title}` : '',
           steps: MISSION_STEPS,

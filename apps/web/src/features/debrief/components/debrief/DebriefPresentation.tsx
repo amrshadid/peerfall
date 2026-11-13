@@ -1,31 +1,34 @@
 import type { DebriefPresentationProps } from '@features/debrief/types'
-import { MarkdownText } from '@features/guide/components/markdown'
-import { Button, ButtonLink, InlineText, SectionHead, StatusMark, TitleBlock } from '@shared/components/ui'
+import { CodexCard } from '@shared/components/codex'
+import { Button, ButtonLink, InlineText, SectionHead, TitleBlock } from '@shared/components/ui'
 import './Debrief.css'
 
-/** After the mission: the verdict, what was measured, why it worked, and how to repeat it on real FRR. */
+/** Each card feeds out this much after the one before it. */
+const FEED_STAGGER_MS = 120
+
+/**
+ * After the mission, laid out as Kernelfall's level card: the headline, the result, the terms it
+ * taught and the way on, then what the runs measured and the Codex cards it filed.
+ */
 export function DebriefPresentation({
-  title,
-  verdict,
+  headline,
+  result,
   measures,
-  explanation,
-  text,
   learned,
-  commands,
-  labNote,
+  cards,
+  seenIn,
+  stage,
   next,
   onReplay,
-  titleHref,
+  mapHref,
 }: DebriefPresentationProps) {
   return (
     <section className="debrief" aria-labelledby="debrief-h">
       <header className="debrief__head">
-        <p className="debrief__kicker">Debrief</p>
-        <h2 id="debrief-h">{title}</h2>
-        <p className={`debrief__verdict${verdict.passed ? '' : ' debrief__verdict--open'}`}>
-          <StatusMark passed={verdict.passed} />
-          {verdict.text}
-        </p>
+        <h2 id="debrief-h">
+          <InlineText text={headline} />
+        </h2>
+        <p>{result}</p>
         {learned.length > 0 && (
           <p className="debrief__learned">
             <span>New in this mission</span>
@@ -40,14 +43,28 @@ export function DebriefPresentation({
               {next.label}
             </Button>
           )}
-          <Button onClick={onReplay}>Play it again</Button>
-          <ButtonLink variant={next ? 'default' : 'primary'} href={titleHref}>
-            Back to the title
+          <Button onClick={onReplay}>Replay mission</Button>
+          <ButtonLink variant={next ? 'default' : 'primary'} href={mapHref}>
+            Back to the map
           </ButtonLink>
         </div>
       </header>
 
       <div className="debrief__body">
+        {stage && (
+          <section className="debrief__stage" aria-labelledby="debrief-stage-h">
+            <h3 id="debrief-stage-h">{stage.name}, done</h3>
+            <p>You can now…</p>
+            <ul>
+              {stage.outcomes.map((outcome) => (
+                <li key={outcome}>
+                  <InlineText text={outcome} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {measures.length > 0 && (
           <section aria-labelledby="debrief-measures-h">
             <SectionHead id="debrief-measures-h" level={3}>
@@ -57,49 +74,11 @@ export function DebriefPresentation({
           </section>
         )}
 
-        {text !== undefined && text.length > 0 && (
-          <section aria-label="What happened and why" className="debrief__text">
-            <MarkdownText blocks={text} topLevel={2} />
-          </section>
-        )}
-
-        {explanation.length > 0 && (
-          <section aria-labelledby="debrief-why-h" className="debrief__why">
-            <SectionHead id="debrief-why-h" level={3}>
-              Why it worked
-            </SectionHead>
-            {explanation.map((paragraph) => (
-              <p key={paragraph}>
-                <InlineText text={paragraph} />
-              </p>
-            ))}
-          </section>
-        )}
-
-        {commands.length > 0 && (
-          <section aria-labelledby="debrief-commands-h" className="debrief__commands">
-            <SectionHead id="debrief-commands-h" level={3} aside="outside the game">
-              Try it on real FRR
-            </SectionHead>
-            {labNote !== null && (
-              <p>
-                <InlineText text={labNote} />
-              </p>
-            )}
-            <dl>
-              {commands.map((entry) => (
-                <div key={entry.command}>
-                  <dt>
-                    <code>{entry.command}</code>
-                  </dt>
-                  <dd>
-                    <InlineText text={entry.explain} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        )}
+        {cards.map((card, index) => (
+          <div key={card.id} className="debrief__feed" style={{ animationDelay: `${index * FEED_STAGGER_MS}ms` }}>
+            <CodexCard card={card} stamp={{ label: 'Filed', note: `Codex · ${seenIn}` }} />
+          </div>
+        ))}
       </div>
     </section>
   )

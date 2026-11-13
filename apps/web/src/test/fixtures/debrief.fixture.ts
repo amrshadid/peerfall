@@ -1,4 +1,5 @@
-import type { DebriefCommand, DebriefMeasure } from '@features/debrief/types'
+import type { DebriefMeasure } from '@features/debrief/types'
+import type { CodexCardData } from '@shared/types'
 
 // Made up to lay screens out and test them: mission text comes from the missions package, checked on the Machine.
 
@@ -9,16 +10,31 @@ export const DEBRIEF_MEASURES: readonly DebriefMeasure[] = [
   { label: 'Path after the fault', value: 'a → b → c' },
 ]
 
-export const DEBRIEF_EXPLANATION: readonly string[] = [
-  'The link kept its carrier, so neither interface went down. OSPF only learns that a neighbor is gone when no hello arrives for the whole **dead interval**.',
-  'BFD sends its own small packets many times a second. When they stop arriving, `bfdd` tells `ospfd`, and OSPF drops the adjacency at once instead of waiting.',
-]
-
 export const DEBRIEF_LEARNED: readonly string[] = ['`bfdd`', 'dead interval', '`ip ospf bfd`']
 
-export const DEBRIEF_COMMANDS: readonly DebriefCommand[] = [
-  { command: 'show bfd peers', explain: 'Each BFD session, its state and the timers both ends agreed on.' },
-  { command: 'show ip ospf neighbor', explain: 'The adjacencies, and the dead time left on each.' },
+export const DEBRIEF_CARDS: readonly CodexCardData[] = [
+  {
+    id: 'bfdd',
+    term: 'bfdd',
+    simple: 'The daemon that runs BFD: it notices a dead path to a neighbour.',
+    deep: null,
+    sources: [{ path: 'bfdd/bfd.c', href: 'https://example.invalid/bfdd/bfd.c' }],
+    docs: null,
+    tryIt: 'show bfd peers',
+    deepens: null,
+    deepenedBy: [],
+    filedIn: '4.1 The Link That Never Went Down',
+  },
+  {
+    id: 'dead-interval',
+    term: 'dead interval',
+    simple: 'How long OSPF waits without a hello before it drops a neighbour.',
+    deep: null,
+    sources: [],
+    docs: null,
+    tryIt: null,
+    deepens: null,
+    deepenedBy: [],
+    filedIn: '4.1 The Link That Never Went Down',
+  },
 ]
-
-export const DEBRIEF_LAB_NOTE = 'The same three routers run on a Linux host from the `lab/` folder of the repository.'

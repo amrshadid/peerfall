@@ -4,6 +4,7 @@ export type ShortcutGroup = 'Game' | 'Terminal'
 
 export type ShortcutId =
   | 'next-step'
+  | 'previous-step'
   | 'hint'
   | 'focus-guide'
   | 'focus-editor'

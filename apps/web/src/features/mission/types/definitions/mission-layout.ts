@@ -2,7 +2,8 @@ import type { PanelId, PanelSizes, RailStep, SaveState, ScreenChrome, TitleBlock
 import type { ReactNode } from 'react'
 
 export interface MissionTopBarData {
-  readonly titleHref: string
+  /** Back to the Peer Map, as Kernelfall's top bar goes back to the Kernel Map. */
+  readonly mapHref: string
   /** The mission's name. */
   readonly heading: string
   /** Where it sits in the journey, e.g. "Stage 4 · Recover from failure". */

@@ -1,1 +1,1 @@
-export { debriefMeasuresOf, debriefVerdictOf } from './debrief-measures.util'
+export { debriefMeasuresOf, debriefResultOf } from './debrief-measures.util'

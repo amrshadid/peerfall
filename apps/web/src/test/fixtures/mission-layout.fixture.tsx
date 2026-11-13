@@ -10,7 +10,7 @@ export const MISSION_LAYOUT: MissionLayoutModel = {
   page: 'The Link That Never Went Down(4.1)',
   volume: 'Peerfall Network Manual · Recover from failure',
   bar: {
-    titleHref: '#/',
+    mapHref: '#/map',
     heading: 'The Link That Never Went Down',
     subheading: 'Stage 4 · Recover from failure',
     steps: MISSION_STEPS,

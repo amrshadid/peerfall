@@ -10,9 +10,9 @@ export interface MissionTopBarProps {
 export function MissionTopBar({ bar, onMenu }: MissionTopBarProps) {
   return (
     <nav className="screen__topbar mission-topbar" aria-label="Mission">
-      <ButtonLink href={bar.titleHref} variant="quiet">
+      <ButtonLink href={bar.mapHref} variant="quiet">
         <Icon name="back" />
-        Title
+        Map
       </ButtonLink>
       <Button
         variant="quiet"

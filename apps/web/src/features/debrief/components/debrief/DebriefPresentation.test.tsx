@@ -2,29 +2,23 @@
 import type { DebriefPresentationProps } from '@features/debrief/types'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  DEBRIEF_COMMANDS,
-  DEBRIEF_EXPLANATION,
-  DEBRIEF_LAB_NOTE,
-  DEBRIEF_LEARNED,
-  DEBRIEF_MEASURES,
-} from '@/test/fixtures/debrief.fixture'
+import { DEBRIEF_CARDS, DEBRIEF_LEARNED, DEBRIEF_MEASURES } from '@/test/fixtures/debrief.fixture'
 import { DebriefPresentation } from './DebriefPresentation'
 
 afterEach(cleanup)
 
 function debrief(overrides: Partial<DebriefPresentationProps> = {}) {
   const props: DebriefPresentationProps = {
-    title: 'The Link That Never Went Down',
-    verdict: { passed: true, text: 'Passed: traffic was back in 0.90 s, inside the 2.00 s target.' },
+    headline: 'An interface that is up says nothing about packets getting through.',
+    result: 'Mission complete · 3 of 3 objectives met · traffic back in 0.90 s, inside 2.00 s',
     measures: DEBRIEF_MEASURES,
-    explanation: DEBRIEF_EXPLANATION,
     learned: DEBRIEF_LEARNED,
-    commands: DEBRIEF_COMMANDS,
-    labNote: DEBRIEF_LAB_NOTE,
+    cards: DEBRIEF_CARDS,
+    seenIn: '4.1 The Link That Never Went Down',
+    stage: null,
     next: null,
     onReplay: vi.fn(),
-    titleHref: '#/',
+    mapHref: '#/map',
     ...overrides,
   }
   render(<DebriefPresentation {...props} />)
@@ -32,17 +26,13 @@ function debrief(overrides: Partial<DebriefPresentationProps> = {}) {
 }
 
 describe('DebriefPresentation', () => {
-  it('gives the verdict in words, with a mark that says the same', () => {
+  it("opens as Kernelfall's card: the debrief's headline, then the result in words", () => {
     debrief()
-    const region = screen.getByRole('region', { name: 'The Link That Never Went Down' })
-    expect(within(region).getByText(/^Passed: traffic was back in 0\.90 s/)).toBeTruthy()
-    expect(within(region).getByRole('img', { name: 'Passes' })).toBeTruthy()
-  })
-
-  it('says so in words when the run did not pass', () => {
-    debrief({ verdict: { passed: false, text: 'Not passed: traffic was lost for 37.8 s.' } })
-    expect(screen.getByText('Not passed: traffic was lost for 37.8 s.')).toBeTruthy()
-    expect(screen.getByRole('img', { name: 'Not passing yet' })).toBeTruthy()
+    const region = screen.getByRole('region', { name: /^An interface that is up/ })
+    expect(within(region).getByRole('heading', { level: 2 }).textContent).toBe(
+      'An interface that is up says nothing about packets getting through.'
+    )
+    expect(within(region).getByText(/^Mission complete · 3 of 3 objectives met/)).toBeTruthy()
   })
 
   it('lists what was measured, each number with its name', () => {
@@ -52,30 +42,48 @@ describe('DebriefPresentation', () => {
     expect(within(measures).getByText('Outage with BFD').nextElementSibling?.textContent).toBe('0.90 s')
   })
 
-  it('explains why, and gives the commands to repeat it on real FRR', () => {
+  it('prints every card the mission filed, stamped Filed with where it was filed', () => {
     debrief()
-    expect(screen.getByRole('region', { name: 'Why it worked' }).textContent).toContain('dead interval')
-    const commands = screen.getByRole('region', { name: /^Try it on real FRR/ })
-    expect([...commands.querySelectorAll('dt')].map((term) => term.textContent)).toEqual([
-      'show bfd peers',
-      'show ip ospf neighbor',
-    ])
-    expect(commands.textContent).toContain('lab/')
+    const cards = screen.getAllByRole('article')
+    expect(cards).toHaveLength(DEBRIEF_CARDS.length)
+    for (const card of cards) {
+      expect(card.querySelector('.pf-man-page__stamp')?.textContent).toBe(
+        'FiledCodex · 4.1 The Link That Never Went Down'
+      )
+    }
+    expect(cards.map((card) => card.getAttribute('aria-labelledby'))).toEqual(
+      DEBRIEF_CARDS.map((card) => `codex-${card.id}`)
+    )
   })
 
-  it('makes the next mission the primary way on when there is one', () => {
+  it("offers Kernelfall's three ways on: the next mission first, Replay, and back to the map", () => {
     const onSelect = vi.fn()
-    const { onReplay } = debrief({ next: { label: 'Next mission', onSelect } })
-    fireEvent.click(screen.getByRole('button', { name: 'Next mission' }))
+    const { onReplay } = debrief({ next: { label: 'Next mission: Stage 3', onSelect } })
+    const actions = [...document.querySelectorAll('.debrief__actions > *')].map((action) => action.textContent)
+    expect(actions).toEqual(['Next mission: Stage 3', 'Replay mission', 'Back to the map'])
+    fireEvent.click(screen.getByRole('button', { name: 'Next mission: Stage 3' }))
     expect(onSelect).toHaveBeenCalledTimes(1)
-    fireEvent.click(screen.getByRole('button', { name: 'Play it again' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Replay mission' }))
     expect(onReplay).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('link', { name: 'Back to the title' }).getAttribute('href')).toBe('#/')
+    expect(screen.getByRole('link', { name: 'Back to the map' }).getAttribute('href')).toBe('#/map')
   })
 
-  it('leaves out the sections it has nothing for', () => {
-    debrief({ measures: [], explanation: [], commands: [], learned: [] })
+  it('makes the map the primary way on when there is no next mission', () => {
+    debrief()
+    expect(screen.getByRole('link', { name: 'Back to the map' }).className).toContain('primary')
+  })
+
+  it('shows what the player can now do once the mission finishes its stage', () => {
+    debrief({ stage: { name: 'Stage 1 · First router', outcomes: ['Start FRR on a router.'] } })
+    const stage = screen.getByRole('region', { name: 'Stage 1 · First router, done' })
+    expect(within(stage).getByText('You can now…')).toBeTruthy()
+    expect(within(stage).getByRole('listitem').textContent).toBe('Start FRR on a router.')
+  })
+
+  it('leaves out the parts it has nothing for', () => {
+    debrief({ measures: [], learned: [], cards: [] })
     expect(screen.getAllByRole('region')).toHaveLength(1)
     expect(screen.queryByText('New in this mission')).toBeNull()
+    expect(screen.queryByRole('article')).toBeNull()
   })
 })
