@@ -8,7 +8,7 @@
 //        PEERFALL_CONTENT_DIR and PEERFALL_RUNS_DIR read the content and write the runs elsewhere.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Validated } from '@peerfall/core/types'
 import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
@@ -41,8 +41,15 @@ const repo = join(here, '../../..')
 // A mission that is not in the game yet can be recorded from a folder of its own: content that
 // does not load stops the whole game, so an unfinished mission stays out of content/ until its
 // runs are judged as its solution says.
-const content = process.env.PEERFALL_CONTENT_DIR ?? join(here, '../content')
-const runsDir = process.env.PEERFALL_RUNS_DIR ?? join(here, '../src/test/runs')
+// pnpm runs the script from the package's folder; a relative path means the folder the command was
+// typed in, which pnpm passes on as INIT_CWD.
+const fromCaller = (path: string) => resolve(process.env.INIT_CWD ?? process.cwd(), path)
+const content = process.env.PEERFALL_CONTENT_DIR
+  ? fromCaller(process.env.PEERFALL_CONTENT_DIR)
+  : join(here, '../content')
+const runsDir = process.env.PEERFALL_RUNS_DIR
+  ? fromCaller(process.env.PEERFALL_RUNS_DIR)
+  : join(here, '../src/test/runs')
 const vm = join(repo, 'apps/web/public/vm')
 const started = Date.now()
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))

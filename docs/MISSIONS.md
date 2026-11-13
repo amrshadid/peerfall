@@ -266,11 +266,20 @@ Content that does not load stops the whole game, so a mission goes into `content
 once it is complete and its runs are judged as its solution says. Until then keep it in a
 folder of its own, laid out like `content/`, and record it from there:
 `PEERFALL_CONTENT_DIR=<folder> PEERFALL_RUNS_DIR=<folder> pnpm --filter @peerfall/missions vm:golden <mission-id>`.
+A relative folder is read from the directory the command was typed in. Keep the runs folder
+out of the content folder, where every folder is read as a chapter, and outside the
+repository (or in `packages/missions/src/test/runs/`), where Biome would check its JSON.
 
 The recorded runs are judged again without a VM by `pnpm --filter @peerfall/missions test`:
 one test file per mission, `src/test/golden-<mission-id>.test.ts`, built on
-`goldenMission(id)` from `#test/index`. A change to a check or to a mission that flips a
-verdict fails there. Record again after changing a mission's `version`.
+`goldenMission(id)` and `itJudgesEveryRun()` from `#test/index`, which lists what each run
+meets, objective by objective. A change to a check or to a mission that flips a verdict
+fails there. Record again after changing a mission's `version`.
+
+**No objective is met at the start.** Objectives are judged live, and one met by the network
+as it starts would stay met all game, so every mission's `start` run meets none
+(`src/test/golden-start-runs.test.ts`). A mission judged from a fault run is exempt: before
+the fault, reaching the far router is what the healthy network does.
 
 For The Link That Never Went Down:
 
