@@ -115,7 +115,10 @@ export function MissionContainer({
   const verdict = run.verdict ?? active.verdict
   // Every reset of the network starts the story's played steps over.
   const [runs, setRuns] = useState(0)
-  const story = useStoryStep({ key: `${missionId}#${runs}`, phase, passed: run.verdict?.passed ?? false })
+  const storyKey = `${missionId}#${runs}`
+  const [buildReadIn, setBuildReadIn] = useState<string | null>(null)
+  const passed = run.verdict?.passed ?? false
+  const story = useStoryStep({ key: storyKey, phase, passed, buildRead: buildReadIn === storyKey })
   const { step } = story
   const stepIndex = MISSION_STEPS.findIndex((entry) => entry.id === step)
   const panels = panelsFor(panelsOfStep(step, mission?.fault !== undefined), showAll)
@@ -130,9 +133,11 @@ export function MissionContainer({
         }
       : step === 'see'
         ? () => story.goTo('build')
-        : step === 'watch'
-          ? showDebrief
-          : null
+        : step === 'build' && passed
+          ? () => story.goTo('watch')
+          : step === 'watch'
+            ? showDebrief
+            : null
   useShortcut('next-step', () => onNext?.(), mission !== null && onNext !== null)
   // Hints are for the steps played on the network, one at a time: a nudge, the concept, the spot.
   const hintEnabled = phase === 'play' && hints.next !== null
@@ -176,6 +181,7 @@ export function MissionContainer({
           }
         : null,
     onStartOver: () => setRestartOpen(true),
+    onBuildRead: () => setBuildReadIn(storyKey),
   }
   const lastRunFellShort = verdict !== null && !verdict.passed
 

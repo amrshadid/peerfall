@@ -9,8 +9,8 @@ describe('panelsOfStep', () => {
     expect(panelsOfStep('debrief')).toEqual({ topology: true, timeline: true, editor: true })
   })
 
-  it('has no timeline in a mission that breaks nothing', () => {
+  it('has no timeline and no editor in a mission that breaks nothing', () => {
     expect(panelsOfStep('see', false)).toEqual({ topology: true, timeline: false, editor: false })
-    expect(panelsOfStep('build', false)).toEqual({ topology: true, timeline: false, editor: true })
+    expect(panelsOfStep('build', false)).toEqual({ topology: true, timeline: false, editor: false })
   })
 })
