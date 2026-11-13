@@ -1,0 +1,34 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, `shell` lines at its shell; `restart: true` is the
+# player's own restart of FRR with its init script.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Restarted from the misspelt file: FRR skips the line again.
+  - id: restarted-only
+    passes: false
+    changes:
+      - router: a
+        restart: true
+  # Fixed in the running configuration and never saved: the restart reads the misspelt file.
+  - id: fixed-not-saved
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, description link to router c]
+      - router: a
+        restart: true
+  # Fixed and saved, never restarted: FRR has not yet started from the new file.
+  - id: saved-not-restarted
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, description link to router c, end, write memory]
+  - id: fixed-and-saved
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, description link to router c, end, write memory]
+      - router: a
+        restart: true

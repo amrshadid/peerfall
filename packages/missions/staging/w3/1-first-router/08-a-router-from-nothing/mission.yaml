@@ -1,0 +1,83 @@
+id: a-router-from-nothing
+version: 1
+title: A Router from Nothing
+summary: Stage 1's capstone. Start FRR on a router that was never started, put its cable to c back in service, label it, save, check and restart.
+minutes: 20
+chapter: first-router
+objective: FRR runs on router a, started by its init script, and after a restart a's interface to c is described and not shut down.
+prerequisites: [] # after the-skipped-line; the integration step sets the chain
+teaches: []
+names: []
+uses:
+  - frr-init-script
+  - watchfrr
+  - vtysh
+  - cli-help
+  - cli-modes
+  - interface-shutdown
+  - running-config
+  - interface-description
+  - saved-config
+  - write-memory
+  - config-check
+  - route
+
+# Stage 1's three routers. FRR is installed on a and not running, and its saved file shuts a-c
+# down: until FRR starts, Linux keeps a-c up, and starting FRR puts it down.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: none
+      config: "interface a-c\n shutdown\n!\n"
+    - { name: b, daemons: [], config: "" }
+    - { name: c, daemons: [], config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+# No objective may be met by the network as it starts: a-c is up and c answers before FRR runs,
+# so reachability is not an objective here. The started file, read after the player's own
+# restart, is what shows that the cable stays up.
+objectives:
+  - id: frr-runs
+    text: FRR runs on a, started the way FRR is started.
+    check: { kind: daemons, router: a, daemons: [watchfrr, zebra, mgmtd, staticd] }
+  - id: on-in-frr
+    text: FRR no longer holds a's interface to c down.
+    # Null while FRR is stopped, and `shutdown` once it starts from the file: met only by undoing it in FRR.
+    check: { kind: config, router: a, source: running, block: [interface a-c], line: shutdown, absent: true }
+  - id: labelled
+    text: a's interface to c has a description in a's frr.conf.
+    check: { kind: config, router: a, source: saved, block: [interface a-c], line: description }
+  - id: restarted
+    text: After you restart FRR on a, the description comes back with it.
+    check: { kind: config, router: a, source: started, block: [interface a-c], line: description }
+  - id: stays-up
+    text: After the restart, the interface to c is not shut down in a's configuration.
+    check: { kind: config, router: a, source: started, block: [interface a-c], line: shutdown, absent: true }
+
+hints:
+  - text: Start where The Silent Router started, then read ip -br link again. Did anything change when FRR came up?
+  - text: The saved file decides what a restart does, as in Gone After the Restart. A fix made from Linux is not in it; a fix made in FRR is, once saved.
+  - text: Undo the shutdown and add the description in a-c's own mode, save, check the file, then restart FRR.
+    command: write memory
+
+chips:
+  - { command: vtysh, explain: "open FRR's console on a" }
+  - { command: /usr/lib/frr/frrinit.sh status a, explain: "ask FRR's script which daemons run on a" }
+  - { command: ip -br link, explain: "list a's interfaces and whether each is up" }
+  - { command: cat /etc/frr/a/frr.conf, explain: "show a's saved configuration" }
+  - { command: vtysh -C -f /etc/frr/a/frr.conf, explain: "check the saved file without applying it" }
+  - { command: ping -c 3 10.0.2.2, explain: "send three packets to c and wait for answers" }
+
+codex: []
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

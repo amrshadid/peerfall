@@ -1,0 +1,51 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, `shell` lines at its shell; `restart: true` is the
+# player's own restart of FRR with its init script.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Started, and nothing else: the file puts a-c down.
+  - id: started-only
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]
+  # Switched on from Linux, labelled and saved: the saved file still says shutdown, and the
+  # restart puts a-c down again.
+  - id: lit-from-linux
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a, ip link set a-c up]
+      - router: a
+        lines: [configure terminal, interface a-c, description link to router c, end, write memory]
+      - router: a
+        restart: true
+  # Everything right in the running configuration, never saved: the restart reads the old file.
+  - id: not-saved
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]
+      - router: a
+        lines: [configure terminal, interface a-c, no shutdown, description link to router c]
+      - router: a
+        restart: true
+  # Saved, never restarted: nothing shows yet what a restart does.
+  - id: saved-not-restarted
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]
+      - router: a
+        lines: [configure terminal, interface a-c, no shutdown, description link to router c, end, write memory]
+  - id: from-nothing
+    passes: true
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]
+      - router: a
+        lines: [configure terminal, interface a-c, no shutdown, description link to router c, end, write memory]
+      - router: a
+        restart: true
