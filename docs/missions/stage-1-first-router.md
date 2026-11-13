@@ -114,7 +114,11 @@ addresses are random per run; times and process numbers differ from run to run.
 
 **Not seen on the Machine:** what the browser terminal shows during the network's setup
 (watchfrr's start lines may reach the console before the player's first prompt), and Tab
-pressed twice on an empty vtysh line (the spike's terminal showed nothing).
+pressed twice on an empty vtysh line (the spike's terminal showed nothing). Also not seen:
+watchfrr's wait of `Min Restart Interval: 60` seconds before restarting the same daemon a
+second time (only the value in `show watchfrr` was read), and the golden runs not yet
+recorded (`wrong-cable` in 1.1, `wrong-interface` in 1.5, `restarted-then-saved` in 1.6,
+`lit-from-linux` in 1.8), whose outcomes follow from behaviour that was seen.
 
 ---
 
