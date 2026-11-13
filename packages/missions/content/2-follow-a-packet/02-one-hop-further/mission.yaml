@@ -1,0 +1,88 @@
+id: one-hop-further
+version: 1
+title: One Hop Further
+summary: Write a static route that hands packets for a network one router away to the neighbour in between.
+minutes: 15
+chapter: follow-a-packet
+objective: Router a reaches router c's address through b, with a static route to c's network that names b as its next hop.
+prerequisites: [two-ends-of-one-cable]
+teaches: [static-route, next-hop, staticd]
+names: [ttl, next-hop-resolution]
+uses: [ip-address, prefix, connected-route, cli-modes]
+
+# Three routers in a line, every interface addressed. c already has its route back to a's
+# network, so this mission is only the way there; The Reply That Never Came Back takes the way
+# back away.
+network:
+  routers:
+    - name: a
+      daemons: [staticd]
+      config: ""
+    - name: b
+      daemons: [staticd]
+      config: ""
+    - name: c
+      daemons: [staticd]
+      config: "ip route 10.0.1.0/30 10.0.2.1\n"
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: a-route
+    text: Give a a static route to c's network, 10.0.2.0/30, through b.
+    check: { kind: route, router: a, to: 10.0.2.2, protocol: static, via: 10.0.1.2 }
+  - id: a-reaches-c
+    text: Reach c's address, 10.0.2.2, from a.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+
+hints:
+  - text: Ask Linux which way it would send to c with ip route get 10.0.2.2. Then look at b's routes. Which router is plugged into c's network?
+  - text: A static route names a network and a next hop, the address of a neighbour that a can already reach over a cable. a's only neighbour is b.
+  - text: In a's configure mode, type the network, then b's address on a's cable.
+    command: ip route 10.0.2.0/30 10.0.1.2
+
+chips:
+  - { command: ip route get 10.0.2.2, explain: "ask Linux which way it would send a packet to c's address" }
+  - { command: vtysh -c "show ip route", explain: "list zebra's routes without opening vtysh" }
+  - { command: ip route 10.0.2.0/30 10.0.1.2, explain: "in configure mode: send packets for c's network to b" }
+  - { command: show ip route 10.0.2.2, explain: "in vtysh: the route zebra uses for c's address, in detail" }
+  - { command: ping -c 3 10.0.2.2, explain: "send three packets to c and wait for answers" }
+  - { command: traceroute -n 10.0.2.2, explain: "list the routers a packet to c passes" }
+
+codex:
+  - id: static-route
+    term: A static route
+    deepens: route
+    simple: "A route you write yourself, such as ip route 10.0.2.0/30 10.0.1.2. S in show ip route, proto static in Linux."
+    deep: "Typed in configure mode, kept by staticd, offered to zebra, and installed by zebra in the kernel. It never changes by itself: if the network moves, the route stays wrong until someone edits it. ip route 0.0.0.0/0 with a next hop is a default route, used for any address no longer route covers."
+    sources: [staticd/static_vty.c, staticd/static_routes.c]
+    docs: https://docs.frrouting.org/en/latest/static.html
+    tryIt: vtysh -c "show ip route static"
+  - id: next-hop
+    term: The next hop
+    simple: The neighbour's address a route hands packets to. It must be on one of the router's own networks.
+    deep: "Each router decides one step only: a hands the packet to b, and b looks the destination up again in its own table. In S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, via names the next hop and a-b the interface zebra found for it. A next hop that no connected network covers is not used: Written but Not Used shows why."
+    sources: [staticd/static_nht.c, zebra/zebra_rnh.c]
+    docs: https://docs.frrouting.org/en/latest/static.html
+    tryIt: ip route get 10.0.2.2
+  - id: staticd
+    term: staticd
+    deepens: frr-daemon
+    simple: The FRR daemon that keeps the routes written by hand and offers them to zebra.
+    deep: "staticd gets each ip route line from vtysh through mgmtd, asks zebra to tell it whether each next hop can be reached, and offers zebra only the routes whose next hop can. zebra decides what goes into the kernel. FRR's init script starts staticd on every router."
+    sources: [staticd/static_main.c, staticd/static_zebra.c]
+    docs: https://docs.frrouting.org/en/latest/static.html
+    tryIt: vtysh -c "show daemons"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

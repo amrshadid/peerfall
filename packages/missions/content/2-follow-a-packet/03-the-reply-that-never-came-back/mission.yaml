@@ -1,0 +1,78 @@
+id: the-reply-that-never-came-back
+version: 2
+title: The Reply That Never Came Back
+summary: Find where a's packets stop when nothing comes back, and give the reply its own route home.
+minutes: 15
+chapter: follow-a-packet
+objective: Router a reaches router c's address, with a static route on c that brings the replies back through b.
+prerequisites: [one-hop-further]
+teaches: [return-path, ttl]
+uses: [static-route, next-hop, connected-route, cli-modes]
+
+# As One Hop Further, with a's route given and c's way back taken away: a's packets reach c,
+# and c has no route that covers a's address for its replies.
+network:
+  routers:
+    - name: a
+      daemons: [staticd]
+      config: "ip route 10.0.2.0/30 10.0.1.2\n"
+    - name: b
+      daemons: [staticd]
+      config: ""
+    - name: c
+      daemons: [staticd]
+      config: ""
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: c-route-back
+    text: Give c a static route to a's network, 10.0.1.0/30, through b.
+    check: { kind: route, router: c, to: 10.0.1.1, protocol: static, via: 10.0.2.1 }
+  - id: a-reaches-c
+    text: Reach c's address, 10.0.2.2, from a, and see the replies.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+
+hints:
+  - text: The packets leave a now, since the error is gone. Go to c and find out what it does with its answer.
+  - text: c's answer is a packet addressed to 10.0.1.1. Does c have any route that covers that address? ip route get 10.0.1.1 on c says.
+  - text: On c, write a static route to a's network, through b's address on c's cable.
+    command: ip route 10.0.1.0/30 10.0.2.1
+
+chips:
+  - { command: ping -c 3 10.0.2.2, explain: "send three packets from a to c and wait for answers" }
+  - {
+      command: nstat -az IcmpInEchos IcmpOutEchoReps,
+      explain: "count the ping requests that reached this router and the replies it sent",
+    }
+  - { command: ip route get 10.0.1.1, explain: "ask Linux which way it would send a packet to a's address" }
+  - { command: ip route 10.0.1.0/30 10.0.2.1, explain: "in c's configure mode: send packets for a's network to b" }
+  - { command: traceroute -n 10.0.2.2, explain: "list the routers a packet to c passes" }
+
+codex:
+  - id: return-path
+    term: The way back
+    simple: A reply is a packet too, addressed to the sender. Every router on the way back needs a route for it.
+    deep: "Each direction is looked up on its own, at each router. A missing route on the way there shows at the sender as Network unreachable. A missing route on the way back shows only as silence, 100% packet loss, and the far router's counters tell the rest: requests in, no replies out. Read both ends."
+    sources: [zebra/rt_netlink.c]
+    docs: https://docs.frrouting.org/en/latest/static.html
+    tryIt: ip route get 10.0.1.1
+  - id: ttl
+    term: TTL
+    simple: A hop count every packet carries. Each router that passes it on lowers it by one, so ttl=63 means one router on the way.
+    deep: "TTL stands for time to live. Linux starts it at 64. A router that would lower it to 0 drops the packet and tells the sender, so a packet caught in a loop of routes dies instead of circling for ever. traceroute sends packets with a TTL of 1, then 2, and so on, and lists the router that answered each. Forwarding is the kernel's work, not FRR's."
+    docs: https://docs.frrouting.org/en/latest/basic.html
+    tryIt: traceroute -n 10.0.2.2
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

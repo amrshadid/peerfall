@@ -4,39 +4,119 @@
 
 ## Scene
 
-**What users saw.** Traffic from router a to router c stopped for about 35 seconds, then came back by itself.
+> **zebra:** Welcome to stage 4, Recover from failure. These three routers run OSPF, a routing protocol: nobody writes their routes, each router learns them from the others. Last night the cable between a and c stopped carrying packets. Both its ends stayed up, and a lost c for half a minute.
+>
+> **bfdd:** I'm bfdd, the guide of this stage. Noticing a silent neighbour fast is my only job. Break that cable yourself, then make the network notice in under two seconds.
 
-**What the network looked like.** Three routers, a, b and c, each connected to the other two. a normally sends traffic to c over their direct link.
+## See it
 
-**What is strange.** The direct link between a and c never went down. Both interfaces stayed up the whole time. Nothing was unplugged and no alarm fired. The link was up, and it was passing nothing.
+> **bfdd:** First, who OSPF talks to. In a's vtysh, type `show ip ospf neighbor`.
+
+---
+
+```
+Neighbor ID     Pri State           Up Time         Dead Time Address         Interface                        RXmtL RqstL DBsmL
+10.255.0.2        1 Full/-          17.315s           32.607s 10.0.1.2        a-b:10.0.1.1                         0     0     0
+10.255.0.3        1 Full/-          16.680s           33.227s 10.0.2.2        a-c:10.0.2.1                         0     0     0
+```
+
+> **bfdd:** ospfd, FRR's OSPF daemon, talks to the neighbour at the end of each cable: b and c, named by their loopback addresses, which OSPF uses as each router's name. A router that a protocol talks to is a _peer_, and the Peerfall is named after them. `Full` means a and that peer have swapped everything they know of the network: in OSPF's word, an _adjacency_. From what it learned, each router works out its own routes.
+
+> **bfdd:** To stay peers, each end sends a _hello_, a small OSPF packet, every 10 seconds. `Dead Time` counts down from 40 seconds and starts again at every hello: that is OSPF's _dead timer_. When it reaches zero, the peer is dropped. Now the route to c's loopback: `show ip route 10.255.0.3`.
+
+---
+
+```
+Routing entry for 10.255.0.3/32
+  Known via "ospf", distance 110, metric 10, best
+  Last update 00:00:07 ago
+  Flags: Selected 
+  Status: Installed 
+  * 10.0.2.2, via a-c, weight 1
+```
+
+> **bfdd:** An OSPF route, distance 110, straight over `a-c`. If c is dropped on that cable, OSPF's next best way goes through b.
 
 ## Build it
 
-**Your job.** Find out why the network took so long to notice, and make it recover in under two seconds the next time the same thing happens.
+> **bfdd:** First, the failure. Press **Send probe**: a sends packets to c's loopback again and again, replies on the timeline. Then press **Break the link**: the cable between a and c drops every packet, both ways, while both interfaces stay up.
 
-You can break the link yourself, as often as you like, and watch what each router does.
+---
+
+> **bfdd:** The timeline shows replies back through b only once OSPF's dead timer ran out: 30 to 39 seconds of loss in three runs on the Machine, depending on when the last hello arrived. Turn me on: in `a-c`'s interface mode, type `ip ospf bfd`, then `show bfd peers`.
+
+---
+
+```
+BFD Peers:
+	peer 10.0.2.2 local-address 10.0.2.1 vrf default interface a-c
+		ID: 2472268457
+		Remote ID: 0
+		Active mode
+		Status: down
+```
+
+> **bfdd:** A _session_ to c, `down`, and `Remote ID: 0`: nobody answers. BFD, Bidirectional Forwarding Detection, is a conversation between the two ends of a cable. Do the same on c for `c-a`, then look again on a.
+
+---
+
+```
+BFD Peers:
+	peer 10.0.2.2 local-address 10.0.2.1 vrf default interface a-c
+		ID: 2472268457
+		Remote ID: 1563095722
+		Active mode
+		Status: up
+		Uptime: 10 second(s)
+		Diagnostics: ok
+		Remote diagnostics: ok
+		Peer Type: dynamic
+		RTT min/avg/max: 0/0/0 usec
+		Local timers:
+			Detect-multiplier: 3
+			Receive interval: 300ms
+			Transmission interval: 300ms
+			Transmission interval (actual with jitter): 228ms
+			Detection timeout: 900ms
+```
+
+> **bfdd:** `up`. Each end now sends a packet every 300 ms, and `Detection timeout: 900ms` is three of them missed. Press **Break the link** again.
+
+---
+
+## Watch it
+
+> **bfdd:** How long until a's traffic to c is back, through b?
+>
+> - about as long as before, half a minute
+> - [x] about a second
+> - it never comes back
+
+---
+
+> **bfdd:** About a second: between 0.82 and 0.96 s in six runs on the Machine. Read what a's log says about me: `grep BFD /var/log/frr/a.log`.
+
+---
+
+```
+2026/11/13 20:35:59.071 OSPF: [KYGCS-7CT60] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Up
+2026/11/13 20:36:15.070 OSPF: [X1ZWK-2050W] ospf_bfd_session_change: NSM[a-c:10.0.2.1:10.0.2.2]: BFD Down
+```
+
+> **bfdd:** That is ospfd writing what I told it: the session came up, then went down. ospfd dropped c at once instead of waiting for its dead timer. The order is the same as the first time: noticed, peer dropped, new route, replies back. Only the first step got shorter.
 
 ## Debrief
 
-**Why the interfaces stayed up.** An interface is "up" when the cable has a signal. That says nothing about whether packets get through. A bad optic, a broken device in the middle or a filter can drop every packet while both ends still show `UP`. Routers that only watch the interface never find out.
-
-**What noticed, the first time.** OSPF routers send each other a **hello** every 10 seconds. A router gives up on a neighbor when it has heard no hello for the **dead interval**, 40 seconds by default. Your first run shows it: a kept c as a neighbor, and kept sending traffic into the dead link, until that timer ran out. Depending on when the last hello arrived, that is 30 to 40 seconds of lost traffic.
-
-Only then did OSPF remove the neighbor, work out the next best path (through b), and hand the new route to the Linux kernel, which is what forwards packets.
-
-**What noticed, the second time.** **BFD** (Bidirectional Forwarding Detection) does one thing: the two ends of a link send each other a small packet every 300 milliseconds, and when three in a row are missing, 900 milliseconds at most, BFD tells OSPF the neighbor is gone. OSPF does not wait for its dead timer.
-
-Look at your second timeline. The order is the same as before: detection, neighbor removed, new route, first reply. Only the first step changed, from tens of seconds to under one.
-
-**Why both ends.** BFD is a conversation. With `ip ospf bfd` on one router only, that router starts a session and nobody answers: `show bfd peers` shows it `down`, it never comes up, and nothing is detected early. Each end also detects the failure for itself: in your timeline the router that noticed first may be c, with a moving its route because c told the network before a's own BFD gave up.
+> **bfdd:** An interface that is up says nothing about packets getting through. OSPF's hellos noticed the silence after half a minute; my packets, every 300 ms from both ends, noticed it in under one. Stage 4 goes on with other ways a network rides out a failure.
 
 ## Real world
 
-The same commands work on any FRR router:
+The same commands work on any FRR router that runs `ospfd` and `bfdd`:
 
 ```
 vtysh
 show ip ospf neighbor
+show ip ospf interface
 show ip route 10.255.0.3
 configure terminal
  interface a-c
@@ -45,4 +125,4 @@ end
 show bfd peers
 ```
 
-To repeat the whole exercise on a Linux machine, with the same three routers and the same fault, see `lab/` in the Peerfall repository.
+Turn BFD on at both ends of the cable. To repeat the whole exercise on a Linux computer, with the same three routers and the same fault, see `lab/` in the Peerfall repository.

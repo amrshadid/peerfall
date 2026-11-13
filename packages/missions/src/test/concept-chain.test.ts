@@ -3,14 +3,20 @@ import { conceptChain } from '@peerfall/game/utils'
 import { describe, expect, it } from 'vitest'
 import { appContent } from '#utils/loader/app-content.util'
 
-// Today's breaks, each with why; writing the missions that are still missing empties this list.
+// Today's breaks, each with why (docs/missions/concepts.md); writing the stages that are still
+// missing empties this list.
 const KNOWN_CONCEPT_GAPS: Readonly<Record<ConceptViolationKind, Readonly<Record<ConceptId, string>>>> = {
-  'used-before-taught': {
-    'ospf-adjacency': '4.1 relies on OSPF neighbors; stage 3, which teaches them, is not written yet',
-  },
+  'used-before-taught': {},
   'taught-twice': {},
   'never-used-again': {
-    'static-route': 'stage 2 ends with 2.2 for now; the missions after it are not written yet',
+    peer: 'named in 1.1 for the Peerfall; stage 3, which teaches peers, is not written yet',
+    pathspace: 'a fact about the Machine, explained by a card of 1.2 only: no mission uses it as a skill',
+    mgmtd: "named in 1.3; it is taught with FRR's northbound API in stage 11, not written yet",
+    'frr-log': 'stage 3 reads the log to debug adjacencies; it is not written yet',
+    ipv6: 'named in 2.1 for the fe80:: lines; IPv6 needs IPv6 in the network definition and the checks first',
+    'floating-static':
+      'taught in 2.5, the last lesson of stage 2; no mission after stage 2 that relies on it is written yet',
+    ecmp: 'the last idea of stage 2; stage 3 makes equal-cost paths with OSPF, not written yet',
   },
 }
 

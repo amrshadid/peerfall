@@ -1,4 +1,204 @@
 # The Codex page of commands (docs/MISSIONS.md). Each entry appears when the mission it is first
 # met in starts. kind: vtysh (typed in FRR's console) or shell (typed at the router's Linux shell).
-# Entries: { name, kind, what, firstMet: <mission id>, deepenedIn: [<mission id>, …] }
-entries: []
+# Entries: { name, kind, what, firstMet: <mission id>, deepenedIn: [<mission id>, …] }, in play order.
+entries:
+  # 1.1 The Dark Cable
+  - name: ip -br link
+    kind: shell
+    what: "list the router's interfaces, one per line, with whether each is up"
+    firstMet: the-dark-cable
+  - name: ip -br addr
+    kind: shell
+    what: "list the router's interfaces with their addresses"
+    firstMet: the-dark-cable
+    deepenedIn: [two-ends-of-one-cable]
+  - name: ip route
+    kind: shell
+    what: "show the router's routing table: one route per line"
+    firstMet: the-dark-cable
+  - name: ping -c 3
+    kind: shell
+    what: "send three packets to an address and print each answer and how long it took"
+    firstMet: the-dark-cable
+  - name: ip link set up
+    kind: shell
+    what: "switch an interface on from Linux: ip link set a-c up"
+    firstMet: the-dark-cable
+  # 1.2 Nobody Answers
+  - name: vtysh
+    kind: shell
+    what: "open FRR's console on this router; it needs FRR's daemons running"
+    firstMet: nobody-answers
+  - name: /usr/lib/frr/zebra -d -N a
+    kind: shell
+    what: "start the daemon zebra by hand, in the background, for router a"
+    firstMet: nobody-answers
+  - name: show daemons
+    kind: vtysh
+    what: "name the daemons that answered vtysh"
+    firstMet: nobody-answers
+  - name: show interface brief
+    kind: vtysh
+    what: "list the interfaces zebra knows, up or down, with their addresses"
+    firstMet: nobody-answers
+    deepenedIn: [two-ends-of-one-cable]
+  - name: exit
+    kind: vtysh
+    what: "leave vtysh and go back to the shell"
+    firstMet: nobody-answers
+  # 1.3 The Silent Router
+  - name: /usr/lib/frr/frrinit.sh status a
+    kind: shell
+    what: "ask FRR's init script which of a's daemons run"
+    firstMet: the-silent-router
+  - name: /usr/lib/frr/frrinit.sh start a
+    kind: shell
+    what: "start FRR on router a: watchfrr, which starts the daemons in the daemons file"
+    firstMet: the-silent-router
+  - name: vtysh -c
+    kind: shell
+    what: 'run one vtysh command and come back to the shell: vtysh -c "show daemons"'
+    firstMet: the-silent-router
+  - name: show watchfrr
+    kind: vtysh
+    what: "ask watchfrr which daemons it watches, their state and its restart command"
+    firstMet: the-silent-router
+  - name: pkill
+    kind: shell
+    what: "stop every process with that name: pkill staticd"
+    firstMet: the-silent-router
+  # 1.4 The Router's Language
+  - name: "?"
+    kind: vtysh
+    what: "lists the words that can come next, each with a line of help, and leaves your line as it was"
+    firstMet: the-routers-language
+  - name: show interface
+    kind: vtysh
+    what: "one interface's state and settings, or every interface's; Shutdown config says whether FRR holds it down"
+    firstMet: the-routers-language
+  - name: configure terminal
+    kind: vtysh
+    what: "enters configure mode, a(config)#, where the router's settings are changed"
+    firstMet: the-routers-language
+  - name: interface
+    kind: vtysh
+    what: "in configure mode: enters one interface's mode, a(config-if)#"
+    firstMet: the-routers-language
+  - name: shutdown
+    kind: vtysh
+    what: "in interface mode: FRR holds the interface down; no shutdown undoes it"
+    firstMet: the-routers-language
+  - name: "no"
+    kind: vtysh
+    what: "before a setting's own words: undoes that setting"
+    firstMet: the-routers-language
+  - name: do
+    kind: vtysh
+    what: "runs a command of a#, such as a show, from any mode"
+    firstMet: the-routers-language
+  - name: end
+    kind: vtysh
+    what: "goes straight back to a# from any mode"
+    firstMet: the-routers-language
+  # 1.5 What It Does Now
+  - name: show running-config
+    kind: vtysh
+    what: "everything FRR's daemons are doing now, as configuration in the words you type"
+    firstMet: what-it-does-now
+  - name: show interface description
+    kind: vtysh
+    what: "every interface with its state and its description"
+    firstMet: what-it-does-now
+  - name: description
+    kind: vtysh
+    what: "in interface mode: gives the interface a label for people; no description removes it"
+    firstMet: what-it-does-now
+  - name: cat /etc/frr/a/frr.conf
+    kind: shell
+    what: "prints the file FRR reads when it starts"
+    firstMet: what-it-does-now
+  # 1.6 Gone After the Restart
+  - name: write memory
+    kind: vtysh
+    what: "at a#: copies the running configuration into frr.conf and keeps the old file as frr.conf.sav"
+    firstMet: gone-after-the-restart
+  - name: /usr/lib/frr/frrinit.sh restart a
+    kind: shell
+    what: "stops FRR on router a and starts it again from its saved frr.conf"
+    firstMet: gone-after-the-restart
+  # 1.7 The Skipped Line
+  - name: show logging
+    kind: vtysh
+    what: "where each daemon writes its log, and how much it logs"
+    firstMet: the-skipped-line
+  - name: tail
+    kind: shell
+    what: "show the last lines of a file, such as FRR's log"
+    firstMet: the-skipped-line
+  - name: vtysh -C -f
+    kind: shell
+    what: "check a configuration file without applying it; names each line FRR would refuse"
+    firstMet: the-skipped-line
+  - name: echo $?
+    kind: shell
+    what: "print how the last command ended: 0 means no error"
+    firstMet: the-skipped-line
+  # 2.1 Two Ends of One Cable
+  - name: ip address
+    kind: vtysh
+    what: "in interface mode: give the interface an address with its prefix length"
+    firstMet: two-ends-of-one-cable
+  - name: show ip route
+    kind: vtysh
+    what: "the IPv4 routes zebra holds, with a letter for where each came from. With an address or a network after it, the route zebra uses for it, in detail, with its source, distance and next hop."
+    firstMet: two-ends-of-one-cable
+    deepenedIn: [one-hop-further]
+  - name: ip neigh
+    kind: shell
+    what: "the MAC addresses this router has learned of its neighbours"
+    firstMet: two-ends-of-one-cable
+  # 2.2 One Hop Further
+  - name: ip route get
+    kind: shell
+    what: Looks one address up in the kernel's routing table and prints the route Linux would send a packet by, or why it can't.
+    firstMet: one-hop-further
+  - name: ip route
+    kind: vtysh
+    what: "In configure mode, writes a static route, a network and its next hop, such as ip route 10.0.2.0/30 10.0.1.2. A number after the next hop is its administrative distance: higher than the other routes, it makes a backup that waits."
+    firstMet: one-hop-further
+    deepenedIn: [the-backup-path]
+  - name: traceroute -n
+    kind: shell
+    what: Lists the routers a packet passes on its way to an address, by number, one line per hop.
+    firstMet: one-hop-further
+  # 2.3 The Reply That Never Came Back
+  - name: nstat -az
+    kind: shell
+    what: Prints the router's packet counters, all of them or the ones named, such as IcmpInEchos and IcmpOutEchoReps for pings.
+    firstMet: the-reply-that-never-came-back
+  # 2.4 Written but Not Used
+  - name: show ip nht
+    kind: vtysh
+    what: The next hops zebra tracks for the daemons, and whether each is resolved, through which route and interface.
+    firstMet: written-but-not-used
+  - name: no ip route
+    kind: vtysh
+    what: In configure mode, removes a static route; type it with the same network and next hop it was written with.
+    firstMet: written-but-not-used
+  # 4.1 The Link That Never Went Down
+  - name: show ip ospf neighbor
+    kind: vtysh
+    what: OSPF's peers on this router, one line each, with their state and the dead timer counting down.
+    firstMet: the-link-that-never-went-down
+  - name: show ip ospf interface
+    kind: vtysh
+    what: OSPF on each interface, with its cost and its hello and dead timers.
+    firstMet: the-link-that-never-went-down
+  - name: ip ospf bfd
+    kind: vtysh
+    what: In interface mode, asks bfdd for a BFD session with every OSPF peer on that interface. Needed at both ends.
+    firstMet: the-link-that-never-went-down
+  - name: show bfd peers
+    kind: vtysh
+    what: bfdd's sessions, with their state, the peer's ID and the timers.
+    firstMet: the-link-that-never-went-down

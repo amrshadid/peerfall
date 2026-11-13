@@ -1,9 +1,0 @@
-entries:
-  - { name: "?", kind: vtysh, what: "lists the words that can come next, each with a line of help, and leaves your line as it was", firstMet: the-routers-language }
-  - { name: show interface, kind: vtysh, what: "one interface's state and settings, or every interface's; Shutdown config says whether FRR holds it down", firstMet: the-routers-language }
-  - { name: configure terminal, kind: vtysh, what: "enters configure mode, a(config)#, where the router's settings are changed", firstMet: the-routers-language }
-  - { name: interface, kind: vtysh, what: "in configure mode: enters one interface's mode, a(config-if)#", firstMet: the-routers-language }
-  - { name: shutdown, kind: vtysh, what: "in interface mode: FRR holds the interface down; no shutdown undoes it", firstMet: the-routers-language }
-  - { name: "no", kind: vtysh, what: "before a setting's own words: undoes that setting", firstMet: the-routers-language }
-  - { name: do, kind: vtysh, what: "runs a command of a#, such as a show, from any mode", firstMet: the-routers-language }
-  - { name: end, kind: vtysh, what: "goes straight back to a# from any mode", firstMet: the-routers-language }

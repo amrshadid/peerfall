@@ -1,20 +1,59 @@
-# Every concept a mission may teach, name or use (docs/MISSIONS.md). A mission's `teaches`,
-# `names` and `uses` point here; `codex` names the card that explains the concept, once one does.
+# Every concept a mission may teach, name or use (docs/MISSIONS.md), in play order; stages 1 and 2
+# come from docs/missions/concepts.md. A mission's `teaches`, `names` and `uses` point here;
+# `codex` names the card that explains the concept, once one does.
 # part: foundations | linux | frr | forwarding | routing | ospf | isis | bfd | bgp | policy |
 #       vrf | mpls | multicast | operations
 concepts:
-  - { id: frr-daemon, term: FRR daemon, part: frr }
-  - { id: vtysh, term: vtysh, part: frr }
-  - { id: watchfrr, term: watchfrr, part: frr }
-  - { id: zebra, term: zebra, part: frr }
-  - { id: routing-table, term: routing table, part: forwarding }
-  - { id: running-config, term: running configuration, part: frr }
-  - { id: saved-config, term: saved configuration, part: frr }
-  - { id: ip-address, term: IPv4 address, part: foundations }
-  - { id: subnet, term: network and prefix length, part: foundations }
-  - { id: connected-route, term: connected route, part: forwarding }
-  - { id: static-route, term: static route, part: routing }
-  - { id: next-hop, term: next hop, part: forwarding }
+  # Stage 1, First router
+  - { id: router, term: a router, part: foundations, codex: router }
+  - { id: interface, term: "an interface, up or down", part: linux, codex: interface }
+  - { id: route, term: a route and the routing table, part: routing, codex: route }
+  - { id: frr-daemon, term: "FRR, a set of daemons", part: frr, codex: frr-daemon }
+  - { id: zebra, term: zebra, part: frr, codex: zebra }
+  - { id: vtysh, term: "vtysh, FRR's console", part: frr, codex: vtysh }
+  - { id: watchfrr, term: watchfrr, part: frr, codex: watchfrr }
+  - { id: frr-init-script, term: "FRR's init script, frrinit.sh", part: frr, codex: frr-init-script }
+  - { id: daemons-file, term: the daemons file, part: frr, codex: daemons-file }
+  - { id: cli-help, term: "?, Tab and abbreviations", part: frr, codex: cli-help }
+  - { id: cli-modes, term: "vtysh's modes: exec, configure, interface", part: frr, codex: cli-modes }
+  - { id: interface-shutdown, term: "shutdown: FRR holding an interface down", part: frr, codex: interface-shutdown }
+  - { id: running-config, term: the running configuration, part: frr, codex: running-config }
+  - { id: interface-description, term: "an interface's description", part: frr, codex: interface-description }
+  - { id: saved-config, term: "the saved configuration, frr.conf", part: frr, codex: saved-config }
+  - { id: write-memory, term: write memory, part: frr, codex: write-memory }
+  - { id: frr-log, term: "FRR's log and show logging", part: frr, codex: frr-log }
+  - { id: config-check, term: checking a file with vtysh -C -f, part: frr, codex: config-check }
+  # Stage 2, Follow a packet
+  - { id: ip-address, term: an IPv4 address on an interface, part: linux, codex: ip-address }
+  - { id: prefix, term: "a network, its prefix and prefix length", part: routing, codex: prefix }
+  - { id: connected-route, term: connected and local routes, part: routing, codex: connected-route }
+  - { id: static-route, term: a static route, part: routing, codex: static-route }
+  - { id: next-hop, term: the next hop, part: routing, codex: next-hop }
+  - { id: staticd, term: staticd, part: frr, codex: staticd }
+  - { id: return-path, term: "the way back: a reply needs its own route", part: foundations, codex: return-path }
+  - { id: ttl, term: "TTL, the hop count each router lowers, and traceroute", part: foundations, codex: ttl }
+  - { id: rib, term: "zebra's routing table (RIB), selected routes", part: routing, codex: rib }
+  - { id: fib, term: "the kernel's table (FIB), installed routes", part: routing, codex: fib }
+  - {
+      id: next-hop-resolution,
+      term: "a next hop must be reachable: show ip nht",
+      part: routing,
+      codex: next-hop-resolution,
+    }
+  - {
+      id: administrative-distance,
+      term: "administrative distance: which source of a route wins",
+      part: routing,
+      codex: administrative-distance,
+    }
+  - { id: floating-static, term: a backup static route with a higher distance, part: routing, codex: floating-static }
+  - { id: ecmp, term: "equal-cost paths: two next hops used at once", part: routing, codex: ecmp }
+  # Named in stages 1 and 2, taught later
+  - { id: mgmtd, term: "mgmtd, FRR's management daemon", part: frr }
+  - { id: pathspace, term: "one Machine, many routers: FRR's -N <name>", part: frr, codex: pathspace }
+  - { id: peer, term: a peer, part: foundations }
+  - { id: ipv6, term: IPv6 addresses and routes, part: linux }
+  # Stage 4, Recover from failure (stage 3 will teach the OSPF neighbor)
   - { id: ospf-adjacency, term: OSPF neighbor, part: ospf }
-  - { id: ospf-dead-interval, term: OSPF dead interval, part: ospf }
-  - { id: bfd, term: BFD, part: bfd }
+  - { id: ospf-dead-interval, term: OSPF hellos and the dead timer, part: ospf, codex: ospf-dead-interval }
+  - { id: bfd, term: BFD, part: bfd, codex: bfd }

@@ -1,1 +1,1 @@
-{"mission":"two-ends-of-one-cable","version":1,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"routes":[]},"b":{"routes":[]}},"pings":[{"from":"a","to":"10.0.1.2","sent":3,"received":0}]}}
+{"mission":"two-ends-of-one-cable","version":2,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"routes":[]},"b":{"routes":[]}},"pings":[{"from":"a","to":"10.0.1.2","sent":3,"received":0}]}}

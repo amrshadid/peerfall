@@ -26,7 +26,7 @@ runs:
       - router: b
         lines: [configure terminal, interface b-a, ip address 10.0.1.2/30]
   # The same outcome reached from Linux instead of FRR: the mission is judged by what the
-  # kernel has, not by which command put it there.
+  # kernel has, not by which command put it there. The Real world says why FRR is the better place.
   - id: addressed-from-linux
     passes: true
     changes:

@@ -1,1 +1,1 @@
-{"mission":"the-silent-router","version":1,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"daemons":[]}},"pings":[]}}
+{"mission":"the-silent-router","version":2,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"daemons":[]}},"pings":[]}}

@@ -1,57 +1,139 @@
 # Two Ends of One Cable
 
-**Question:** Why does a new cable carry nothing?
+**Question:** What does a router need before it can send anything over a new cable?
 
 ## Scene
 
-**What was reported.** A cable was plugged in between router a and router b this morning. Both ends show the interface up. Nothing gets across: a cannot reach b, and b cannot reach a.
+> **zebra:** Router a runs, and it survives a restart. But a router alone routes nothing: its whole job is passing packets on to other routers. So in this stage we follow packets from one router to the next, and we start with the smallest piece: a new cable between a and b. Both ends are up. Nothing crosses it.
 
-**What the network looks like.** Two routers and one link. On a the interface is called `a-b`, on b it is `b-a`.
+## See it
 
-**What is strange.** The link is fine. Neither interface has an IPv4 address yet, so neither router has anywhere to send a packet.
+> **zebra:** Ask Linux what a has on that cable: `ip -br addr`.
 
-## Build it
-
-**Your job.** Give each end its address, in FRR: `10.0.1.1/30` on a and `10.0.1.2/30` on b. Then watch what each router's routing table gains, in FRR and in Linux, and reach b from a.
-
-Have your work checked whenever you like. Nothing is timed.
-
-## Debrief
-
-**Up, and still unreachable.** An interface that is up can carry packets. It does not say where to send them. Before you gave a its address, a's kernel routing table was empty, and Linux refused even to try:
+---
 
 ```
+a:~# ip -br addr
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+a-b@if2          UP             fe80::d47e:63ff:feb5:6a1a/64 
+```
+
+> **zebra:** `a-b` is `UP`, and it has no address like the `10.0.1.1` you saw in The Dark Cable. The long `fe80::` one is an IPv6 address Linux gives every interface by itself; IPv6 waits for later. Try to reach b anyway: `ping -c 2 10.0.1.2`.
+
+---
+
+```
+a:~# ping -c 2 10.0.1.2
 ping: connect: Network unreachable
 ```
 
-**What one address gives a router.** `10.0.1.1/30` says two things. `10.0.1.1` is this router's own address on the link. `/30` says the first 30 bits name the network, so the link is the network `10.0.1.0/30`: four addresses, of which `10.0.1.1` and `10.0.1.2` can be given to routers.
+> **zebra:** The Dark Cable's refusal: no route covers b's address, so Linux won't even send. Now ask me. Type `vtysh`, then `show interface brief`.
 
-From that one line zebra made two routes. `show ip route` lists them:
-
-```
-C>* 10.0.1.0/30 is directly connected, a-b, weight 1, 00:00:07
-L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:07
-```
-
-`C` is a **connected** route: everything in `10.0.1.0/30` is reached by sending it straight out of `a-b`, with no router in between. `L` is the router's own address. `>` marks the route FRR chose and `*` says it is in the kernel.
-
-**From Zebra into Linux.** FRR does not forward packets. The Linux kernel does, from its own routing table. Zebra is the daemon that talks to the kernel: it handed Linux the address, and Linux added the route for the address's network itself. `ip route` shows the kernel's table:
+---
 
 ```
-10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1
+a# show interface brief
+Interface       Status  VRF             Addresses
+---------       ------  ---             ---------
+a-b             up      default         fe80::d47e:63ff:feb5:6a1a/64
+lo              up      default         
+
 ```
 
-`dev a-b` is the way out, and `proto kernel` says the kernel put the route there. The two tables agree, and that is the thing to check whenever a packet does not go where FRR says it should.
+> **zebra:** I see what Linux sees: `a-b` up, with only its `fe80::` address. Now `show ip route`, the routes I, zebra, hold for a.
 
-**Why one end is not enough.** With only a addressed, a had its route and sent its packets out of `a-b`. Nobody at the other end owned `10.0.1.2`, so nobody answered:
+---
 
 ```
+a# show ip route
+a# 
+```
+
+> **zebra:** Nothing at all, and `ip route` in Linux prints nothing either. With no address on `a-b`, a has no network on that cable, so there is no route into it. What the cable lacks is a number at each end that packets can be sent to and from.
+
+## Build it
+
+> **zebra:** An _address_ names one interface, and it is a setting of that interface, typed in its mode. `configure terminal`, `interface a-b`, then `ip address 10.0.1.1/30`, then `end`. Then `show ip route` again.
+
+---
+
+```
+a# show ip route
+Codes: K - kernel route, C - connected, L - local, S - static,
+       R - RIP, O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, v - VNC, V - VNC-Direct, A - Babel, F - PBR,
+       f - OpenFabric, t - Table-Direct,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+IPv4 unicast VRF default:
+C>* 10.0.1.0/30 is directly connected, a-b, weight 1, 00:00:00
+L>* 10.0.1.1/32 is directly connected, a-b, weight 1, 00:00:00
+```
+
+> **zebra:** Two routes from one line. An address is 32 bits, written as four numbers. `/30` is the _prefix length_: the first 30 bits name the network, so a's network is `10.0.1.0/30`, the four addresses `.0` to `.3`. The first names the network and the last reaches all of it at once, so `.1` and `.2` are left for the two ends. `C` is the _connected route_: all of `10.0.1.0/30` is straight out of `a-b`. `L`, the local route, is a's own address. `>` and `*` wait for later in this stage. Linux has its copy too: `exit`, then `ip route`.
+
+---
+
+```
+a:~# ip route
+10.0.1.0/30 dev a-b proto kernel scope link src 10.0.1.1 
+```
+
+> **zebra:** `proto kernel`: Linux added it itself, as in The Dark Cable.
+
+## Watch it
+
+> **zebra:** Only a has its address. You ping b again: what happens?
+>
+> - `Network unreachable`, as before
+> - [x] packets leave, and nobody answers
+> - b answers
+
+---
+
+```
+a:~# ping -c 3 10.0.1.2
+PING 10.0.1.2 (10.0.1.2) 56(84) bytes of data.
 From 10.0.1.1 icmp_seq=1 Destination Host Unreachable
+From 10.0.1.1 icmp_seq=2 Destination Host Unreachable
+From 10.0.1.1 icmp_seq=3 Destination Host Unreachable
+
+--- 10.0.1.2 ping statistics ---
+3 packets transmitted, 0 received, +3 errors, 100% packet loss, time 2087ms
+pipe 3
 ```
 
-Each router knows only its own end of the cable. Both ends need an address, and both addresses have to be in the same network.
+> **zebra:** a has a route now, so the packets leave. Nobody owns `10.0.1.2` yet, so a itself reports `Destination Host Unreachable`. Each router knows only its own end. Select b on the topology and give `b-a` the address `10.0.1.2/30`, the same way. Then ping b from a again.
 
-**Why in FRR.** `ip addr add 10.0.1.1/30 dev a-b` in Linux gives the kernel the same address and the same route, and packets flow just the same. But the address is then missing from FRR's configuration, so `write memory` cannot save it. Configure the address in FRR and it is part of the router's configuration like everything else.
+---
+
+```
+a:~# ping -c 3 10.0.1.2
+PING 10.0.1.2 (10.0.1.2) 56(84) bytes of data.
+64 bytes from 10.0.1.2: icmp_seq=1 ttl=64 time=1.07 ms
+64 bytes from 10.0.1.2: icmp_seq=2 ttl=64 time=0.446 ms
+64 bytes from 10.0.1.2: icmp_seq=3 ttl=64 time=0.883 ms
+
+--- 10.0.1.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2006ms
+rtt min/avg/max/mdev = 0.446/0.800/1.073/0.262 ms
+```
+
+> **zebra:** Three answers. On the way, a learned b's _MAC address_, the one b's interface uses on the cable itself: `ip neigh` shows it.
+
+---
+
+```
+a:~# ip neigh
+10.0.1.2 dev a-b lladdr f2:c8:83:fc:92:be REACHABLE 
+```
+
+> **zebra:** `lladdr` is b's MAC address. a needs it before it can put a packet for b on the cable.
+
+## Debrief
+
+> **zebra:** One address gives a router its network and a route into it. Both ends need one, in the same network. Typed in FRR, it is in the running configuration that `write memory` saves. a reaches b; what about a router one cable further? In One Hop Further.
 
 ## Real world
 
@@ -67,5 +149,8 @@ end
 show ip route
 exit
 ip route
+ip neigh
 ping -c 3 10.0.1.2
 ```
+
+`ip addr add 10.0.1.1/30 dev a-b` in Linux gives the kernel the same address and route, but FRR's running configuration never shows it, so `write memory` cannot save it.

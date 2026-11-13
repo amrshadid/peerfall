@@ -1,5 +1,0 @@
-# ip -br addr (The Dark Cable) and show interface brief (The Router's Language) are met earlier.
-entries:
-  - { name: ip address, kind: vtysh, what: "in interface mode: give the interface an address with its prefix length", firstMet: two-ends-of-one-cable }
-  - { name: show ip route, kind: vtysh, what: "the IPv4 routes zebra holds, with a letter for where each came from", firstMet: two-ends-of-one-cable }
-  - { name: ip neigh, kind: shell, what: "the MAC addresses this router has learned of its neighbours", firstMet: two-ends-of-one-cable }

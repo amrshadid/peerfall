@@ -1,5 +1,0 @@
-entries:
-  - { name: show logging, kind: vtysh, what: "where each daemon writes its log, and how much it logs", firstMet: the-skipped-line }
-  - { name: tail, kind: shell, what: "show the last lines of a file, such as FRR's log", firstMet: the-skipped-line }
-  - { name: vtysh -C -f, kind: shell, what: "check a configuration file without applying it; names each line FRR would refuse", firstMet: the-skipped-line }
-  - { name: echo $?, kind: shell, what: "print how the last command ended: 0 means no error", firstMet: the-skipped-line }

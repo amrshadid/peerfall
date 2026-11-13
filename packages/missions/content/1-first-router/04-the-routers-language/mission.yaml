@@ -1,0 +1,87 @@
+id: the-routers-language
+version: 1
+title: The Router's Language
+summary: Ask vtysh for its own words with ?, Tab and short words, and switch an interface on in the mode it belongs to.
+minutes: 20
+chapter: first-router
+objective: Router a's interface to c is switched on again, its kernel routes through it, and a reaches c.
+prerequisites: [the-silent-router]
+teaches: [cli-help, cli-modes, interface-shutdown]
+names: [running-config]
+uses: [vtysh, interface, route]
+
+# Stage 1's three routers. FRR runs on a, started by its own init script, and a's frr.conf
+# says shutdown for a-c: zebra holds that interface down, as in The Dark Cable.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: watchfrr
+      config: "interface a-c\n shutdown\n!\n"
+    - name: b
+      daemons: []
+      config: ""
+    - name: c
+      daemons: []
+      config: ""
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: cable-lit
+    text: Switch a's interface to c back on, so that a's kernel routes through it.
+    check: { kind: route, router: a, prefix: 10.0.2.0/30, protocol: kernel, interface: a-c }
+  - id: reaches-c
+    text: Reach c's address, 10.0.2.2, from a.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+
+hints:
+  - text: In vtysh, `show interface a-c` says why the interface is down. Read the line that starts with `Shutdown`.
+  - text: A change is typed in the mode it belongs to. An interface's settings are changed inside that interface, after `configure terminal` and then `interface a-c`. Type `?` there to see what you can say.
+  - text: In `a(config-if)#`, undo the shutdown.
+    command: no shutdown
+
+# From this mission on, a chip shows a command without its arguments.
+chips:
+  - { command: "?", explain: "in vtysh: list the words that can come next, with help" }
+  - { command: show interface, explain: "in vtysh: an interface's state; add brief for all of them" }
+  - { command: configure terminal, explain: "in vtysh: enter configure mode" }
+  - { command: interface, explain: "in configure mode: enter one interface's mode" }
+  - { command: "no", explain: "undo a setting: no before the setting's own words" }
+  - { command: do, explain: "run a command from a#, such as a show, from any mode" }
+  - { command: end, explain: "back to a# from any mode" }
+
+codex:
+  - id: cli-help
+    term: Asking vtysh
+    simple: "`?` lists what can come next, Tab finishes a word, and a short word works when only one command starts with it."
+    deep: "vtysh matches each word against a tree of commands. `?` prints the words possible at that point, each with its help line, and leaves your line as it was. Tab completes a word when one choice fits; a second Tab lists the choices. `sh int br` is `show interface brief`. A line that matches nothing gets `% Unknown command:`, one that stops too early `% Command incomplete:`."
+    deepens: vtysh
+    sources: [lib/command.c, vtysh/vtysh.c]
+    docs: https://docs.frrouting.org/en/latest/basic.html
+    tryIt: "`vtysh`, then `show ?`"
+  - id: cli-modes
+    term: Modes
+    simple: "Where vtysh is: `a#` to look, `a(config)#` to change the router, and `a(config-if)#` to change one interface."
+    deep: "`configure terminal` enters configure mode; `interface a-c` enters that interface's mode. Each mode knows its own commands, which is why `no shutdown` is unknown at `a#`. `exit` goes back one mode, `end` straight to `a#`, and `do` runs a command of `a#`, such as `do show interface brief`, from any mode."
+    sources: [lib/command.c, vtysh/vtysh.c]
+    docs: https://docs.frrouting.org/en/latest/basic.html
+    tryIt: "`vtysh`, then `configure terminal`, then `?`"
+  - id: interface-shutdown
+    term: shutdown
+    simple: "An interface setting in FRR: zebra keeps the interface down while the configuration says `shutdown`. `no shutdown` undoes it."
+    deep: "`show interface a-c` reports it as `Shutdown config is Enabled by CLI`. zebra applies it when the configuration is read, so a restart from a `frr.conf` that says `shutdown` takes the interface down again, even after Linux brought it up with `ip link set a-c up`."
+    deepens: interface
+    sources: [zebra/zebra_cli.c, zebra/interface.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show interface a-c"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

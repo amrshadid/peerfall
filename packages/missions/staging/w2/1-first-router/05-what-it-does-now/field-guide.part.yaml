@@ -1,5 +1,0 @@
-entries:
-  - { name: show running-config, kind: vtysh, what: "everything FRR's daemons are doing now, as configuration in the words you type", firstMet: what-it-does-now }
-  - { name: show interface description, kind: vtysh, what: "every interface with its state and its description", firstMet: what-it-does-now }
-  - { name: description, kind: vtysh, what: "in interface mode: gives the interface a label for people; no description removes it", firstMet: what-it-does-now }
-  - { name: cat /etc/frr/a/frr.conf, kind: shell, what: "prints the file FRR reads when it starts", firstMet: what-it-does-now }

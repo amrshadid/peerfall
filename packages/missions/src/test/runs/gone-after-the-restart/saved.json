@@ -1,1 +1,0 @@
-{"mission":"gone-after-the-restart","version":2,"run":"saved","passes":false,"events":[],"state":{"routers":{"a":{"savedConfig":"frr version 10.6.1\nfrr defaults traditional\nhostname a\nlog file /var/log/frr/a.log\nlog timestamp precision 3\nservice integrated-vtysh-config\n!\ninterface lo\n description loopback of router a\nexit\n!\n","startedConfig":null}},"pings":[]}}

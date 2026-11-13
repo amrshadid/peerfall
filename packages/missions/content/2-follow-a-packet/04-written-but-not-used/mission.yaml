@@ -1,0 +1,91 @@
+id: written-but-not-used
+version: 1
+title: Written but Not Used
+summary: Follow a written route from the configuration into zebra's table and the kernel's, and find where it stops.
+minutes: 15
+chapter: follow-a-packet
+objective: Router a uses a static route to c's network whose next hop it can reach, and reaches c's address.
+prerequisites: [the-reply-that-never-came-back]
+teaches: [rib, fib, next-hop-resolution]
+uses: [static-route, next-hop, staticd, zebra, running-config]
+
+# As One Hop Further, with a's route written wrong and c's way back given. The wrong next hop is
+# b's other address, the one on b's cable to c: a plausible slip. a has no route to it, so the
+# route stays in the running configuration and never reaches zebra's table or the kernel's.
+network:
+  routers:
+    - name: a
+      daemons: [staticd]
+      config: "ip route 10.0.2.0/30 10.0.2.1\n"
+    - name: b
+      daemons: [staticd]
+      config: ""
+    - name: c
+      daemons: [staticd]
+      config: "ip route 10.0.1.0/30 10.0.2.1\n"
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: a-route
+    text: Make a use a static route to c's network through a next hop it can reach.
+    check: { kind: route, router: a, to: 10.0.2.2, protocol: static, via: 10.0.1.2 }
+  - id: a-reaches-c
+    text: Reach c's address, 10.0.2.2, from a.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+
+hints:
+  - text: Look for the route in three places, show running-config, show ip route and ip route. Where does it stop?
+  - text: staticd offers zebra a route only once zebra can reach the route's next hop. show ip nht lists each next hop and whether it is resolved.
+  - text: Remove the route with no in front of it, and write it again with b's address on a's own cable.
+    command: ip route 10.0.2.0/30 10.0.1.2
+
+chips:
+  - { command: show running-config, explain: "in vtysh: everything FRR is doing now, as configuration" }
+  - { command: show ip route, explain: "in vtysh: zebra's table, every route zebra knows" }
+  - { command: ip route, explain: "at the shell: the kernel's table, the routes Linux forwards with" }
+  - { command: show ip nht, explain: "in vtysh: the next hops zebra tracks, and whether each can be reached" }
+  - { command: no ip route 10.0.2.0/30 10.0.2.1, explain: "in configure mode: remove the route that is written wrong" }
+  - {
+      command: ip route 10.0.2.0/30 10.0.1.2,
+      explain: "in configure mode: a route to c's network through b's near address",
+    }
+
+codex:
+  - id: rib
+    term: zebra's table, the RIB
+    deepens: zebra
+    simple: Every route zebra knows, from every source, as show ip route prints it. > marks the one zebra selected for its network.
+    deep: "RIB stands for Routing Information Base. Connected, local and static routes arrive here, and later OSPF and BGP routes too. For each network zebra selects one route and sends it to the kernel. A static route whose next hop is unresolved never arrives: staticd holds it back, so show ip route has no line for it at all."
+    sources: [zebra/zebra_rib.c, zebra/zebra_vty.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show ip route"
+  - id: fib
+    term: The kernel's table, the FIB
+    deepens: route
+    simple: The routes Linux forwards packets with, as ip route prints them. * in show ip route marks a route that is in it.
+    deep: "FIB stands for Forwarding Information Base. zebra installs each route it selected through netlink, Linux's channel for routing changes, and a static one shows as proto static metric 20. Linux forwards every packet from this table alone: FRR never touches a packet on its way through."
+    sources: [zebra/rt_netlink.c, zebra/zebra_nhg.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: ip route
+  - id: next-hop-resolution
+    term: A next hop must be reachable
+    deepens: next-hop
+    simple: A route is used only if its next hop can be reached through another route. show ip nht says which can.
+    deep: "staticd registers each next hop with zebra's next-hop tracking, NHT. zebra answers resolved via connected, prefix 10.0.1.0/30, or unresolved, and tells staticd again whenever that changes, so a static route comes and goes with the route to its next hop."
+    sources: [zebra/zebra_rnh.c, staticd/static_nht.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show ip nht"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

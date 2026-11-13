@@ -5,24 +5,27 @@
 chapters:
   - id: first-router
     title: First router
-    summary: Start FRR on Linux, find its daemons, use vtysh, and save and reload a configuration.
-    story: One router, alone and silent. Before it can find any peer, FRR has to run on it, answer its console, and keep what you tell it across a restart.
+    summary: Meet a router through Linux, start FRR and its daemons, use vtysh, and save a configuration that survives a restart.
+    story: It starts before FRR, with what a router is as plain Linux shows it. Then FRR itself, its daemons and its console, how it is started and kept running, how to ask it for help, what it is doing now, what survives a restart, and what happens when the saved file has a mistake. The last mission brings a router up from nothing.
     guide: zebra
-    standsFor: FRR's daemons, watchfrr, vtysh and frr.conf
+    standsFor: Linux interfaces and routes, FRR's daemons, watchfrr, vtysh and frr.conf
     outcomes:
-      - start FRR the way an installed router does, and tell which daemons run
-      - read and change a router's configuration in vtysh
-      - save a change so that it survives a restart
+      - start FRR on a Linux router and say which daemons run and what keeps them running
+      - use vtysh, its help and its modes
+      - read the running configuration, save it and know what a restart leaves
+      - find a line FRR refused
   - id: follow-a-packet
     title: Follow a packet
-    summary: Connected and static routes, next hops, and a route's way from Zebra into Linux forwarding.
-    story: The routers run, and still nothing crosses the cables. Each one knows only its own links until someone tells it where the rest of the network is.
+    summary: Addresses and connected routes, static routes and next hops, the way back, zebra's table and the kernel's, and administrative distance.
+    story: A packet's journey, one step at a time. The address an interface needs and the route it brings, a route written by hand to a network one router away, the route the reply needs to come back, why a route that is written is not always used, and which route wins when there are two. The last mission builds a line of three routers from bare cables and makes it survive a restart.
     guide: zebra
-    standsFor: zebra, staticd and the Linux routing table
+    standsFor: zebra, staticd, zebra's table (RIB) and the kernel's (FIB)
     outcomes:
-      - give an interface its address in FRR and find the connected route in Linux
-      - write a static route with its next hop
-      - check that a packet has a route there and its reply a route back
+      - give interfaces addresses and read the routes they bring
+      - write static routes and their next hops
+      - find a missing way back
+      - follow a route from FRR's configuration through zebra's table into the kernel's
+      - choose between routes with administrative distance
   - id: build-an-underlay
     title: Build an underlay
     summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.

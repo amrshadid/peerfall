@@ -1,0 +1,96 @@
+id: the-backup-path
+version: 1
+title: The Backup Path
+summary: Choose between two static routes with administrative distance, and keep one waiting as a backup.
+minutes: 20
+chapter: follow-a-packet
+objective: Router a sends to c's loopback over the direct cable, and keeps the route through b waiting as a backup.
+prerequisites: [written-but-not-used]
+teaches: [administrative-distance, floating-static, ecmp]
+names: []
+uses: [static-route, next-hop, rib, fib, interface-shutdown, ttl]
+
+# A triangle. Only c has a loopback: the address a wants to reach. a starts with the long way,
+# through b; b and c have the routes that make the way through b work in both directions.
+network:
+  routers:
+    - name: a
+      daemons: [staticd]
+      config: |
+        ip route 10.255.0.3/32 10.0.1.2
+    - name: b
+      daemons: [staticd]
+      config: |
+        ip route 10.255.0.3/32 10.0.3.2
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [staticd]
+      config: |
+        ip route 10.0.1.0/30 10.0.3.1
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: a, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: b, address: 10.0.3.1/30 }
+        - { router: c, address: 10.0.3.2/30 }
+
+# Neither objective is met at the start: the kernel's only route goes through b, and that route is
+# zebra's selected one. a already reaches c through b, so reaching c is not an objective here.
+objectives:
+  - id: direct
+    text: Make a send to c's loopback, 10.255.0.3, only over the direct cable.
+    check: { kind: route, router: a, to: 10.255.0.3, protocol: static, via: 10.0.2.2 }
+  - id: backup
+    text: Keep the route through b in zebra's table as a backup, known but not selected.
+    check: { kind: rib, router: a, prefix: 10.255.0.3/32, protocol: static, via: 10.0.1.2, selected: false }
+
+hints:
+  - text: Read the numbers in brackets in show ip route. After you add a second route, read them again. Which lines have >* now?
+  - text: For one network, zebra selects the route with the lowest distance. Equal distances are both used. A route with a higher distance waits until the better one goes.
+  - text: Add the direct route, through c's address on a's cable to c. Then write the route through b again, with a distance after the next hop.
+    command: ip route 10.255.0.3/32 10.0.1.2 10
+
+chips:
+  - { command: show ip route, explain: "zebra's table: every route, its distance, and which one is selected" }
+  - { command: traceroute -n, explain: "the routers a packet passes through, one line each" }
+  - { command: ping -c 3, explain: "send three packets and count the replies" }
+  - { command: ip route, explain: "in configure mode: a static route; a number after the next hop is its distance" }
+  - { command: shutdown, explain: "in interface mode: FRR holds the interface down" }
+  - { command: no shutdown, explain: "in interface mode: let the interface come up again" }
+
+codex:
+  - id: administrative-distance
+    term: Administrative distance
+    simple: A number per route, the first in [1/0]. For one network, zebra selects the route with the lowest. A static route gets 1.
+    deep: zebra gives each source of routes a default distance, from its table of route types. Static routes get 1, and OSPF's, which stage 4 shows, get 110. The second number, the metric, compares routes from one protocol. The distance never leaves the router, and its neighbours never see it.
+    deepens: rib
+    sources: [lib/frrdistance.h, zebra/zebra_rib.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show ip route 10.255.0.3"
+  - id: floating-static
+    term: Floating static route
+    simple: A static route with a higher distance. It waits in zebra's table and is used only when the better route goes.
+    deep: Written as ip route 10.255.0.3/32 10.0.1.2 10. The same network and next hop with a new distance replaces the old line. It takes over when the better route leaves zebra's table, as when its interface is shut down. A cable that stays up and drops every packet never removes the better route, so the backup never takes over. Stage 4 shows that failure.
+    deepens: static-route
+    sources: [staticd/static_vty.c]
+    docs: https://docs.frrouting.org/en/latest/static.html
+    tryIt: vtysh -c "show ip route static"
+  - id: ecmp
+    term: Equal-cost multipath, ECMP
+    simple: Two routes for one network with the same distance are both used. zebra puts one route with two next hops in the kernel.
+    deep: zebra installs a single route with several next hops, and ip route lists each one as a nexthop via line. Linux may then send a packet out of either. Two static routes with distance 1 make one. Routing protocols make them too, whenever two paths cost the same.
+    sources: [zebra/zebra_nhg.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: ip route
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

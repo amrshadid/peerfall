@@ -1,6 +1,0 @@
-# Field Guide entries this mission introduces.
-entries:
-  - name: nstat -az
-    kind: shell
-    what: Prints the router's packet counters, all of them or the ones named, such as IcmpInEchos and IcmpOutEchoReps for pings.
-    firstMet: the-reply-that-never-came-back

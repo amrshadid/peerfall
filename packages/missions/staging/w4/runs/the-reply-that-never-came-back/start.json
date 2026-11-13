@@ -1,1 +1,0 @@
-{"mission":"the-reply-that-never-came-back","version":2,"run":"start","passes":false,"events":[],"state":{"routers":{"c":{"routes":[{"prefix":"10.0.2.0/30","protocol":"kernel","nextHops":[{"via":null,"interface":"c-b"}]}]}},"pings":[{"from":"a","to":"10.0.2.2","sent":3,"received":0}]}}

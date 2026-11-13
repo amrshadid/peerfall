@@ -1,0 +1,81 @@
+id: the-silent-router
+version: 2
+title: The Silent Router
+summary: Start FRR the way a router does, with its own script, and watch watchfrr bring a stopped daemon back.
+minutes: 15
+chapter: first-router
+objective: FRR runs on router a, started by its init script, with watchfrr keeping its daemons running.
+prerequisites: [nobody-answers]
+teaches: [watchfrr, frr-init-script, daemons-file]
+names: [mgmtd, staticd]
+uses: [frr-daemon, zebra, vtysh]
+
+# Stage 1's three routers. FRR is installed and configured on a, and nothing of it runs:
+# starting it is the player's. b and c run zebra and mgmtd, no staticd, so `pkill staticd`
+# stops a's alone.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: none
+      config: ""
+    - { name: b, daemons: [], config: "" }
+    - { name: c, daemons: [], config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: daemons-answer
+    text: Start FRR on router a, so that zebra, mgmtd and staticd run and answer.
+    check: { kind: daemons, router: a, daemons: [zebra, mgmtd, staticd] }
+  - id: watchfrr-watches
+    text: Have watchfrr running beside them.
+    check: { kind: daemons, router: a, daemons: [watchfrr] }
+
+hints:
+  - text: "Read `/etc/frr/a/daemons`, then ask FRR's own script what runs: `/usr/lib/frr/frrinit.sh status a`."
+  - text: The script that reports the status also starts FRR. It starts watchfrr first, and watchfrr starts the rest. Its last word is the router's name.
+  - text: Start FRR on a with its script.
+    command: /usr/lib/frr/frrinit.sh start a
+
+chips:
+  - { command: cat /etc/frr/a/daemons, explain: "show which daemons router a should run" }
+  - { command: /usr/lib/frr/frrinit.sh status a, explain: "ask FRR's script which daemons run on a" }
+  - { command: /usr/lib/frr/frrinit.sh start a, explain: "start FRR on a, the way a router starts it" }
+  - { command: vtysh -c "show daemons", explain: "run one vtysh command: the daemons that answered" }
+  - { command: vtysh -c "show watchfrr", explain: "ask watchfrr what it watches" }
+  - { command: pkill staticd, explain: "stop the daemon staticd" }
+
+codex:
+  - id: watchfrr
+    term: watchfrr
+    deepens: frr-daemon
+    simple: FRR's watchdog. It starts the other daemons and starts one again when it dies.
+    deep: "watchfrr keeps a connection open to every daemon it was given. When one closes, `read returned EOF`, it runs its restart command, `/usr/lib/frr/watchfrr.sh restart %s`, as `show watchfrr` lists. At a start, the same command starts every daemon and has `frr.conf` read into them: `Configuration Read in`. On the Machine its messages appear in the terminal. It never learns why a daemon died; it only starts it again."
+    sources: [watchfrr/watchfrr.c, watchfrr/watchfrr_vty.c, tools/watchfrr.sh.in]
+    docs: https://docs.frrouting.org/en/latest/watchfrr.html
+    tryIt: vtysh -c "show watchfrr"
+  - id: frr-init-script
+    term: FRR's init script
+    simple: "`frrinit.sh` starts, stops, restarts and reports FRR on a router: `start a`, `restart a`, `status a`."
+    deep: "The script reads the router's `daemons` file, starts watchfrr with the list of daemons, and watchfrr does the rest. `restart` stops everything and starts it again from `frr.conf`. Its last word is a pathspace: left out on the Machine, it starts an FRR with no name that `vtysh -N a` cannot reach. With systemd, `systemctl start frr` runs the same script."
+    sources: [tools/frrinit.sh.in, tools/frrcommon.sh.in, tools/frr.service.in]
+    docs: https://docs.frrouting.org/en/latest/setup.html
+    tryIt: /usr/lib/frr/frrinit.sh status a
+  - id: daemons-file
+    term: the daemons file
+    simple: "A list of FRR's protocol daemons with `yes` or `no` beside each: which ones this router starts."
+    deep: "zebra, mgmtd and staticd always start; the file switches on the protocols: `ospfd=yes`, `bgpd=yes`. On the Machine each router's file lists the daemons a mission may use; on an installed router `/etc/frr/daemons` lists them all, with options for each daemon. A change takes effect at the next start."
+    sources: [tools/frrcommon.sh.in, tools/etc/frr/daemons]
+    docs: https://docs.frrouting.org/en/latest/setup.html
+    tryIt: cat /etc/frr/a/daemons
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world
