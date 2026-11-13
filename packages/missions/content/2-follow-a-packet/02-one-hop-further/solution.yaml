@@ -1,0 +1,17 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # c's own address as the next hop: a can't reach it directly, and the route is not used.
+  - id: next-hop-too-far
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.0.2.0/30 10.0.2.2]
+  - id: through-b
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.0.2.0/30 10.0.1.2]

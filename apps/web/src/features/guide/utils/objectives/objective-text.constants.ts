@@ -6,15 +6,20 @@ export const DETECTOR_NAMES: Readonly<Record<DetectionEvent, string>> = {
   ospf_dead_timer_expired: "OSPF's dead timer",
 }
 
-/** Each term, said once in plain words beside the evidence that first shows it. */
+/**
+ * Each term, said once in plain words beside the evidence that first shows it: an objective list
+ * says each one only under the first objective that brings it up.
+ */
 export const TERMS = {
-  reply: 'A reply is one probe packet that reached the far router and came back.',
+  reply: 'A reply is one packet that reached the far router and came back.',
+  // With no route a router does not even send: Linux refuses with ENETUNREACH, which ping prints.
   route:
-    "A route is the entry in a router's table that says where packets for a destination leave. Without one they are dropped.",
+    "A route is the entry in a router's table that says where packets for a destination leave. Without one, Linux refuses to send them: `Network unreachable`.",
   interface:
     "An interface is a router's end of a link. Here each is named after the two routers it joins: `a-c` is a's end of the link to c.",
   detectors:
     "BFD is a small protocol whose only job is to notice a dead path fast. OSPF's dead timer is how long OSPF waits without hearing a neighbor before it gives up on it.",
+  rib: "Zebra's routing table holds every route FRR knows, even one it keeps waiting. For each destination zebra selects one, the lowest distance, and only the selected route goes into the kernel's table, which forwards packets.",
   daemon:
     'A daemon is one of the programs FRR is made of: each routing protocol has its own, and `zebra` hands their routes to the kernel.',
   configuration:

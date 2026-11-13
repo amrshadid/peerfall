@@ -1,0 +1,1 @@
+{"mission":"a-router-from-nothing","version":1,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"daemons":[],"runningConfig":null,"savedConfig":"frr defaults traditional\nhostname a\nlog file /var/log/frr/a.log\nlog timestamp precision 3\n!\ninterface a-c\n shutdown\n!\n","startedConfig":null}},"pings":[]}}

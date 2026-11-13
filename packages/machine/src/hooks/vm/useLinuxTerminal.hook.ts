@@ -22,7 +22,8 @@ export function useLinuxTerminal(onOutput: (bytes: Uint8Array) => void): UseLinu
   useEffect(() => {
     connectVm(
       (status) => useVmStore.getState().setStatus(status),
-      (update) => useVmStore.getState().applyEvents(update)
+      (update) => useVmStore.getState().applyEvents(update),
+      (update) => useVmStore.getState().applyShell(update)
     )
     return () => {
       if (disconnectVm().stopped) {

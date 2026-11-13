@@ -1,46 +1,83 @@
 id: two-ends-of-one-cable
-version: 1
+version: 3
 title: Two Ends of One Cable
+summary: Give both ends of a new cable their addresses, and watch the connected route appear in FRR and in Linux.
+minutes: 15
 chapter: follow-a-packet
 objective: Routers a and b each have an address on their link, each has the connected route in its kernel, and a reaches b.
-prerequisites: [gone-after-the-restart]
+prerequisites: [a-router-from-nothing]
+teaches: [ip-address, prefix, connected-route]
+names: [rib, fib, ipv6]
+uses: [interface, route, zebra, vtysh, cli-modes]
 
 # Two routers and one cable. The interfaces are up and have no IPv4 address: the addresses
 # below are the plan, and giving them, in FRR, is the player's.
 network:
   routers:
-    - name: a
-      daemons: []
-      config: ""
-    - name: b
-      daemons: []
-      config: ""
+    - { name: a, daemons: [], config: "" }
+    - { name: b, daemons: [], config: "" }
   links:
     - ends:
         - { router: a, address: 10.0.1.1/30, unaddressed: true }
         - { router: b, address: 10.0.1.2/30, unaddressed: true }
 
 objectives:
+  # Each end's own address, as zebra's local route (L): a route to the network alone would also
+  # be met with the ends swapped, and a would then answer its own ping.
   - id: a-connected
-    text: Give a's interface a-b the address 10.0.1.1/30, and find the route to 10.0.1.0/30 that appears in a's kernel.
-    check: { kind: route, router: a, prefix: 10.0.1.0/30, protocol: kernel, interface: a-b }
-    hints:
-      - text: Select router a. In vtysh, show interface brief lists a's interfaces and their addresses, and show ip route lists its routes. Look at both before you change anything.
-      - text: An interface gets its address in its own block of the configuration. In vtysh enter configure terminal, then interface a-b, then this line, then end.
-        command: ip address 10.0.1.1/30
-      - text: Zebra hands the address to Linux, and Linux adds a route for the network the address is in. Leave vtysh and ask the kernel for its routing table.
-        command: ip route
+    text: Give a's interface a-b its own address, 10.0.1.1, which brings a's connected route.
+    check: { kind: rib, router: a, prefix: 10.0.1.1/32, protocol: local }
   - id: b-connected
-    text: Give b's interface b-a the address 10.0.1.2/30, so that b's kernel has the route too.
-    check: { kind: route, router: b, prefix: 10.0.1.0/30, protocol: kernel, interface: b-a }
-    hints:
-      - text: A cable has two ends, and each router knows only its own. Select router b and look at its interfaces and its routes.
-      - text: On b the interface that faces a is b-a. In b's vtysh enter configure terminal, then interface b-a, then this line, then end.
-        command: ip address 10.0.1.2/30
+    text: Give b's interface b-a its own address, 10.0.1.2, which brings b's connected route.
+    check: { kind: rib, router: b, prefix: 10.0.1.2/32, protocol: local }
   - id: a-reaches-b
-    text: Send packets from a to b's address and see the replies come back.
+    text: Reach b's address from a.
     check: { kind: reaches, from: a, to: 10.0.1.2 }
-    hints:
-      - text: Both ends have to be in the same network, 10.0.1.0/30, for either to reach the other. Check each router's address with show interface brief.
-      - text: In a's terminal, outside vtysh, send three packets to b's address.
-        command: ping -c 3 10.0.1.2
+
+hints:
+  - text: Compare ip -br addr on a with what the plan says a should have. What is missing?
+  - text: An address is a setting of an interface, typed in the interface's mode. Each end of the cable needs its own, in the same network.
+  - text: In a(config-if)# for a-b, then the same on b for b-a with 10.0.1.2/30.
+    command: ip address 10.0.1.1/30
+
+chips:
+  - { command: ip -br addr, explain: "the interfaces' addresses, as Linux has them" }
+  - { command: ip route, explain: "the kernel's routing table" }
+  - { command: ping, explain: "send packets to an address and wait for answers: ping -c 3 10.0.1.2" }
+  - { command: ip neigh, explain: "the MAC addresses this router has learned of its neighbours" }
+  - { command: show ip route, explain: "in vtysh: the routes zebra holds" }
+  - { command: configure terminal, explain: "in vtysh: enter configure mode" }
+  - { command: interface, explain: "in configure mode: enter one interface's mode" }
+  - { command: ip address, explain: "in interface mode: give the interface an address with its prefix length" }
+
+codex:
+  - id: ip-address
+    term: An address
+    simple: A number that names one interface, such as 10.0.1.1. A router has one on each cable it routes over.
+    deep: "An IPv4 address is 32 bits, written as four numbers from 0 to 255. Configured in FRR, zebra hands it to Linux, which puts it on the interface and answers for it. Linux also gives each interface on a cable an IPv6 address of its own, the fe80:: one. To send to a neighbour on the cable, a router first learns the neighbour's MAC address, which ip neigh lists."
+    sources: [zebra/interface.c, zebra/if_netlink.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show interface brief"
+  - id: prefix
+    term: A network and its prefix length
+    simple: /30 says how many leading bits name the network. 10.0.1.1/30 is in the network 10.0.1.0/30, four addresses.
+    deep: The bits after the prefix number the addresses inside it. With /30, two bits are left, so four addresses, 10.0.1.0 to 10.0.1.3. The first names the network and the last is its broadcast address, which reaches all of it at once, so .1 and .2 are left for the two ends of a cable. A /32 is one address; a /24 holds 256.
+    sources: [lib/prefix.c]
+    docs: https://docs.frrouting.org/en/latest/basic.html
+    tryIt: ip -br addr
+  - id: connected-route
+    term: Connected and local routes
+    simple: The route an address brings, for its whole network straight out of that interface. C in show ip route; L is the address itself.
+    deep: zebra makes both from the address, C>* 10.0.1.0/30 is directly connected, a-b and L>* 10.0.1.1/32. Linux adds its own copy of the connected route, proto kernel, as soon as the address is on an interface that is up. No router stands between a and anything in that network.
+    deepens: route
+    sources: [zebra/connected.c]
+    docs: https://docs.frrouting.org/en/latest/zebra.html
+    tryIt: vtysh -c "show ip route"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

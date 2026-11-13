@@ -40,29 +40,46 @@ describe('the repository’s content', () => {
       throw new Error(loaded.errors.join('\n'))
     }
     const { game } = loaded.value
-    expect(game.missions[0]).toMatchObject({ id: 'the-silent-router', chapter: 'first-router', prerequisites: [] })
-    expect(game.missionsIn('first-router').map((mission) => [mission.id, mission.prerequisites])).toEqual([
-      ['the-silent-router', []],
-      ['gone-after-the-restart', ['the-silent-router']],
-    ])
-    expect(game.missionsIn('follow-a-packet').map((mission) => [mission.id, mission.prerequisites])).toEqual([
-      ['two-ends-of-one-cable', ['gone-after-the-restart']],
-      ['the-reply-that-never-came-back', ['two-ends-of-one-cable']],
-    ])
+    expect(game.missions[0]).toMatchObject({ id: 'the-dark-cable', chapter: 'first-router', prerequisites: [] })
+    const firstTwoStages = [...game.missionsIn('first-router'), ...game.missionsIn('follow-a-packet')]
+    expect(firstTwoStages).toHaveLength(14)
+    firstTwoStages.slice(1).forEach((mission, at) => {
+      expect([mission.id, mission.prerequisites]).toEqual([mission.id, [firstTwoStages[at]?.id]])
+    })
+    // Stage 3 is not written yet: the mission after it follows stage 2's capstone, so the journey stays in order.
+    expect(game.mission('the-link-that-never-went-down')?.prerequisites).toEqual(['bring-the-line-up'])
     // A mission that breaks nothing has no fault to run and no recovery target.
     expect(game.missions[0]).not.toHaveProperty('fault')
     expect(game.missions[0]).not.toHaveProperty('recoveryTargetMs')
   })
 
-  it('gives a mission its incident, its debrief and its folder', () => {
+  it('gives a mission its story and its folder', () => {
     const loaded = appContent()
     if (!loaded.ok) {
       throw new Error(loaded.errors.join('\n'))
     }
-    const texts = loaded.value.textsOf('the-link-that-never-went-down')
-    expect(texts?.incident).toContain('# Incident')
-    expect(texts?.debrief).toContain('ip ospf bfd')
+    const story = loaded.value.storyOf('the-link-that-never-went-down')
+    expect(story?.title).toBe('The Link That Never Went Down')
+    expect([...(story?.sections.keys() ?? [])]).toEqual([
+      'scene',
+      'see-it',
+      'build-it',
+      'watch-it',
+      'debrief',
+      'real-world',
+    ])
+    expect(story?.sections.get('real-world')).toContainEqual(expect.objectContaining({ kind: 'code' }))
     expect(loaded.value.folderOf('the-link-that-never-went-down')).toBe(MISSION)
+  })
+
+  it('numbers every mission by its stage and its place in it', () => {
+    const loaded = appContent()
+    const game = loaded.ok ? loaded.value.game : null
+    expect(game?.missions.map((mission) => game.numberOf(mission.id))).toEqual([
+      ...['1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8'],
+      ...['2.1', '2.2', '2.3', '2.4', '2.5', '2.6'],
+      '4.1',
+    ])
   })
 })
 
@@ -84,13 +101,28 @@ describe('broken content', () => {
     expect(errors[0]).toMatch(new RegExp(`^${path}: recoveryTargetMs`))
   })
 
-  it('wants an incident and a debrief beside every mission', () => {
-    const errors = errorsOf(withFiles({ incidents: {}, debriefs: {} }))
-    expect(errors).toHaveLength(2 * Object.keys(CONTENT_FILES.missions).length)
-    expect(errors.slice(-2)).toEqual([
-      `${MISSION}/incident.md: missing or empty`,
-      `${MISSION}/debrief.md: missing or empty`,
+  it('wants a story beside every mission', () => {
+    const errors = errorsOf(withFiles({ stories: {} }))
+    expect(errors).toHaveLength(Object.keys(CONTENT_FILES.missions).length)
+    expect(errors.at(-1)).toBe(`${MISSION}/story.md: missing or empty`)
+  })
+
+  it('names the story section a mission points at and its story lacks, and each problem’s line', () => {
+    const path = `${MISSION}/story.md`
+    const text = (CONTENT_FILES.stories[path] ?? '')
+      .replace('## Debrief', '## Later')
+      .replace('## Scene', '## Scene\n\n### Aside')
+    expect(errorsOf(withFiles({ stories: { ...CONTENT_FILES.stories, [path]: text } }))).toEqual([
+      `${path}:7: only "# Title" and "## Section" headings are read`,
+      `${path}: no section for "story.md#debrief"`,
     ])
+  })
+
+  it('wants concepts.yaml and field-guide.yaml, and every concept a mission names in it', () => {
+    expect(errorsOf(withFiles({ concepts: 'concepts: []' }))).toContain(
+      'missions.the-dark-cable.teaches[0]: "router" is not a concept of concepts.yaml'
+    )
+    expect(errorsOf(withFiles({ fieldGuide: '' }))[0]).toMatch(/^field-guide\.yaml: /)
   })
 
   it('wants the folder to be named after the chapter and the mission', () => {
@@ -99,8 +131,9 @@ describe('broken content', () => {
     const errors = errorsOf(
       withFiles({
         missions: { [moved]: CONTENT_FILES.missions[path] ?? '' },
-        incidents: { '3-build-an-underlay/02-something-else/incident.md': 'text' },
-        debriefs: { '3-build-an-underlay/02-something-else/debrief.md': 'text' },
+        stories: {
+          '3-build-an-underlay/02-something-else/story.md': CONTENT_FILES.stories[`${MISSION}/story.md`] ?? '',
+        },
       })
     )
     expect(errors).toEqual([

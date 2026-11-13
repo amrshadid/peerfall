@@ -10,7 +10,8 @@ import type {
   TopologyRouterView,
   TopologyView,
 } from '@features/topology/types'
-import type { LinkName, NetworkDefinition, StampedMachineEvent } from '@peerfall/machine/types'
+import type { InterfaceState, LinkName, NetworkDefinition, StampedMachineEvent } from '@peerfall/machine/types'
+import { interfaceName } from '@peerfall/machine/utils'
 import { PATH_ALSO, PATH_ARROW, RING, STAGE, TURN } from './topology-layout.constants'
 
 /** One key for a link whichever end is named first. */
@@ -143,4 +144,27 @@ export function linkStatesOf(events: readonly StampedMachineEvent[]): readonly L
     }
   }
   return [...faulted.values()].map((link) => ({ link, state: 'dropping' }))
+}
+
+/**
+ * The links' states once the interfaces the Machine last showed are known: a link is down when
+ * either end has no carrier (switched off, or its far end is). Otherwise what the events say
+ * wins, since a netem fault keeps both ends' carrier while it drops every packet. A router whose
+ * interfaces were never read tells nothing.
+ */
+export function linkStatesWithCarrier(
+  network: NetworkDefinition,
+  fromEvents: readonly LinkStatus[],
+  interfaces: Readonly<Record<string, readonly InterfaceState[]>>
+): readonly LinkStatus[] {
+  const noCarrier = (router: string, peer: string) =>
+    interfaces[router]?.some(({ name, carrier }) => name === interfaceName(router, peer) && !carrier) ?? false
+  const down = network.links
+    .map(({ ends: [first, second] }) => [first.router, second.router] as const)
+    .filter(([first, second]) => noCarrier(first, second) || noCarrier(second, first))
+  const downKeys = new Set(down.map(([first, second]) => linkKeyOf(first, second)))
+  return [
+    ...down.map((link): LinkStatus => ({ link, state: 'down' })),
+    ...fromEvents.filter(({ link }) => !downKeys.has(linkKeyOf(link[0], link[1]))),
+  ]
 }

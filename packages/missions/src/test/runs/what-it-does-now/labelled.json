@@ -1,0 +1,1 @@
+{"mission":"what-it-does-now","version":1,"run":"labelled","passes":true,"events":[],"state":{"routers":{"a":{"runningConfig":"frr version 10.6.1\nfrr defaults traditional\nhostname a\nlog file /var/log/frr/a.log\nlog timestamp precision 3\nservice integrated-vtysh-config\n!\ninterface a-c\n description link to router c\nexit\n!\n"}},"pings":[]}}

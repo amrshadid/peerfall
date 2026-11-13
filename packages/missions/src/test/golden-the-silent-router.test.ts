@@ -1,56 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { goldenMission } from '#test/index'
+import { goldenMission, itJudgesEveryRun } from '#test/index'
 
 // Runs recorded on the real Machine by `pnpm vm:golden the-silent-router`, judged again here by
 // the mission's own checks from the state that was read as root.
 const golden = goldenMission('the-silent-router')
-const daemons = (id: string) => golden.run(id).state?.routers.a?.daemons
 
 describe('The Silent Router, on the Machine', () => {
-  it('has all five golden runs, recorded for this version of the mission', () => {
-    expect(golden.runs.map((recorded) => recorded.run).sort()).toEqual([
-      'by-hand-then-init-script',
-      'daemons-by-hand',
-      'init-script',
-      'start',
-      'zebra-by-hand',
-    ])
-    for (const recorded of golden.runs) {
-      expect(recorded.version).toBe(golden.mission.version)
-    }
+  itJudgesEveryRun(golden, {
+    start: { 'daemons-answer': false, 'watchfrr-watches': false },
+    // One daemon by hand: vtysh answers, and FRR is not whole.
+    'zebra-by-hand': { 'daemons-answer': false, 'watchfrr-watches': false },
+    // Every daemon by hand: they answer, and nothing watches them.
+    'daemons-by-hand': { 'daemons-answer': true, 'watchfrr-watches': false },
+    // The script without the router's name: an FRR runs that vtysh -N a cannot reach.
+    'init-script-without-name': { 'daemons-answer': false, 'watchfrr-watches': false },
+    'init-script': { 'daemons-answer': true, 'watchfrr-watches': true },
+    // Started by hand first, then again properly: the script stops what runs and starts watchfrr.
+    'by-hand-then-init-script': { 'daemons-answer': true, 'watchfrr-watches': true },
   })
 
-  it('judges every run as its solution says', () => {
-    for (const recorded of golden.runs) {
-      expect([recorded.run, golden.verdict(recorded.run).passed]).toEqual([recorded.run, recorded.passes])
-    }
-  })
-
-  it('needs no fault and no probe: it is judged from the state alone', () => {
-    expect(golden.mission.fault).toBeUndefined()
-    expect(golden.mission.probe).toBeUndefined()
-    expect(golden.runs.every((recorded) => recorded.events.length === 0)).toBe(true)
-  })
-
-  it('start: nothing of FRR runs, and the mission is not passed', () => {
-    expect(daemons('start')).toEqual([])
-    expect(golden.objectives('start')).toEqual({ 'daemons-answer': false, 'watchfrr-watches': false })
-  })
-
-  it('zebra started by hand: vtysh has one daemon to talk to, and FRR is not whole', () => {
-    expect(daemons('zebra-by-hand')).toEqual(['zebra'])
-    expect(golden.objectives('zebra-by-hand')).toEqual({ 'daemons-answer': false, 'watchfrr-watches': false })
-  })
-
-  it('every daemon started by hand: they answer, and nothing watches them', () => {
-    expect(daemons('daemons-by-hand')).toEqual(['mgmtd', 'zebra', 'staticd'])
-    expect(golden.objectives('daemons-by-hand')).toEqual({ 'daemons-answer': true, 'watchfrr-watches': false })
-  })
-
-  it('FRR’s init script: watchfrr and the three daemons it started all answer', () => {
-    for (const id of ['init-script', 'by-hand-then-init-script']) {
-      expect(daemons(id)).toEqual(['mgmtd', 'zebra', 'staticd', 'watchfrr'])
-      expect(golden.objectives(id)).toEqual({ 'daemons-answer': true, 'watchfrr-watches': true })
-    }
+  it('FRR’s init script starts watchfrr beside the three daemons', () => {
+    expect(golden.run('init-script').state?.routers.a?.daemons).toEqual(['mgmtd', 'zebra', 'staticd', 'watchfrr'])
   })
 })

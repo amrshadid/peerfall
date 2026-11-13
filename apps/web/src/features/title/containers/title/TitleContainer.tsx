@@ -14,7 +14,7 @@ import {
   volumeOf,
 } from '@features/title/utils/contents'
 import { useTourScreen } from '@features/tour/hooks/tour'
-import { useMissionList, useProgress } from '@peerfall/game/hooks'
+import { useCodex, useMissionList, useProgress } from '@peerfall/game/hooks'
 import { useReducedMotion } from '@shared/hooks/motion'
 import { useNow } from '@shared/hooks/time'
 import { hrefOf } from '@shared/navigation'
@@ -28,6 +28,7 @@ export function TitleContainer() {
   const { progress } = useProgress()
   const { saveState, lastSavedAt } = useSaveStatus()
   const list = useMissionList()
+  const codex = useCodex()
   const { openCheatSheet } = useCheatSheet()
   const now = useNow()
   const reducedMotion = useReducedMotion()
@@ -58,7 +59,7 @@ export function TitleContainer() {
       }
       firstMission={firstMissionOf(firstMission)}
       onNewGame={newGame}
-      contents={titleContentsOf({ chapter, firstMission, onNewGame: newGame })}
+      contents={titleContentsOf({ chapter, firstMission, codexCards: codex.filed, onNewGame: newGame })}
       figure={{ chapters: journey, href: hrefOf({ name: 'map' }), pulse: !reducedMotion }}
       newGame={{
         open: confirming,

@@ -1,8 +1,13 @@
 import type { TimelineMark, TimelineRun } from '@features/timeline/types'
 import type { RunSummary } from '@peerfall/game/types'
 import type { LinkName, StampedMachineEvent } from '@peerfall/machine/types'
-import { DETECTION_LABELS, MS_PER_SECOND } from './timeline-run.constants'
+import { DETECTION_LABELS, MS_PER_SECOND, RUN_LABELS } from './timeline-run.constants'
 import { timelineRunOf } from './timeline-run.util'
+
+/** A run after the baseline is named by what it did: repaired only when it met the objectives. */
+export function attemptLabelOf(passed: boolean): string {
+  return passed ? RUN_LABELS.repaired : RUN_LABELS.attempt
+}
 
 /** What a saved run does not say about itself: which link broke and whose traffic was watched. */
 export interface RunSetting {

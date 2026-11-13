@@ -1,0 +1,92 @@
+.pf-man-page {
+  position: relative;
+  padding: 0.75rem 1.5rem 1.25rem;
+  border: var(--rule);
+  background: var(--sheet);
+}
+
+.pf-man-page__head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  padding-bottom: 0.375rem;
+  border-bottom: var(--rule);
+  font-variation-settings: "wdth" 75;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.pf-man-page__head > :first-child,
+.pf-man-page__head > :last-child {
+  text-transform: uppercase;
+}
+
+.pf-man-page__head > :nth-child(2) {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.pf-man-page__head > :last-child {
+  text-align: right;
+}
+
+.pf-man-page__stamp {
+  position: absolute;
+  top: 2.5rem;
+  right: 1.25rem;
+  display: grid;
+  padding: 0.25rem 0.75rem;
+  border: 3px solid var(--red);
+  color: var(--red);
+  font-variation-settings: "wdth" 112;
+  font-weight: 800;
+  font-size: 1.25rem;
+  line-height: 1;
+  transform: rotate(-6deg);
+  animation: pf-stamp 320ms var(--ease-in) both;
+}
+
+.pf-man-page__stamp small {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@keyframes pf-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-6deg) scale(1.6);
+  }
+}
+
+.pf-man-page__body > div {
+  display: grid;
+  grid-template-columns: 7.75rem 1fr;
+  gap: 1rem;
+  padding: 0.625rem 0 0.25rem;
+}
+
+.pf-man-page__body dt {
+  font-variation-settings: "wdth" 75;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+}
+
+.pf-man-page__body dd {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+/* Keep the first sections clear of the stamp. */
+.pf-man-page:has(.pf-man-page__stamp) .pf-man-page__body > div:nth-child(-n + 2) dd {
+  padding-right: 9.5rem;
+}
+
+.pf-man-page__body pre {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--soft);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}

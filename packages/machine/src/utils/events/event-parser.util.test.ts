@@ -126,6 +126,33 @@ describe('the Machine’s event lines', () => {
     ).toEqual({ type: 'fib_remove', router: 'a', prefix: '10.255.0.3' })
   })
 
+  it('passes over the local table’s entries that come with an address: they are no route change', () => {
+    for (const line of [
+      'fib b [2026-11-13T19:41:54.422671] local 10.0.1.2 dev b-a table local proto kernel scope host src 10.0.1.2 ',
+      'fib b [2026-11-13T19:41:54.445460] broadcast 10.0.1.3 dev b-a table local proto kernel scope link src 10.0.1.2 ',
+      'fib b [2026-11-13T19:41:54.487881] local 10.9.9.0/24 dev lo table local proto kernel scope host src 10.9.9.1 ',
+      'fib a [2026-11-13T19:52:20.215089] Deleted local 10.9.9.1 dev lo table local proto kernel scope host src 10.9.9.1 ',
+      'fib a [2026-11-13T19:52:20.206749] Deleted broadcast 10.9.9.255 dev lo table local proto kernel scope link src 10.9.9.1 ',
+    ]) {
+      expect(parseEventLine(line)).toBeNull()
+    }
+    // The connected route the same address brings, printed between them, is one.
+    expect(
+      parseEventLine('fib b [2026-11-13T19:41:54.445268] 10.0.1.0/30 dev b-a proto kernel scope link src 10.0.1.2 ')
+        ?.event
+    ).toMatchObject({ type: 'fib_install', prefix: '10.0.1.0/30', interface: 'b-a', protocol: 'kernel' })
+  })
+
+  it('names the prefix of a route that forwards nowhere when it is deleted', () => {
+    // `ip route add blackhole 10.99.0.0/16` and `ip route del …` in router a.
+    expect(parseEventLine('fib a [2026-11-13T19:52:20.377395] Deleted blackhole 10.99.0.0/16 ')?.event).toEqual({
+      type: 'fib_remove',
+      router: 'a',
+      prefix: '10.99.0.0/16',
+    })
+    expect(parseEventLine('fib a [2026-11-13T19:52:20.293904] blackhole 10.99.0.0/16 ')).toBeNull()
+  })
+
   it('reads a probe’s reply and a missing one', () => {
     expect(
       parseEventLine('probe direct [1794504832.282240] 64 bytes from 10.255.0.3: icmp_seq=15 ttl=64 time=0.375 ms')

@@ -18,8 +18,10 @@ describe('useMachineLock', () => {
     rerender({ current: status('ready') })
     expect(result.current).toBeNull()
 
-    // A second mission's setup: the shell exists now, so the keys wait for it.
+    // A second mission's setup still locks the keys; going back to a saved network holds them.
     rerender({ current: status('setting-up') })
+    expect(result.current?.holdsKeys).toBe(false)
+    rerender({ current: status('restoring') })
     expect(result.current?.holdsKeys).toBe(true)
   })
 })

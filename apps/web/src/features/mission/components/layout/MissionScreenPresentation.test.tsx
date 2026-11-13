@@ -34,7 +34,7 @@ describe('MissionScreenPresentation', () => {
   it('names the mission in the one h1, with its steps beside it', () => {
     layout()
     expect(screen.getByRole('heading', { level: 1, name: 'The Link That Never Went Down' })).toBeTruthy()
-    expect(within(screen.getByRole('list', { name: 'Mission steps' })).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(screen.getByRole('list', { name: 'Mission steps' })).getAllByRole('listitem')).toHaveLength(5)
   })
 
   it("doesn't draw a panel the mission hasn't opened, or the dividers that would resize it", () => {

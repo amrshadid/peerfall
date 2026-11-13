@@ -1,4 +1,6 @@
 export { validateChapters } from '#utils/validate/chapters.schema'
 export { checkInterfaces, checkRouter, readCheck } from '#utils/validate/check.schema'
+export { validateConcepts } from '#utils/validate/concepts.schema'
+export { validateFieldGuide } from '#utils/validate/field-guide.schema'
 export { validateMission } from '#utils/validate/mission.schema'
 export { readNetwork } from '#utils/validate/network.schema'

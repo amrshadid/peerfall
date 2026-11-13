@@ -1,7 +1,7 @@
 import type { RunSummary } from '@peerfall/game/types'
 import { describe, expect, it } from 'vitest'
 import { BASELINE_EVENTS, HEALTHY_EVENTS, ONGOING_EVENTS } from '@/test/fixtures/machine-events.fixture'
-import { liveRunOf, timelineLanesOf, timelineRunOfSummary } from './saved-run.util'
+import { attemptLabelOf, liveRunOf, timelineLanesOf, timelineRunOfSummary } from './saved-run.util'
 
 const SETTING = { faultLink: ['a', 'c'], from: 'a', destination: '10.255.0.3' } as const
 
@@ -102,6 +102,13 @@ describe('liveRunOf', () => {
     expect(run?.marks.find((mark) => mark.kind === 'route')?.detail).toContain('a: 10.255.0.3 via 10.0.1.2 on a-b')
     const elsewhere = liveRunOf('This run', BASELINE_EVENTS, { ...SETTING, from: 'b' })
     expect(elsewhere?.marks.some((mark) => mark.kind === 'route')).toBe(false)
+  })
+})
+
+describe('attemptLabelOf', () => {
+  it('calls a run repaired only when it met the objectives', () => {
+    expect(attemptLabelOf(true)).toBe('Repaired')
+    expect(attemptLabelOf(false)).toBe('Latest attempt')
   })
 })
 

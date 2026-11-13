@@ -4,6 +4,7 @@ import { PAIR, TRIANGLE } from '@/test/fixtures/network.fixture'
 import {
   linkKeyOf,
   linkStatesOf,
+  linkStatesWithCarrier,
   pathLinkKeys,
   pathTextOf,
   routerPositions,
@@ -104,5 +105,34 @@ describe('linkStatesOf', () => {
       { type: 'fault_cleared' as const, link: ['a', 'c'] as const, seq: 99, timeMs: (fault?.timeMs ?? 0) + 60_000 },
     ]
     expect(linkStatesOf(cleared)).toEqual([])
+  })
+})
+
+describe('linkStatesWithCarrier', () => {
+  const lo = { name: 'lo', carrier: true }
+  const dropping = [{ link: ['a', 'c'] as const, state: 'dropping' as const }]
+
+  it('says a link is down when the near end is switched off or the far end has no carrier', () => {
+    expect(
+      linkStatesWithCarrier(TRIANGLE, [], {
+        a: [lo, { name: 'a-b', carrier: true }, { name: 'a-c', carrier: false }],
+      })
+    ).toEqual([{ link: ['a', 'c'], state: 'down' }])
+    expect(linkStatesWithCarrier(TRIANGLE, [], { c: [lo, { name: 'c-a', carrier: false }] })).toEqual([
+      { link: ['a', 'c'], state: 'down' },
+    ])
+  })
+
+  it('keeps what the events say for a link whose ends have carrier, or were never read', () => {
+    const lit = { a: [lo, { name: 'a-c', carrier: true }], c: [lo, { name: 'c-a', carrier: true }] }
+    expect(linkStatesWithCarrier(TRIANGLE, dropping, lit)).toEqual(dropping)
+    expect(linkStatesWithCarrier(TRIANGLE, dropping, {})).toEqual(dropping)
+    expect(linkStatesWithCarrier(TRIANGLE, [], {})).toEqual([])
+  })
+
+  it('puts down before dropping: an interface without carrier passes nothing at all', () => {
+    expect(linkStatesWithCarrier(TRIANGLE, dropping, { a: [{ name: 'a-c', carrier: false }] })).toEqual([
+      { link: ['a', 'c'], state: 'down' },
+    ])
   })
 })

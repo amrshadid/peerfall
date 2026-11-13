@@ -1,7 +1,7 @@
 import type { Notice } from '@features/notices/types'
 import { describe, expect, it } from 'vitest'
 import { MAX_NOTICES } from './notices.constants'
-import { missionPassedNotice, pushNotice, saveFailedNotice, shownNotice } from './notices.util'
+import { codexFiledNotice, missionPassedNotice, pushNotice, saveFailedNotice, shownNotice } from './notices.util'
 
 const info = (id: string): Notice => ({ id, kind: 'info', kicker: 'Note', text: id, sticky: false })
 
@@ -11,6 +11,11 @@ describe('notices', () => {
     expect(first).toMatchObject({ kind: 'complete', kicker: 'Mission passed', sticky: false })
     expect(first.text).toBe('The Link That Never Went Down')
     expect(missionPassedNotice('link', 'x', 2).id).not.toBe(first.id)
+  })
+
+  it('names the cards a pass filed, and says nothing when it filed none', () => {
+    expect(codexFiledNotice('m', ['the RIB'], 1)).toMatchObject({ kicker: 'Card filed in the Codex', text: 'the RIB' })
+    expect(codexFiledNotice('m', [], 1)).toBeNull()
   })
 
   it('keeps a failed save on show until it is dismissed', () => {

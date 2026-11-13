@@ -16,9 +16,10 @@ describe('machineLockOf', () => {
     expect(machineLockOf({ phase: 'setting-up', detail: 'router b: ospfd' }, false)?.detail).toBe('router b: ospfd')
   })
 
-  it('holds keys while a network is set up or restored, but only after the first boot', () => {
+  it('holds keys while a network is restored, never while one is built, and only after the first boot', () => {
     expect(machineLockOf({ phase: 'setting-up', detail: null }, false)?.holdsKeys).toBe(false)
-    expect(machineLockOf({ phase: 'setting-up', detail: null }, true)?.holdsKeys).toBe(true)
+    expect(machineLockOf({ phase: 'setting-up', detail: null }, true)?.holdsKeys).toBe(false)
+    expect(machineLockOf({ phase: 'restoring', detail: null }, false)?.holdsKeys).toBe(false)
     const restoring = machineLockOf({ phase: 'restoring', detail: null }, true)
     expect(restoring?.holdsKeys).toBe(true)
     expect(restoring?.detail).toContain('reaches the shell')

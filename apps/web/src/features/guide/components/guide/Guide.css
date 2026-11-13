@@ -11,78 +11,188 @@
   padding: 0.875rem 1.125rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   overflow: auto;
 }
 
-.guide__body p {
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.guide__body code {
+.guide__review {
+  padding: 0.375rem 0.625rem;
+  background: var(--red-wash);
+  border-left: 4px solid var(--red);
   font-size: 0.8125rem;
+  font-weight: 600;
 }
 
-/* The report is a filed form: ruled above in ink, its number line in the code face. */
-.guide__incident {
+/* What the Machine printed, as it printed it. */
+.guide__code {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--soft);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.guide__heading {
+  font-size: 0.9375rem;
+  font-variation-settings: "wdth" 112;
+  font-weight: 800;
+  padding-bottom: 0.25rem;
+  border-bottom: var(--rule);
+}
+
+.guide__beat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* What the player has already acted on steps back, so the beat they are on reads first. */
+.guide__beat--read {
+  color: var(--ink-2);
+}
+
+.guide__beat + .guide__beat {
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ink-2);
+}
+
+.guide__continue {
+  align-self: flex-start;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  padding: 0;
+  cursor: pointer;
+}
+
+.guide__continue:hover,
+.guide__continue:focus-visible {
+  color: var(--ink);
+}
+
+/* A question the player answers before zebra does: ruled in red like an open revision. */
+.guide__predict {
   display: grid;
   gap: 0.5rem;
-  padding: 0.625rem 0 0.25rem 0.75rem;
-  border-left: 4px solid var(--red);
+  margin: 0;
+  padding: 0.625rem 0.75rem 0.75rem;
+  border: 2px solid var(--red);
+  list-style: none;
 }
 
-.guide__kicker {
-  font-family: var(--mono);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.guide__predict legend {
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--red);
 }
 
-.guide__body .guide__kicker {
-  font-size: 0.6875rem;
-  line-height: 1;
+.guide__predict-options {
+  display: grid;
+  gap: 0.375rem;
 }
 
-.guide__incident h2 {
-  font-size: 1.25rem;
-  font-variation-settings: "wdth" 112;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  text-wrap: balance;
+.guide__predict-options button {
+  min-height: 2.5rem;
+  padding: 0.375rem 0.625rem;
+  border: var(--rule);
+  background: var(--sheet);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  color: var(--ink);
+  cursor: pointer;
 }
 
-.guide__body .guide__source {
+.guide__predict-options button:hover,
+.guide__predict-options button:focus-visible {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.guide__predict-hint {
   font-size: 0.8125rem;
   color: var(--ink-2);
 }
 
-.guide__task {
-  display: grid;
-  gap: 0.375rem;
+.guide__predict-hint button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+
+.guide__predict--answered {
+  border: var(--rule-thin);
+  gap: 0.25rem;
+}
+
+.guide__predict-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  color: var(--ink-2);
+}
+
+.guide__predict-answer--right {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.guide__predict-tag {
+  padding: 0 0.3125rem;
+  border: 1px solid currentColor;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.guide__predict-tag--right {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* What a met objective was met by: quiet, under its text. The tick already says it passed. */
+.guide__evidence {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--ink-2);
 }
 
 .guide__commands ul {
   display: grid;
   gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: 0.875rem;
 }
 
 .guide__commands li {
   display: grid;
-  gap: 0.1875rem;
-  justify-items: start;
+  grid-template-columns: minmax(7rem, max-content) 1fr;
+  align-items: baseline;
+  gap: 0.625rem;
 }
 
 .guide__commands li > span {
-  color: var(--ink-2);
   font-size: 0.8125rem;
   line-height: 1.4;
 }
 
 .guide__command {
+  justify-self: start;
   max-width: 100%;
   padding: 0.125rem 0.5rem;
   border: var(--rule);
@@ -93,6 +203,7 @@
   font-size: 0.8125rem;
   text-align: left;
   overflow-wrap: anywhere;
+  cursor: pointer;
   transition: background-color var(--t-instant) var(--ease);
 }
 
@@ -105,6 +216,7 @@ button.guide__command:focus-visible {
 /* Only named, not run: a thin rule, so it doesn't read as something to press. */
 .guide__command--name {
   border: var(--rule-thin);
+  cursor: default;
 }
 
 .guide__hints {
@@ -124,15 +236,15 @@ button.guide__command:focus-visible {
   border-left: 3px solid var(--blue);
 }
 
-.guide__hint-stage {
+.guide__hint-tier {
   display: block;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--blue);
 }
 
-.guide__body .guide__hints-none,
-.guide__body .guide__note {
+.guide__hints-none,
+.guide__note {
   font-size: 0.8125rem;
   color: var(--ink-2);
 }
@@ -149,42 +261,12 @@ button.guide__command:focus-visible {
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--ink-2);
+  cursor: pointer;
 }
 
 .guide__more:hover,
 .guide__more:focus-visible {
   color: var(--ink);
-}
-
-/* The report folds away once it has been read: its title stays, the text is one key away. */
-.guide__report {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.guide__report summary {
-  justify-self: start;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--ink-2);
-  cursor: pointer;
-}
-
-.guide__report summary:hover,
-.guide__report summary:focus-visible {
-  color: var(--ink);
-}
-
-.guide__report[open] summary {
-  margin-bottom: 0.5rem;
-}
-
-/* What a met objective was met by: quiet, under its text. The tick already says it passed. */
-.guide__evidence {
-  display: block;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  color: var(--ink-2);
 }
 
 .guide__hint-command {
@@ -202,12 +284,37 @@ button.guide__command:focus-visible {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--ink);
+  cursor: pointer;
 }
 
 .guide__copy:hover,
 .guide__copy:focus-visible {
   background: var(--ink);
   color: var(--sheet);
+}
+
+.guide__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+/* Before the mission's terms have been met, the cards wait behind one quiet line. */
+.guide__codex-fold summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.guide__codex-fold summary span {
+  margin-left: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.guide__codex-fold[open] summary {
+  margin-bottom: 0.5rem;
 }
 
 /* What the network is doing, kept in view over the actions it holds back. */
@@ -249,7 +356,7 @@ button.guide__command:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* The way on stays in view under the scrolling text. */
+/* The way on stays in view under the scrolling transcript. */
 .guide__actions {
   flex: none;
   display: flex;
@@ -275,7 +382,7 @@ button.guide__command:focus-visible {
 
 @media (max-height: 52.5rem) {
   .guide__body {
-    gap: 0.75rem;
+    gap: 0.625rem;
     padding-top: 0.625rem;
   }
 }

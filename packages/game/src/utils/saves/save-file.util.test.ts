@@ -15,7 +15,7 @@ const PROGRESS: Progress = {
       firstStartedAt: 10,
       completedAt: 20,
       attempts: 2,
-      hintsRevealed: { 'recovers-through-b': 2 },
+      hintsRevealed: 2,
       runs: [
         {
           role: 'baseline',
@@ -108,13 +108,13 @@ describe('save files', () => {
       progress: {
         ...PROGRESS,
         lastActive: 7,
-        missions: [{ ...mission, hintsRevealed: { 'reaches-c': 'two' }, runs: [{ role: 'replay' }] }],
+        missions: [{ ...mission, hintsRevealed: 'two', runs: [{ role: 'replay' }] }],
       },
     }
     const loaded = readSaveFile(JSON.parse(JSON.stringify(corrupt)))
     expect(!loaded.ok && loaded.errors).toEqual(
       expect.arrayContaining([
-        'progress.missions[0].hintsRevealed.reaches-c: expected a whole number, got text',
+        'progress.missions[0].hintsRevealed: expected a whole number, got text',
         'progress.missions[0].runs[0].role: expected one of baseline, attempt, got "replay"',
         'progress.missions[0].runs[0].summary: expected an object, got nothing',
         'progress.lastActive: expected non-empty text, got a number',

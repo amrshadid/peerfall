@@ -1,6 +1,6 @@
 import { errorResponse, handleServiceError } from '@peerfall/core/services'
 import type { ServiceResponse } from '@peerfall/core/types'
-import type { MissionId, ObjectiveId } from '#types/definitions/mission'
+import type { MissionId } from '#types/definitions/mission'
 import type { SaveIssue } from '#types/definitions/saves'
 
 /** Storage refused a write (full, or blocked in a private window). */
@@ -19,11 +19,8 @@ export const unknownMissionError = (missionId: MissionId): ServiceResponse<never
 export const lockedMissionError = (missionId: MissionId): ServiceResponse<never> =>
   errorResponse('FORBIDDEN', `mission "${missionId}" is locked`)
 
-export const unknownObjectiveError = (objectiveId: ObjectiveId): ServiceResponse<never> =>
-  errorResponse('NOT_FOUND', `the mission has no objective "${objectiveId}"`)
-
-export const noHintLeftError = (objectiveId: ObjectiveId): ServiceResponse<never> =>
-  errorResponse('NOT_FOUND', `every hint for "${objectiveId}" is already revealed`)
+export const noHintLeftError = (missionId: MissionId): ServiceResponse<never> =>
+  errorResponse('NOT_FOUND', `all three hints of "${missionId}" are already revealed`)
 
 export const notCompletedError = (missionId: MissionId): ServiceResponse<never> =>
   errorResponse('FORBIDDEN', `mission "${missionId}" has no passing run yet: the debrief comes after one`)

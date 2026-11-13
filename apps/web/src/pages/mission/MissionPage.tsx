@@ -1,3 +1,4 @@
+import { CodexModalContainer } from '@features/codex'
 import { NotFoundContainer } from '@features/content'
 import { DebriefContainer } from '@features/debrief'
 import { EditorContainer } from '@features/editor'
@@ -10,22 +11,25 @@ import { TopologyContainer } from '@features/topology'
 
 export interface MissionPageProps {
   missionId: string
+  /** A Codex card open over the mission, from the address. */
+  cardId: string | null
 }
 
 /** `#/mission/<id>`: the mission's container lays the panels' containers out around its run. */
-export function MissionPage({ missionId }: MissionPageProps) {
+export function MissionPage({ missionId, cardId }: MissionPageProps) {
   return (
-    <MissionContainer
-      missionId={missionId}
-      guide={({ run, step, stepLabel, onStartOver }) => (
-        <GuideContainer run={run} step={step} stepLabel={stepLabel} onStartOver={onStartOver} />
-      )}
-      editor={({ run }) => <EditorContainer waiting={waitReasonOf(run.phase)} />}
-      terminal={<TerminalContainer />}
-      topology={<TopologyContainer />}
-      timeline={<TimelineContainer />}
-      debrief={<DebriefContainer />}
-      notFound={<NotFoundContainer />}
-    />
+    <>
+      <MissionContainer
+        missionId={missionId}
+        guide={(view) => <GuideContainer {...view} />}
+        editor={({ run }) => <EditorContainer waiting={waitReasonOf(run.phase)} />}
+        terminal={({ run }) => <TerminalContainer settling={run.phase === 'building' || run.phase === 'settling'} />}
+        topology={<TopologyContainer />}
+        timeline={<TimelineContainer />}
+        debrief={({ onPlayAgain }) => <DebriefContainer onPlayAgain={onPlayAgain} />}
+        notFound={<NotFoundContainer />}
+      />
+      <CodexModalContainer missionId={missionId} cardId={cardId} />
+    </>
   )
 }

@@ -80,6 +80,14 @@ describe('TimelineContainer', () => {
     expect(screen.getAllByText('noticed by c on c-a')).toHaveLength(2)
   })
 
+  it('calls a later run that fell short the latest attempt, never repaired', () => {
+    mocks.baseline = BASELINE
+    mocks.repaired = saved('attempt', summary('ospf_dead_timer_expired', 30_700), false)
+    render(<TimelineContainer />)
+    expect(screen.getByText('Latest attempt: traffic was lost for 30.7 s, over the 2.00 s target.')).toBeTruthy()
+    expect(screen.queryByText(/^Repaired/)).toBeNull()
+  })
+
   it('draws a first run live, where the baseline will be', () => {
     mocks.events = ONGOING_EVENTS
     render(<TimelineContainer />)
@@ -108,7 +116,7 @@ describe('TimelineContainer', () => {
     expect(screen.getByText('What each moment means')).toBeTruthy()
     expect(screen.getByText(/BFD, when it runs on both ends, checks the link several times a second\./)).toBeTruthy()
     // No adjacency change in this run, so that term is not brought up yet.
-    expect(screen.queryByText(/OSPF stops treating the two routers as neighbors/)).toBeNull()
+    expect(screen.queryByText(/OSPF stops treating the two routers as neighbours/)).toBeNull()
   })
 
   it('draws nothing when no mission is being played', () => {

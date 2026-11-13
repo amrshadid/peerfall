@@ -1,0 +1,86 @@
+.pf-dialogue {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pf-dialogue p {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.pf-dialogue code {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pf-dialogue__lead {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pf-dialogue__speaker {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.pf-dialogue__portrait {
+  display: block;
+  border: var(--rule);
+  background: var(--sheet);
+}
+
+.pf-dialogue__portrait svg {
+  width: 100%;
+  height: auto;
+}
+
+.pf-dialogue__speaker b {
+  display: block;
+  font-size: 1.125rem;
+  font-variation-settings: "wdth" 112;
+}
+
+.pf-dialogue__speaker span {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.pf-dialogue__aside {
+  display: grid;
+  grid-template-columns: 1.875rem 1fr;
+  gap: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 2px dashed var(--ink-2);
+}
+
+.pf-dialogue__aside--plain {
+  grid-template-columns: 1fr;
+}
+
+/* Stage directions: what the drawing does between lines, set apart like a script's. */
+.pf-dialogue__narration {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  border-left: 2px solid var(--ink-2);
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.pf-dialogue__aside > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.pf-dialogue__name b {
+  font-variation-settings: "wdth" 112;
+}
+
+@media (max-height: 52.5rem) {
+  .pf-dialogue p {
+    font-size: 0.875rem;
+  }
+}

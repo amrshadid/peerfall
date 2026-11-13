@@ -8,7 +8,7 @@ import type {
   ObjectiveDefinition,
   RouteHop,
 } from '@peerfall/game/types'
-import type { KernelRoute } from '@peerfall/machine/types'
+import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
 import { DETECTOR_NAMES, NOT_CHECKED, NOT_TESTED, TERMS } from './objective-text.constants'
 
 const MS_PER_SECOND = 1000
@@ -41,6 +41,20 @@ const kernelRouteText = (route: KernelRoute): string => {
   return [route.prefix, ...(route.protocol === '' ? [] : [`from ${route.protocol}`]), hops.join(' and ')]
     .filter((part) => part !== '')
     .join(' ')
+}
+
+/** A route of zebra's in one line, with its distance and whether zebra selected it. */
+const ribRouteText = (route: RibRoute): string => {
+  const hops = route.nextHops.map((hop) =>
+    hop.via === null ? `on ${hop.interface ?? 'its interface'}` : `via ${hop.via}`
+  )
+  return [
+    route.prefix,
+    `from ${route.protocol}`,
+    ...hops,
+    `distance ${route.distance}`,
+    route.selected ? 'selected' : 'not selected',
+  ].join(' ')
 }
 
 const packets = (count: number): string => (count === 1 ? '1 packet' : `${count} packets`)
@@ -76,10 +90,26 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
       return result.kind === 'route' && result.route
         ? `Router ${result.router} has a route there, but not the one asked for: ${code(kernelRouteText(result.route))}. ${TERMS.route}`
         : `The router has a route there, but not the one this objective asks for. ${TERMS.route}`
+    case 'no_rib_route':
+      return check.kind === 'rib'
+        ? `Router ${check.router}'s zebra has no route for ${code(check.prefix)}. ${TERMS.rib}`
+        : `Zebra has no route there. ${TERMS.rib}`
+    case 'wrong_rib_route':
+      return result.kind === 'rib' && result.routes.length > 0
+        ? `Router ${result.router}'s zebra holds ${result.routes.map((route) => code(ribRouteText(route))).join(' and ')}, but not the route this objective asks for. ${TERMS.rib}`
+        : `Zebra has a route there, but not the one this objective asks for. ${TERMS.rib}`
     case 'not_configured':
       return result.kind === 'config'
         ? `Router ${result.router}'s ${result.source} configuration does not have that line yet. ${TERMS.configuration}`
         : `The configuration does not have that line yet. ${TERMS.configuration}`
+    case 'still_configured':
+      return result.kind === 'config' && result.found
+        ? `Router ${result.router}'s ${result.source} configuration still has ${code(result.found.trim())}. ${TERMS.configuration}`
+        : `The configuration still has that line. ${TERMS.configuration}`
+    case 'no_config':
+      return result.kind === 'config'
+        ? `Router ${result.router} has no ${result.source} configuration to read yet. ${TERMS.configuration}`
+        : `There is no configuration to read yet. ${TERMS.configuration}`
     case 'unreachable': {
       if (result.kind === 'reaches') {
         return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
@@ -88,6 +118,10 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
       const needed = check.kind === 'reachable' ? ` It takes ${check.minReplies}.` : ''
       return `${got === 0 ? 'No reply' : `Only ${replies(got)}`} came back from ${names.destination}.${needed} ${TERMS.reply}`
     }
+    case 'own_address':
+      return result.kind === 'reaches'
+        ? `${result.to} is router ${result.from}'s own address: ${result.from} answered itself, not another router. ${TERMS.reply}`
+        : `That address is the router's own: it answered itself. ${TERMS.reply}`
     case 'no_route':
       return result.kind === 'route'
         ? `Router ${result.router} has no route there. ${TERMS.route}`
@@ -160,6 +194,10 @@ export function evidenceText(result: CheckResult, names: ProbeNames): string | n
       return result.route
         ? `Router ${result.router}'s kernel has ${code(kernelRouteText(result.route))}. ${TERMS.route}`
         : null
+    case 'rib':
+      return result.found
+        ? `Router ${result.router}'s zebra holds ${code(ribRouteText(result.found))}. ${TERMS.rib}`
+        : null
     case 'reaches':
       return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
     case 'config':
@@ -177,6 +215,7 @@ export function guideObjectivesOf(
   verdict: MissionVerdict | null
 ): readonly GuideObjective[] {
   const names = probeNamesOf(mission)
+  const said = new Set<string>()
   return mission.objectives.map((objective: ObjectiveDefinition) => {
     const result = verdict?.objectives.find((judged) => judged.objectiveId === objective.id)?.result ?? null
     if (result === null) {
@@ -186,8 +225,29 @@ export function guideObjectivesOf(
       id: objective.id,
       text: objective.text,
       passed: result.passed,
-      observed: result.passed ? null : failureText(objective.check, result, names),
-      evidence: result.passed ? evidenceText(result, names) : null,
+      observed: result.passed ? null : sayingTermsOnce(failureText(objective.check, result, names), said),
+      evidence: result.passed ? sayingTermsOnce(evidenceText(result, names), said) : null,
     }
   })
+}
+
+const TERM_TEXTS: readonly string[] = Object.values(TERMS)
+
+/** Drops the explanation of a term an earlier objective already gave, and notes the ones this text gives. */
+function sayingTermsOnce<T extends string | null>(text: T, said: Set<string>): T {
+  if (text === null) {
+    return text
+  }
+  let kept: string = text
+  for (const term of TERM_TEXTS) {
+    if (!kept.includes(term)) {
+      continue
+    }
+    if (said.has(term)) {
+      kept = kept.replace(` ${term}`, '').replace(term, '')
+    } else {
+      said.add(term)
+    }
+  }
+  return kept as T
 }

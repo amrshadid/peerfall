@@ -42,7 +42,7 @@ function entry(mission: JourneyMissionSource, status: MissionStatus, attempts = 
 
 function journey(missions: Missions): readonly JourneyChapterSource[] {
   return STAGES.map(([id, title, summary], index) => ({
-    chapter: { id, stage: index + 1, title, summary },
+    chapter: { id, stage: index + 1, title, summary, outcomes: [] },
     missions: id === 'recover-from-failure' ? missions : [],
   }))
 }

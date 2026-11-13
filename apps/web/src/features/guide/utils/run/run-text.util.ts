@@ -1,11 +1,7 @@
-import type { GuideHint, GuideStatus } from '@features/guide/types'
+import type { GuideStatus } from '@features/guide/types'
 import type { ProbeNames } from '@features/guide/utils/objectives'
-import type { ObjectiveHints } from '@peerfall/game/hooks'
-import { type MissionDefinition, type MissionVerdict, STATE_CHECK_KINDS } from '@peerfall/game/types'
+import { type MissionDefinition, STATE_CHECK_KINDS } from '@peerfall/game/types'
 import type { MissionRunPhase } from '@peerfall/missions/hooks'
-
-/** The mission loop's steps, as docs/MISSIONS.md names them. */
-export type GuideStep = 'inspect' | 'predict' | 'apply' | 'verify'
 
 /** `a–c`, or plain words in a mission that breaks nothing. */
 const linkText = (mission: Pick<MissionDefinition, 'fault'>): string => mission.fault?.link.join('–') ?? 'under test'
@@ -102,67 +98,8 @@ export function waitReasonOf(phase: MissionRunPhase): string | null {
   }
 }
 
-/** What to do in each step of the loop, with this mission's own names in it. */
-export function taskOf(
-  step: GuideStep,
-  mission: Pick<MissionDefinition, 'fault'>,
-  names: ProbeNames
-): readonly string[] {
-  const link = linkText(mission)
-  // A mission that breaks nothing has no baseline to take: its objectives are the whole task.
-  if (!mission.fault) {
-    return [
-      'Select a router on the map to put the terminal in it, then work through the objectives below. Each is judged by what the routers do, never by what you typed.',
-      '**Check my work** reads the routers as they are and ticks what is met. Use it as often as you like.',
-    ]
-  }
-  switch (step) {
-    case 'inspect':
-      return [
-        `Select a router on the map to put the terminal in it. **Send probe** sends packets from ${names.from} to ${names.target} for a few seconds and shows whether replies come back and which way they go.`,
-        `**Break the link** makes the link ${link} drop every packet while its interfaces stay up, and measures how long traffic is lost. Run it once before you change anything: that run is your baseline.`,
-      ]
-    case 'predict':
-      return [
-        'You have a baseline. The timeline shows what noticed the dead link and how long each step took.',
-        'Before you change anything, say what you expect: which moment on the timeline has to come sooner? Then change the routers, in `vtysh` in the terminal or in the editor, and break the link again.',
-      ]
-    case 'apply':
-      return [
-        'The last run did not meet every objective. Compare its timeline with the baseline, change the configuration, and break the link again. Retries are free.',
-      ]
-    case 'verify':
-      return [
-        'The last run met every objective. Compare the two runs on the timeline, then read the debrief for why it worked. You can keep experimenting.',
-      ]
-  }
-}
-
-/** Whether an objective is judged from the routers as they are, so the player has to ask for the check. */
+/** Whether an objective is judged from the routers as they are, rather than from a fault run. */
 export function hasStateChecks(mission: Pick<MissionDefinition, 'objectives'>): boolean {
   const kinds: readonly string[] = STATE_CHECK_KINDS
   return mission.objectives.some((objective) => kinds.includes(objective.check.kind))
-}
-
-/** The objective a hint is for now: the first one still open with a hint left, else any with one left. */
-export function hintTargetOf(objectives: readonly ObjectiveHints[], verdict: MissionVerdict | null): string | null {
-  const withHints = objectives.filter((entry) => entry.left > 0)
-  const passed = (id: string) => verdict?.objectives.find((judged) => judged.objectiveId === id)?.result.passed ?? false
-  return (withHints.find((entry) => !passed(entry.objective.id)) ?? withHints[0])?.objective.id ?? null
-}
-
-/** Every hint shown so far, objective by objective, each saying which objective and which stage it is. */
-export function revealedHintsOf(objectives: readonly ObjectiveHints[]): readonly GuideHint[] {
-  return objectives.flatMap((entry, objectiveIndex) => {
-    const total = entry.revealed.length + entry.left
-    return entry.revealed.map((hint, index) => ({
-      stage: `objective ${objectiveIndex + 1}, step ${index + 1} of ${total}`,
-      text: hint.text,
-      command: hint.command ?? null,
-    }))
-  })
-}
-
-export function hintsLeftOf(objectives: readonly ObjectiveHints[]): number {
-  return objectives.reduce((sum, entry) => sum + entry.left, 0)
 }

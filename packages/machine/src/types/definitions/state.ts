@@ -8,8 +8,49 @@ export interface KernelRoute {
   readonly nextHops: readonly { readonly via: string | null; readonly interface: string }[]
 }
 
+/**
+ * One route of zebra's routing table (the RIB), as `show ip route json` prints it. Unlike the
+ * kernel's table it holds every route zebra knows, also those it did not select: a backup with a
+ * higher distance waits here and never reaches the kernel.
+ */
+export interface RibRoute {
+  /** As FRR writes it, always with its length: `10.255.0.3/32`. */
+  readonly prefix: string
+  /** Who gave zebra the route, in FRR's words: `static`, `connected`, `local`, `kernel`, `ospf`… */
+  readonly protocol: string
+  /** The administrative distance: for one prefix zebra selects the lowest. */
+  readonly distance: number
+  readonly metric: number
+  /** Zebra chose it for this prefix (the `>` of `show ip route`). */
+  readonly selected: boolean
+  /** It is in the kernel's table (the `*` of `show ip route`). */
+  readonly installed: boolean
+  /** `via` is null for a directly connected route; `interface` is null when FRR names none. */
+  readonly nextHops: readonly { readonly via: string | null; readonly interface: string | null }[]
+}
+
+/** One of a router's interfaces, as `ip -o link show` prints it. */
+export interface InterfaceState {
+  /** As the router names it: `a-c`, without the `@if3` that names the far end of a veth. */
+  readonly name: string
+  /**
+   * Switched on and with a live far end: the flags hold both `UP` and `LOWER_UP`. An end switched
+   * off shows neither; its far end shows `NO-CARRIER,…,UP`. A link that drops every packet with
+   * `tc netem` keeps its carrier on both ends.
+   */
+  readonly carrier: boolean
+}
+
 /** What a mission may ask about one router. Each part is a command of its own, so only what is needed is read. */
-export const ROUTER_STATE_PARTS = ['daemons', 'routes', 'runningConfig', 'savedConfig'] as const
+export const ROUTER_STATE_PARTS = [
+  'daemons',
+  'routes',
+  'rib',
+  'runningConfig',
+  'savedConfig',
+  'startedConfig',
+  'links',
+] as const
 
 export type RouterStatePart = (typeof ROUTER_STATE_PARTS)[number]
 
@@ -18,10 +59,22 @@ export interface RouterState {
   /** The FRR daemons that answered vtysh, as `show daemons` names them; empty when none did. */
   readonly daemons?: readonly string[]
   readonly routes?: readonly KernelRoute[]
+  /** Zebra's IPv4 routes, selected or not; empty when zebra did not answer. */
+  readonly rib?: readonly RibRoute[]
   /** `show running-config` as text; `null` when no daemon answered. */
   readonly runningConfig?: string | null
   /** The router's `frr.conf` as it is on disk: what FRR starts with. `null` when there is none. */
   readonly savedConfig?: string | null
+  /**
+   * The router's `frr.conf` as it was when FRR last finished starting with its init script since
+   * the network was built: watchfrr writes `watchfrr.started` once every daemon is up and has
+   * read frr.conf, and the Machine copies the file at that moment. What a restart really started
+   * from. `null` when FRR has not started that way since the network was built (the build's own
+   * start does not count), or there was no frr.conf to start from.
+   */
+  readonly startedConfig?: string | null
+  /** Every interface of the router's namespace, the loopback included; empty when the namespace is gone. */
+  readonly links?: readonly InterfaceState[]
 }
 
 /** A few packets from one router to an address, sent when the state is read. */

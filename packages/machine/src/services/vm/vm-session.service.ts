@@ -21,6 +21,7 @@ import {
   type VmManifest,
   type VmPhase,
   type VmSession,
+  type VmShellUpdate,
   type VmStartOptions,
 } from '#types/definitions/vm'
 import { parseEventLine } from '#utils/events/event-parser.util'
@@ -33,6 +34,7 @@ import {
   probeStopLine,
   stampedFaultLine,
 } from '#utils/network/network-script.util'
+import { EMPTY_PROMPT_WATCH, watchInput, watchOutput } from '#utils/terminal/prompt-watch.util'
 
 const PROMPT_TAIL = 64
 const CONTROL_UART = 2
@@ -110,6 +112,25 @@ export function createVmSession(wasmUrl?: string): VmSession {
   }
   let pristine = false
   let router: string | null = null
+  let onShell: (update: VmShellUpdate) => void = () => {}
+  let promptWatch = EMPTY_PROMPT_WATCH
+  let commandsFinished = 0
+  const shellNews = () => onShell({ router, commandsFinished })
+  /** The terminal's shell is now in `next`: the store follows the session, never the other way. */
+  const shellIn = (next: string | null) => {
+    router = next
+    shellNews()
+  }
+  /** Keys reach the shell: an Enter among them starts a command. */
+  const sendKeys = (running: V86, keys: string) => {
+    pristine = false
+    promptWatch = watchInput(promptWatch, keys)
+    running.serial0_send(keys)
+  }
+  /** A restored Machine's terminal is mid-line somewhere else, and the commands typed since never ran. */
+  const forgetTyping = () => {
+    promptWatch = EMPTY_PROMPT_WATCH
+  }
   let status: (phase: VmPhase, detail?: string | null) => void = () => {}
   let nextPrompt: () => Promise<void> = async () => {}
   // Held while the Machine is saved, set up or restored: a save would keep the keys, a restore lose them.
@@ -123,8 +144,9 @@ export function createVmSession(wasmUrl?: string): VmSession {
     if (holds === 0 && heldInput.length > 0) {
       const keys = heldInput.join('')
       heldInput = []
-      pristine = false
-      emulator?.serial0_send(keys)
+      if (emulator) {
+        sendKeys(emulator, keys)
+      }
     }
   }
   // A restore under a setup would wipe it: everything that changes the Machine takes turns, after boot.
@@ -146,6 +168,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
     // The line in flight belongs to the Machine being replaced: it will never answer.
     control.drop()
     zeroTscOffset(running)
+    forgetTyping()
     // A copy: v86 keeps what it is given.
     await running.restore_state(state.slice(0))
     await wait(VM_RESTORE_SETTLE_MS)
@@ -161,13 +184,14 @@ export function createVmSession(wasmUrl?: string): VmSession {
     await prompt
     // bash prints its prompt just before readline takes the terminal; keys sooner split the line.
     await wait(VM_RESTORE_SETTLE_MS)
-    router = next
+    shellIn(next)
   }
 
   return {
-    async start(options: VmStartOptions, onOutput, onStatus, onEventUpdate) {
+    async start(options: VmStartOptions, onOutput, onStatus, onEventUpdate, onShellUpdate) {
       status = (phase, detail = null) => onStatus({ phase, detail })
       onEvents = onEventUpdate ?? (() => {})
+      onShell = onShellUpdate ?? (() => {})
       status('loading')
       try {
         // The one file that changes with each image; everything it points to has a versioned path.
@@ -284,10 +308,19 @@ export function createVmSession(wasmUrl?: string): VmSession {
           }
         })
         running.add_listener('serial1-output-byte', pushEventByte)
+        const latin1 = new TextDecoder('latin1')
         flushTimer = setInterval(() => {
           if (pending.length > 0) {
-            onOutput(new Uint8Array(pending))
+            const bytes = new Uint8Array(pending)
             pending = []
+            // Prompts are plain ASCII: bytes read one to one are enough to find them.
+            const watched = watchOutput(promptWatch, latin1.decode(bytes))
+            promptWatch = watched.watch
+            onOutput(bytes)
+            if (watched.finished > 0) {
+              commandsFinished += watched.finished
+              shellNews()
+            }
           }
           flushEvents()
         }, VM_OUTPUT_FLUSH_MS)
@@ -302,8 +335,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
         return
       }
       if (emulator) {
-        pristine = false
-        emulator.serial0_send(text)
+        sendKeys(emulator, text)
       }
     },
 
@@ -326,7 +358,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
           network = null
           if (!pristine && clean) {
             await restore(running, clean)
-            router = null
+            shellIn(null)
           }
           rewindEvents(0)
           pristine = false
@@ -418,7 +450,8 @@ export function createVmSession(wasmUrl?: string): VmSession {
           const wanted = router
           await restore(running, kept.state)
           rewindEvents(kept.events)
-          router = kept.router
+          // The restored shell is in the router it was in when saved, until it is moved back.
+          shellIn(kept.router)
           if (wanted !== router) {
             await moveShell(wanted)
           } else {

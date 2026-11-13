@@ -1,0 +1,100 @@
+id: bring-the-line-up
+version: 1
+title: Bring the Line Up
+summary: "Stage 2's capstone: from bare cables, give a line of three routers their addresses and routes both ways, save them, and restart every router."
+minutes: 20
+chapter: follow-a-packet
+objective: Router a reaches c through b, and every address and route it needs comes back when FRR restarts on each router.
+prerequisites: [the-backup-path]
+teaches: []
+names: []
+uses:
+  [
+    ip-address,
+    prefix,
+    connected-route,
+    static-route,
+    next-hop,
+    return-path,
+    rib,
+    fib,
+    saved-config,
+    write-memory,
+    frr-init-script,
+  ]
+
+# Three routers in a line, FRR started by its init script on each, and no interface addressed:
+# the plan's addresses are on the topology. watchfrr starts staticd on every router whatever the
+# daemons file says, so no router lists it.
+network:
+  routers:
+    - name: a
+      daemons: []
+      startup: watchfrr
+      config: ""
+    - name: b
+      daemons: []
+      startup: watchfrr
+      config: ""
+    - name: c
+      daemons: []
+      startup: watchfrr
+      config: ""
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30, unaddressed: true }
+        - { router: b, address: 10.0.1.2/30, unaddressed: true }
+    - ends:
+        - { router: b, address: 10.0.2.1/30, unaddressed: true }
+        - { router: c, address: 10.0.2.2/30, unaddressed: true }
+
+# None is met at the start: no address, no route, and no router restarted yet. `started` is the
+# frr.conf FRR came back with after the player's own restart of that router.
+objectives:
+  - id: a-reaches-c
+    text: Reach c's address, 10.0.2.2, from a.
+    check: { kind: reaches, from: a, to: 10.0.2.2 }
+  - id: a-address-lasts
+    text: a restarts with its address, 10.0.1.1/30 on a-b.
+    check: { kind: config, router: a, source: started, block: [interface a-b], line: ip address 10.0.1.1/30 }
+  - id: b-a-address-lasts
+    text: b restarts with its address towards a, 10.0.1.2/30 on b-a.
+    check: { kind: config, router: b, source: started, block: [interface b-a], line: ip address 10.0.1.2/30 }
+  - id: b-c-address-lasts
+    text: b restarts with its address towards c, 10.0.2.1/30 on b-c.
+    check: { kind: config, router: b, source: started, block: [interface b-c], line: ip address 10.0.2.1/30 }
+  - id: c-address-lasts
+    text: c restarts with its address, 10.0.2.2/30 on c-b.
+    check: { kind: config, router: c, source: started, block: [interface c-b], line: ip address 10.0.2.2/30 }
+  - id: a-route-lasts
+    text: a restarts with its route to c's network, 10.0.2.0/30.
+    check: { kind: config, router: a, source: started, line: ip route 10.0.2.0/30 }
+  - id: c-route-lasts
+    text: c restarts with its route back to a's network, 10.0.1.0/30.
+    check: { kind: config, router: c, source: started, line: ip route 10.0.1.0/30 }
+
+hints:
+  - text: Follow one packet from a to c, and its reply back to a. At each router, which route sends it on? Where there is none, that router needs one.
+  - text: "Each end of a cable needs its address, as in Two Ends of One Cable. a needs a way there and c a way back, as in The Reply That Never Came Back. A restart keeps only what was saved, as in Gone After the Restart."
+  - text: On each router, once its addresses and routes are in, save the running configuration, then restart FRR with its init script and the router's name.
+    command: write memory
+
+chips:
+  - { command: ip -br addr, explain: "each interface and its addresses, as Linux has them" }
+  - { command: ip address, explain: "in interface mode: give the interface an address" }
+  - { command: ip route, explain: "in configure mode: a static route to a network, through a next hop" }
+  - { command: show ip route, explain: "zebra's table" }
+  - { command: ip route get, explain: "in the shell: which way Linux would send to an address" }
+  - { command: ping -c 3, explain: "send three packets and count the replies" }
+  - { command: write memory, explain: "save the running configuration to frr.conf" }
+  - { command: /usr/lib/frr/frrinit.sh restart, explain: "restart FRR from frr.conf; the router's name goes last" }
+
+codex: []
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

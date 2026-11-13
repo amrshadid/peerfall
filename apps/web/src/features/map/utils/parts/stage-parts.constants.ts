@@ -5,7 +5,7 @@ import type { ChapterId } from '@peerfall/game/types'
  * README's "What you'll learn" table. The game's chapters carry no such field.
  */
 export const STAGE_PARTS: Readonly<Record<ChapterId, readonly string[]>> = {
-  'first-router': ['watchfrr', 'mgmtd', 'vtysh', 'frr-reload'],
+  'first-router': ['watchfrr', 'mgmtd', 'vtysh'],
   'follow-a-packet': ['zebra', 'staticd'],
   'build-an-underlay': ['ospfd', 'ospf6d', 'isisd'],
   'recover-from-failure': ['bfdd', 'graceful restart', 'fast reroute', 'vrrpd'],

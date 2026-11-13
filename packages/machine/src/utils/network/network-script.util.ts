@@ -24,6 +24,21 @@ export const interfaceName = (router: string, peer: string): string => `${router
 /** Where a router's FRR daemons log, with millisecond timestamps. */
 export const routerLogPath = (router: string): string => `/var/log/frr/${router}.log`
 
+/** The copy of a router's frr.conf taken when its FRR last finished starting with its init script. */
+export const startedConfigPath = (router: string): string => `/run/pf-started-${router}.conf`
+
+/**
+ * Root's line that copies a router's frr.conf each time watchfrr has started every daemon and
+ * handed them the file: it writes `watchfrr.started` in the router's run folder then. The copy is
+ * what that start really read, whatever the file holds later. inotify is told of the write: the
+ * run folder is tmpfs (on the 9p root, frr.conf itself sends no inotify news).
+ */
+// reads watchfrr/watchfrr.c: the "all daemons up, doing startup-complete notify" path, which writes watchfrr.started
+export const startedConfigWatchLine = (router: string): string =>
+  `inotifyd - /run/frr/${router}:w 2>/dev/null | while read -r _ _ file; do ` +
+  `[ "$file" = watchfrr.started ] && cp /etc/frr/${router}/frr.conf ${startedConfigPath(router)}.new && mv ${startedConfigPath(router)}.new ${startedConfigPath(router)}; ` +
+  'done >/dev/null 2>&1 &'
+
 /**
  * Every problem that would make the setup lines wrong or unsafe to run as root. Names and addresses
  * go into shell lines unquoted, so nothing else may pass.
@@ -210,6 +225,8 @@ export function networkWatchLines(network: NetworkDefinition): string[] {
     // A router whose FRR is not running has no daemon to take a debug switch.
     const debugs = startupOf(router) === 'none' ? [] : daemons.flatMap((daemon) => DEBUGS[daemon] ?? [])
     return [
+      // Only FRR's init script starts watchfrr; a router whose daemons the Machine starts has none.
+      ...(startupOf(router) === 'direct' ? [] : [startedConfigWatchLine(name)]),
       ...(debugs.length === 0 ? [] : [`vtysh -N ${name} ${debugs.map((debug) => `-c '${debug}'`).join(' ')}`]),
       `tail -n +1 -F ${routerLogPath(name)} 2>/dev/null | ${toEventPort('frr', name)} &`,
       // -o keeps a route with several next hops on one line.

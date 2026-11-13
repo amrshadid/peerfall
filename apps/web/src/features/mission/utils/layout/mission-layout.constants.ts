@@ -2,12 +2,13 @@ import type { MissionStepId } from '@features/mission/types'
 import type { VmPhase } from '@peerfall/machine/types'
 import type { RailStep } from '@shared/types'
 
-/** The mission loop, in order: look, say what a change will do, make it, check it. */
+/** The mission's story, in order, as the step rail shows it (Kernelfall's loop, its Card read as the debrief). */
 export const MISSION_STEPS: readonly (RailStep & { readonly id: MissionStepId })[] = [
-  { id: 'inspect', label: 'Inspect' },
-  { id: 'predict', label: 'Predict' },
-  { id: 'apply', label: 'Apply' },
-  { id: 'verify', label: 'Verify' },
+  { id: 'scene', label: 'Scene' },
+  { id: 'see', label: 'See it' },
+  { id: 'build', label: 'Build it' },
+  { id: 'watch', label: 'Watch it' },
+  { id: 'debrief', label: 'Debrief' },
 ]
 
 /** The status bar's word on the Machine. */

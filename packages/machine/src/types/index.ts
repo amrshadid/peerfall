@@ -26,11 +26,13 @@ export {
   type RouterDefinition,
 } from '#types/definitions/network'
 export {
+  type InterfaceState,
   type KernelRoute,
   type MachineState,
   PING_MAX_COUNT,
   type PingRequest,
   type PingResult,
+  type RibRoute,
   ROUTER_STATE_PARTS,
   type RouterState,
   type RouterStatePart,
@@ -51,6 +53,7 @@ export {
   type VmManifest,
   type VmPhase,
   type VmSession,
+  type VmShellUpdate,
   type VmStartOptions,
   type VmStatus,
 } from '#types/definitions/vm'

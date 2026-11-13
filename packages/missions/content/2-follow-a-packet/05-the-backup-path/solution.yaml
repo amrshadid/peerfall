@@ -1,0 +1,35 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # The direct route added, distances equal: both next hops are used, not only the direct one.
+  - id: equal-distances
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.3/32 10.0.2.2]
+  # The route through b removed: direct only, and no backup left in zebra's table.
+  - id: no-backup
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, no ip route 10.255.0.3/32 10.0.1.2, ip route 10.255.0.3/32 10.0.2.2]
+  # The distances the wrong way round: the direct route waits, and traffic still goes through b.
+  - id: direct-as-backup
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.3/32 10.0.2.2 20]
+  - id: floating-backup
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.3/32 10.0.2.2, ip route 10.255.0.3/32 10.0.1.2 10]
+  # Any distance above 1 makes the backup: judged by what zebra holds, not by the number typed.
+  - id: floating-backup-200
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.3/32 10.0.1.2 200, ip route 10.255.0.3/32 10.0.2.2]

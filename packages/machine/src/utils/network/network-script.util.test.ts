@@ -10,6 +10,7 @@ import {
   networkProblems,
   networkSetupLines,
   networkWatchLines,
+  startedConfigWatchLine,
 } from '#utils/network/network-script.util'
 
 const triangle: NetworkDefinition = {
@@ -150,7 +151,19 @@ describe('a router started another way', () => {
     expect(lines.filter((line) => line.startsWith('vtysh'))).toEqual([
       "vtysh -N b -c 'debug ospf nsm' -c 'debug ospf bfd'",
     ])
-    expect(lines).toHaveLength(2 + 3 + 2)
+    // a (none) and b (watchfrr) each get the watcher of their FRR's starts; c (direct) has no watchfrr.
+    expect(lines).toHaveLength(3 + 4 + 2)
+  })
+
+  it('copies frr.conf each time watchfrr has started every daemon, on routers its init script starts', () => {
+    const lines = networkWatchLines(network)
+    expect(lines.filter((line) => line.startsWith('inotifyd'))).toEqual([
+      startedConfigWatchLine('a'),
+      startedConfigWatchLine('b'),
+    ])
+    expect(startedConfigWatchLine('a')).toBe(
+      'inotifyd - /run/frr/a:w 2>/dev/null | while read -r _ _ file; do [ "$file" = watchfrr.started ] && cp /etc/frr/a/frr.conf /run/pf-started-a.conf.new && mv /run/pf-started-a.conf.new /run/pf-started-a.conf; done >/dev/null 2>&1 &'
+    )
   })
 
   it('is started and restarted with FRR’s own init script, in its namespace and under its hostname', () => {

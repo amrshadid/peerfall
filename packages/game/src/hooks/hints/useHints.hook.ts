@@ -5,45 +5,38 @@ import { getGameNow } from '#config'
 import type { HintRevealedPayload } from '#events/types'
 import { GAME_EVENTS } from '#events/types'
 import { announceProgress } from '#services/utils/announce-progress.service'
-import { noActiveMissionError, noHintLeftError, unknownObjectiveError } from '#services/utils/error-handling.service'
+import { noActiveMissionError, noHintLeftError } from '#services/utils/error-handling.service'
 import { useProgressStore } from '#store/progress.store'
-import type { HintDefinition, ObjectiveDefinition, ObjectiveId } from '#types/definitions/mission'
+import type { HintTier, RevealedHint } from '#types/definitions/hints'
 import { hintsLeft, nextHint, revealedHints } from '#utils/hints/index'
 import { findMissionProgress, revealNextHint } from '#utils/progress/index'
 
 const SOURCE = 'game/hints'
 
-/** An objective of the active mission with the hints shown for it so far. */
-export interface ObjectiveHints {
-  readonly objective: ObjectiveDefinition
-  /** In order: where to look first, a specific command last. */
-  readonly revealed: readonly HintDefinition[]
-  readonly left: number
-}
-
 export interface UseHintsResult {
-  /** One entry per objective of the active mission, in its order; empty when none is active. */
-  readonly objectives: readonly ObjectiveHints[]
-  /** Shows an objective's next hint. Hints cost nothing; how many were used is only recorded. */
-  readonly reveal: (objectiveId: ObjectiveId) => Promise<ServiceResponse<HintDefinition>>
+  /** The active mission's hints shown so far, in order: nudge, concept, spot. Empty when none is active. */
+  readonly revealed: readonly RevealedHint[]
+  /** The tier `reveal` shows next; `null` once all three are shown or no mission is active. */
+  readonly next: HintTier | null
+  readonly left: number
+  /** Shows the next hint. Hints cost nothing; how many were used is only recorded. */
+  readonly reveal: () => Promise<ServiceResponse<RevealedHint>>
 }
 
-/** Reveals the next hint of one of the active mission's objectives, and saves that it was used. */
-export async function revealHint(objectiveId: ObjectiveId): Promise<ServiceResponse<HintDefinition>> {
+/** Reveals the active mission's next hint, and saves that it was used. */
+export async function revealHint(): Promise<ServiceResponse<RevealedHint>> {
   const store = useProgressStore.getState
   const { active, progress } = store()
   if (!active) return noActiveMissionError()
   const { mission } = active
-  const objective = mission.objectives.find((candidate) => candidate.id === objectiveId)
-  if (!objective) return unknownObjectiveError(objectiveId)
-  const shown = findMissionProgress(progress, mission.id)?.hintsRevealed[objectiveId] ?? 0
-  const hint = nextHint(objective, shown)
-  const revealed = revealNextHint(progress, mission, objectiveId)
-  if (!hint || !revealed) return noHintLeftError(objectiveId)
+  const shown = findMissionProgress(progress, mission.id)?.hintsRevealed ?? 0
+  const hint = nextHint(mission, shown)
+  const revealed = revealNextHint(progress, mission)
+  if (!hint || !revealed) return noHintLeftError(mission.id)
   store().setProgress(revealed)
   eventBus.emit<HintRevealedPayload>(
     GAME_EVENTS.HINT_REVEALED,
-    { missionId: mission.id, objectiveId, stage: shown + 1, at: getGameNow() },
+    { missionId: mission.id, tier: hint.tier, stage: revealedHints(mission, shown).length + 1, at: getGameNow() },
     { source: SOURCE }
   )
   await announceProgress(SOURCE)
@@ -55,13 +48,14 @@ export function useHints(): UseHintsResult {
   const progress = useProgressStore((state) => state.progress)
 
   return useMemo(() => {
-    const counts = active ? (findMissionProgress(progress, active.mission.id)?.hintsRevealed ?? {}) : {}
+    if (!active) {
+      return { revealed: [], next: null, left: 0, reveal: revealHint }
+    }
+    const shown = findMissionProgress(progress, active.mission.id)?.hintsRevealed ?? 0
     return {
-      objectives: (active?.mission.objectives ?? []).map((objective) => ({
-        objective,
-        revealed: revealedHints(objective, counts[objective.id] ?? 0),
-        left: hintsLeft(objective, counts[objective.id] ?? 0),
-      })),
+      revealed: revealedHints(active.mission, shown),
+      next: nextHint(active.mission, shown)?.tier ?? null,
+      left: hintsLeft(active.mission, shown),
       reveal: revealHint,
     }
   }, [active, progress])

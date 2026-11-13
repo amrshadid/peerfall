@@ -45,7 +45,7 @@ describe('validateMission', () => {
         dificulty: 'hard',
       })
     ).toEqual([
-      'dificulty: unknown field (expected one of: id, version, title, chapter, objective, prerequisites, network, fault, probe, recoveryTargetMs, restartOnCheck, objectives)',
+      'dificulty: unknown field (expected one of: id, version, title, summary, minutes, chapter, objective, prerequisites, teaches, names, uses, network, fault, probe, recoveryTargetMs, restartOnCheck, objectives, hints, chips, codex, story)',
       'id: expected a kebab-case id like recover-from-failure, got "The Link"',
       'version: expected a number from 1 to 9007199254740991, got 0',
       'title: expected non-empty text, got empty text',
@@ -141,23 +141,98 @@ describe('validateMission', () => {
     })
   })
 
+  describe('hints', () => {
+    const [nudge, concept, spot] = YAML.hints
+
+    it('wants exactly three: nudge, concept, spot', () => {
+      expect(errorsWith({ hints: [nudge, concept] })).toEqual([
+        'hints: expected exactly 3 hints (nudge, concept, spot), got 2',
+      ])
+      expect(errorsWith({ hints: [nudge, concept, spot, nudge] })).toEqual([
+        'hints: expected exactly 3 hints (nudge, concept, spot), got 4',
+      ])
+      expect(errorsWith({ hints: undefined })).toEqual(['hints: expected a list, got nothing'])
+    })
+
+    it('lets only the spot name a command', () => {
+      expect(errorsWith({ hints: [{ ...nudge, command: 'show ip route' }, concept, spot] })).toEqual([
+        'hints[0].command: only the third hint (the spot) may name a command',
+      ])
+      expect(errorsWith({ hints: [nudge, concept, { text: 'Look.', comand: 'show' }] })).toEqual([
+        'hints[2].comand: unknown field (expected one of: text, command)',
+      ])
+    })
+  })
+
+  describe('teaching fields', () => {
+    it('reads the summary, minutes, concepts, chips, cards and story sections', () => {
+      const result = validateMission(YAML)
+      expect(result.ok && result.value).toMatchObject({
+        summary: 'Make the network notice a dead link in under a second.',
+        minutes: 20,
+        teaches: ['bfd-session'],
+        names: ['bfd-timers'],
+        uses: ['ospf-adjacency'],
+        chips: [{ command: 'show ip ospf neighbor' }],
+        codex: [{ id: 'bfd', term: 'BFD', sources: ['bfdd/bfd.c'], tryIt: 'show bfd peers' }],
+        story: { scene: 'story.md#scene', debrief: 'story.md#debrief', realWorld: 'story.md#real-world' },
+      })
+    })
+
+    it('leaves names, chips and cards empty when they are left out', () => {
+      const { names: _names, chips: _chips, codex: _codex, ...rest } = YAML
+      const result = validateMission(rest)
+      expect(result.ok && [result.value.names, result.value.chips, result.value.codex]).toEqual([[], [], []])
+    })
+
+    it('keeps to the concept budget and says each concept once', () => {
+      expect(errorsWith({ teaches: ['a', 'b', 'c', 'd'] })).toEqual(['teaches: expected at most 3 concepts, got 4'])
+      expect(errorsWith({ uses: ['bfd-session'] })).toEqual(['uses: "bfd-session" is already in teaches'])
+    })
+
+    it('checks every card field', () => {
+      const [card] = YAML.codex
+      expect(
+        errorsWith({
+          codex: [
+            { ...card, id: 'Card', deepens: 'card', sources: ['/abs path'], docs: 'http://x', summary: 'old' },
+            { ...card, deepens: 'bfd' },
+          ],
+        })
+      ).toEqual([
+        'codex[0].summary: unknown field (expected one of: id, term, simple, deep, deepens, sources, docs, tryIt)',
+        'codex[0].id: expected a kebab-case id like recover-from-failure, got "Card"',
+        'codex[0].sources[0]: expected a path in FRR’s source tree like zebra/zebra_rib.c, got "/abs path"',
+        'codex[0].docs: expected an https:// link, got "http://x"',
+        'codex[1].deepens: a card cannot deepen itself',
+      ])
+    })
+
+    it('points the story at sections of story.md, the scene, debrief and real world always', () => {
+      expect(
+        errorsWith({ story: { scene: 'story.md#scene', debrief: 'debrief.md', seeit: 'story.md#see-it' } })
+      ).toEqual([
+        'story.seeit: unknown field (expected one of: scene, seeIt, buildIt, watchIt, debrief, realWorld)',
+        'story.debrief: expected a story section like story.md#scene, got "debrief.md"',
+        'story.realWorld: expected non-empty text, got nothing',
+      ])
+    })
+
+    it('keeps minutes between 1 and 120', () => {
+      expect(errorsWith({ minutes: 0 })).toEqual(['minutes: expected a number from 1 to 120, got 0'])
+    })
+  })
+
   describe('objectives', () => {
     it('needs at least one, with ids that differ', () => {
       expect(errorsWith({ objectives: [] })).toEqual(['objectives: expected at least one objective'])
       expect(errorsWith({ objectives: [REACHES, REACHES] })).toEqual(['objectives: "reaches-c" appears more than once'])
     })
 
-    it('stages hints: at least two, the last one naming a command', () => {
-      const [where, command] = RECOVERS.hints
-      expect(errorsWith({ objectives: [{ ...RECOVERS, hints: [command] }] })).toEqual([
-        'objectives[0].hints: expected at least 2 hints, from where to look to a specific command',
+    it('carries no hints of its own: the mission has them', () => {
+      expect(errorsWith({ objectives: [{ ...RECOVERS, hints: YAML.hints }] })).toEqual([
+        'objectives[0].hints: unknown field (expected one of: id, text, check)',
       ])
-      expect(errorsWith({ objectives: [{ ...RECOVERS, hints: [where, command] }] })).toEqual([
-        'objectives[0].hints[1].command: the last hint names a specific command',
-      ])
-      expect(
-        errorsWith({ objectives: [{ ...RECOVERS, hints: [{ text: 'Look.', comand: 'show' }, where] }] })
-      ).toContain('objectives[0].hints[0].comand: unknown field (expected one of: text, command)')
     })
 
     it('reads each kind of check with its own fields', () => {
@@ -191,7 +266,7 @@ describe('validateMission', () => {
         ],
       })
       expect(errors).toEqual([
-        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, reaches, config, got "typed"',
+        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, rib, reaches, config, got "typed"',
         'objectives[1].check: expected "before", "after" or both: the interface traffic must leave through',
         'objectives[2].check.within: unknown field (expected one of: kind, via, withinMs)',
         'objectives[2].check.withinMs: expected a number from 1 to 9007199254740991, got 0',
@@ -294,10 +369,48 @@ describe('validateMission', () => {
         'objectives[4].check.via: expected an address like 10.0.1.2, got "b"',
         'objectives[5].check.to: expected an address like 10.0.1.2, got "c"',
         'objectives[5].check.minReplies: expected a number from 1 to 3, got 4',
-        'objectives[6].check.source: expected one of running, saved, got "startup"',
+        'objectives[6].check.source: expected one of running, saved, started, got "startup"',
         'objectives[6].check.block: expected a list, got text',
         'objectives[6].check.line: expected non-empty text, got empty text',
       ])
+    })
+
+    it('reads a rib check, each narrowing field only when given', () => {
+      const checkOf = (check: Readonly<Record<string, unknown>>) => {
+        const result = validateMission({ ...STATE, objectives: [{ ...FRR_RUNS, check }] })
+        return result.ok ? result.value.objectives[0]?.check : result.errors
+      }
+      const backup = {
+        kind: 'rib',
+        router: 'a',
+        prefix: '10.255.0.3/32',
+        protocol: 'static',
+        via: '10.0.1.2',
+        selected: false,
+      }
+      expect(checkOf(backup)).toEqual(backup)
+      expect(checkOf({ kind: 'rib', router: 'a', prefix: '10.0.1.0/30' })).toEqual({
+        kind: 'rib',
+        router: 'a',
+        prefix: '10.0.1.0/30',
+      })
+      expect(checkOf({ ...backup, prefix: '10.255.0.3', via: 'b', selected: 'no', distance: 10 })).toEqual([
+        'objectives[0].check.distance: unknown field (expected one of: kind, router, prefix, protocol, via, selected)',
+        'objectives[0].check.via: expected an address like 10.0.1.2, got "b"',
+        'objectives[0].check.selected: expected true or false, got text',
+        'objectives[0].check.prefix: expected a prefix like 10.0.1.0/30, got "10.255.0.3"',
+      ])
+    })
+
+    it('reads a config check’s absent flag, kept only when true', () => {
+      const line = { kind: 'config', router: 'a', source: 'started', block: ['interface a-b'], line: 'shutdown' }
+      const checkOf = (fields: Readonly<Record<string, unknown>>) => {
+        const result = validateMission({ ...STATE, objectives: [{ ...FRR_RUNS, check: { ...line, ...fields } }] })
+        return result.ok ? result.value.objectives[0]?.check : result.errors
+      }
+      expect(checkOf({ absent: true })).toEqual({ ...line, absent: true })
+      expect(checkOf({ absent: false })).toEqual(line)
+      expect(checkOf({ absent: 'yes' })).toEqual(['objectives[0].check.absent: expected true or false, got text'])
     })
 
     it('only lets a state check name a router of the network, and an interface of that router', () => {
@@ -363,7 +476,7 @@ describe('validateChapters', () => {
       ok: false,
       errors: [
         'version: unknown field (expected one of: chapters)',
-        'chapters[1].stage: unknown field (expected one of: id, title, summary)',
+        'chapters[1].stage: unknown field (expected one of: id, title, summary, story, guide, standsFor, outcomes)',
         'chapters[1].summary: expected non-empty text, got empty text',
         'chapters: "recover-from-failure" appears more than once',
       ],

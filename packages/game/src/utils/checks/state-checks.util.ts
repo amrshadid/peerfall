@@ -1,9 +1,10 @@
-import type { KernelRoute, MachineState, RouterStatePart, StateRequest } from '@peerfall/machine/types'
+import type { KernelRoute, MachineState, RibRoute, RouterStatePart, StateRequest } from '@peerfall/machine/types'
 import { configEntries } from '@peerfall/machine/utils'
 import {
   CHECK_FAILURES,
   type CheckDefinition,
   type CheckResult,
+  type ConfigSource,
   REACH_PACKETS,
   STATE_CHECK_KINDS,
   type StateCheckKind,
@@ -26,14 +27,23 @@ export const hasStateChecks = (mission: Pick<MissionDefinition, 'objectives'>): 
 export const hasRunChecks = (mission: Pick<MissionDefinition, 'objectives'>): boolean =>
   mission.objectives.some((objective) => !isStateCheck(objective.check))
 
-const partOf = (check: StateCheck<'daemons' | 'route' | 'config'>): RouterStatePart => {
+/** The part of a router's state each config source reads. */
+const CONFIG_PARTS = {
+  running: 'runningConfig',
+  saved: 'savedConfig',
+  started: 'startedConfig',
+} as const satisfies Record<ConfigSource, RouterStatePart>
+
+const partOf = (check: StateCheck<'daemons' | 'route' | 'rib' | 'config'>): RouterStatePart => {
   switch (check.kind) {
     case 'daemons':
       return 'daemons'
     case 'route':
       return 'routes'
+    case 'rib':
+      return 'rib'
     case 'config':
-      return check.source === 'running' ? 'runningConfig' : 'savedConfig'
+      return CONFIG_PARTS[check.source]
   }
 }
 
@@ -44,6 +54,10 @@ const partOf = (check: StateCheck<'daemons' | 'route' | 'config'>): RouterStateP
 export function stateRequestOf(mission: Pick<MissionDefinition, 'objectives'>): StateRequest | null {
   const routers: Record<string, RouterStatePart[]> = {}
   const pings: { from: string; to: string; count: number }[] = []
+  const ask = (router: string, part: RouterStatePart) => {
+    const parts = routers[router] ?? []
+    routers[router] = parts.includes(part) ? parts : [...parts, part]
+  }
   for (const { check } of mission.objectives) {
     if (!isStateCheck(check)) {
       continue
@@ -52,11 +66,11 @@ export function stateRequestOf(mission: Pick<MissionDefinition, 'objectives'>): 
       if (!pings.some((ping) => ping.from === check.from && ping.to === check.to)) {
         pings.push({ from: check.from, to: check.to, count: REACH_PACKETS })
       }
+      // zebra's table tells whether the address is the sender's own.
+      ask(check.from, 'rib')
       continue
     }
-    const part = partOf(check)
-    const parts = routers[check.router] ?? []
-    routers[check.router] = parts.includes(part) ? parts : [...parts, part]
+    ask(check.router, partOf(check))
   }
   return Object.keys(routers).length === 0 && pings.length === 0 ? null : { routers, pings }
 }
@@ -113,6 +127,27 @@ function checkRoute(check: StateCheck<'route'>, state: MachineState | null): Sta
   return result(isRouteAsked(check, route) ? null : CHECK_FAILURES.wrongRoute, route)
 }
 
+const isRibRouteAsked = (check: StateCheck<'rib'>, route: RibRoute): boolean =>
+  (check.protocol === undefined || route.protocol === check.protocol) &&
+  // One route of zebra's carries every equal-distance next hop: being one of them is enough.
+  (check.via === undefined || route.nextHops.some((hop) => hop.via === check.via)) &&
+  (check.selected === undefined || route.selected === check.selected)
+
+function checkRib(check: StateCheck<'rib'>, state: MachineState | null): StateResult<'rib'> {
+  const rib = state?.routers[check.router]?.rib
+  const result = (failure: StateResult<'rib'>['failure'], routes: readonly RibRoute[], found: RibRoute | null) =>
+    ({ kind: 'rib', passed: failure === null, failure, router: check.router, routes, found }) as const
+  if (rib === undefined) {
+    return result(CHECK_FAILURES.notChecked, [], null)
+  }
+  const routes = rib.filter((route) => samePrefix(route.prefix, check.prefix))
+  if (routes.length === 0) {
+    return result(CHECK_FAILURES.noRibRoute, routes, null)
+  }
+  const found = routes.find((route) => isRibRouteAsked(check, route)) ?? null
+  return result(found ? null : CHECK_FAILURES.wrongRibRoute, routes, found)
+}
+
 function checkReaches(check: StateCheck<'reaches'>, state: MachineState | null): StateResult<'reaches'> {
   const ping = state?.pings.find(({ from, to }) => from === check.from && to === check.to)
   const result = (failure: StateResult<'reaches'>['failure']) =>
@@ -128,6 +163,14 @@ function checkReaches(check: StateCheck<'reaches'>, state: MachineState | null):
   if (!ping) {
     return result(CHECK_FAILURES.notChecked)
   }
+  // A router answers a ping to its own address itself. With zebra down the table is empty, and the
+  // ping alone decides.
+  const own = state?.routers[check.from]?.rib?.some(
+    (route) => route.protocol === 'local' && samePrefix(route.prefix, `${check.to}/32`)
+  )
+  if (own) {
+    return result(CHECK_FAILURES.ownAddress)
+  }
   return result(ping.received >= check.minReplies ? null : CHECK_FAILURES.unreachable)
 }
 
@@ -136,16 +179,23 @@ const sameBlock = (first: readonly string[], second: readonly string[]): boolean
 
 function checkConfig(check: StateCheck<'config'>, state: MachineState | null): StateResult<'config'> {
   const router = state?.routers[check.router]
-  const text = check.source === 'running' ? router?.runningConfig : router?.savedConfig
+  const text = router?.[CONFIG_PARTS[check.source]]
   const result = (failure: StateResult<'config'>['failure'], found: string | null) =>
     ({ kind: 'config', passed: failure === null, failure, router: check.router, source: check.source, found }) as const
   if (text === undefined) {
     return result(CHECK_FAILURES.notChecked, null)
   }
+  if (check.absent && text === null) {
+    // A line missing from a configuration that does not exist proves nothing about it.
+    return result(CHECK_FAILURES.noConfig, null)
+  }
   // No text: FRR is not running, or there is no frr.conf. Either way the line is not there.
   const found = configEntries(text ?? '').find(
     ({ context, line }) => sameBlock(context, check.block) && (line === check.line || line.startsWith(`${check.line} `))
   )
+  if (check.absent) {
+    return result(found ? CHECK_FAILURES.stillConfigured : null, found?.line ?? null)
+  }
   return result(found ? null : CHECK_FAILURES.notConfigured, found?.line ?? null)
 }
 
@@ -156,6 +206,8 @@ export function evaluateStateCheck(check: StateCheck, state: MachineState | null
       return checkDaemons(check, state)
     case 'route':
       return checkRoute(check, state)
+    case 'rib':
+      return checkRib(check, state)
     case 'reaches':
       return checkReaches(check, state)
     case 'config':

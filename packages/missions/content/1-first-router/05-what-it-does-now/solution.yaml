@@ -1,0 +1,30 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Labelled the cable to b instead.
+  - id: wrong-interface
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, description link to router b]
+  # Typed in configure mode: refused.
+  - id: wrong-mode
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, description link to router c]
+        refused: true # FRR refuses a description in configure mode
+  - id: labelled
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, description link to router c]
+  # Short words, and words of the player's own: any description passes.
+  - id: abbreviated
+    passes: true
+    changes:
+      - router: a
+        lines: [conf t, int a-c, desc the cable to c]

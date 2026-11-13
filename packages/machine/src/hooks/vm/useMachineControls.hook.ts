@@ -8,6 +8,7 @@ import {
   startVmProbe,
   stopVmProbe,
 } from '#services/vm/vm-connection.service'
+import { useVmStore } from '#store/vm.store'
 import type { ProbeDefinition } from '#types/definitions/event'
 import type { LinkDefinition } from '#types/definitions/network'
 import type { ControlReply } from '#types/definitions/vm'
@@ -34,7 +35,11 @@ export function useMachineControls(): UseMachineControlsResult {
       startProbe: startVmProbe,
       stopProbe: stopVmProbe,
       saveHealthy: saveVmHealthy,
-      restoreHealthy: restoreVmHealthy,
+      restoreHealthy: async (slot) => {
+        // The saved Machine's interfaces may differ from the last reading.
+        useVmStore.getState().forgetInterfaces()
+        return restoreVmHealthy(slot)
+      },
       run: runVmControl,
     }),
     []

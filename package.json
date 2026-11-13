@@ -1,6 +1,6 @@
 {
   "name": "peerfall",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -18,7 +18,8 @@
     "type-check": "pnpm -r --if-present type-check",
     "check": "biome check .",
     "format": "biome check --write .",
-    "verify": "pnpm check && pnpm type-check && pnpm test && pnpm build"
+    "content:report": "pnpm --filter @peerfall/missions --silent content:report",
+    "verify": "pnpm check && pnpm type-check && pnpm test && pnpm content:report && pnpm build"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.7",

@@ -112,6 +112,44 @@ describe('reaches', () => {
       received: 0,
     })
   })
+
+  // Two Ends of One Cable with the ends swapped: a holds 10.0.1.2 itself, as zebra showed it.
+  const OWN = {
+    prefix: '10.0.1.2/32',
+    protocol: 'local',
+    distance: 0,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: null, interface: 'a-b' }],
+  }
+  const swapped = (rib: (typeof OWN)[]): MachineState => ({
+    routers: { a: { rib } },
+    pings: [{ from: 'a', to: '10.0.1.2', sent: 3, received: 3 }],
+  })
+
+  it('fails when the address is the sending router’s own: it answered itself', () => {
+    expect(judge({ kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 }, swapped([OWN]))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.ownAddress,
+      received: 3,
+    })
+  })
+
+  it('judges by the ping alone when zebra’s table is empty or holds the address from elsewhere', () => {
+    const check = { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 } as const
+    expect(judge(check, swapped([])).passed).toBe(true)
+    expect(judge(check, swapped([{ ...OWN, protocol: 'connected', prefix: '10.0.1.0/30' }])).passed).toBe(true)
+    expect(judge(check, swapped([{ ...OWN, protocol: 'static' }])).passed).toBe(true)
+  })
+
+  it('asks for zebra’s table of the router that pings', () => {
+    const check = { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 } as const
+    expect(stateRequestOf({ objectives: [{ id: 'reaches', text: '', check }] })).toEqual({
+      routers: { a: ['rib'] },
+      pings: [{ from: 'a', to: '10.0.1.2', count: 3 }],
+    })
+  })
 })
 
 describe('config', () => {
@@ -119,6 +157,22 @@ describe('config', () => {
     const line = { kind: 'config', router: 'a', block: ['interface a-b'], line: 'ip address 10.0.1.1/30' } as const
     expect(judge({ ...line, source: 'running' })).toMatchObject({ passed: true, found: 'ip address 10.0.1.1/30' })
     expect(judge({ ...line, source: 'saved' }).passed).toBe(true)
+  })
+
+  it('reads what FRR was last started from, and finds nothing before a restart', () => {
+    const check = { kind: 'config', router: 'a', source: 'started', block: ['interface lo'], line: 'description' }
+    const routerA = STATE.routers.a
+    const restarted = {
+      ...STATE,
+      routers: { ...STATE.routers, a: { ...routerA, startedConfig: 'interface lo\n description kept\nexit\n' } },
+    }
+    const never = { ...STATE, routers: { ...STATE.routers, a: { ...routerA, startedConfig: null } } }
+    expect(judge(check as CheckDefinition, restarted)).toMatchObject({ passed: true, found: 'description kept' })
+    expect(judge(check as CheckDefinition, never)).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.notConfigured,
+    })
+    expect(judge(check as CheckDefinition)).toMatchObject({ passed: false, failure: CHECK_FAILURES.notChecked })
   })
 
   it('takes the first words of a line for the line', () => {
@@ -137,10 +191,121 @@ describe('config', () => {
     expect(judge({ ...saved, source: 'running', block: [], line: 'ip address' }).passed).toBe(false)
   })
 
+  it('with absent, passes only when a configuration exists and the line is gone from its block', () => {
+    const check = {
+      kind: 'config',
+      router: 'a',
+      source: 'started',
+      block: ['interface a-c'],
+      line: 'shutdown',
+      absent: true,
+    } as const
+    const startedFrom = (startedConfig: string | null): MachineState => ({
+      ...STATE,
+      routers: { ...STATE.routers, a: { ...STATE.routers.a, startedConfig } },
+    })
+    expect(judge(check, startedFrom('interface a-c\n ip address 10.0.3.1/30\nexit\n'))).toEqual({
+      kind: 'config',
+      passed: true,
+      failure: null,
+      router: 'a',
+      source: 'started',
+      found: null,
+    })
+    expect(judge(check, startedFrom('interface a-c\n shutdown\nexit\n'))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.stillConfigured,
+      found: 'shutdown',
+    })
+    expect(judge(check, startedFrom('interface a-b\n shutdown\nexit\n')).passed).toBe(true)
+    expect(judge(check, startedFrom(null))).toMatchObject({ passed: false, failure: CHECK_FAILURES.noConfig })
+    expect(judge(check)).toMatchObject({ passed: false, failure: CHECK_FAILURES.notChecked })
+  })
+
   it('fails on a router whose FRR is down: it runs no configuration', () => {
     expect(judge({ kind: 'config', router: 'b', source: 'running', block: [], line: 'hostname' })).toMatchObject({
       passed: false,
       failure: CHECK_FAILURES.notConfigured,
+    })
+  })
+})
+
+describe('rib', () => {
+  // Router a of The Backup Path, as zebra held 10.255.0.3/32 on the Machine at each step.
+  const THROUGH_B = {
+    prefix: '10.255.0.3/32',
+    protocol: 'static',
+    distance: 1,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: '10.0.1.2', interface: 'a-b' }],
+  }
+  const DIRECT = { ...THROUGH_B, nextHops: [{ via: '10.0.2.2', interface: 'a-c' }] }
+  const SHARED = { ...THROUGH_B, nextHops: [...THROUGH_B.nextHops, ...DIRECT.nextHops] }
+  const WAITING = { ...THROUGH_B, distance: 10, selected: false, installed: false }
+  const CONNECTED = {
+    prefix: '10.0.1.0/30',
+    protocol: 'connected',
+    distance: 0,
+    metric: 0,
+    selected: true,
+    installed: true,
+    nextHops: [{ via: null, interface: 'a-b' }],
+  }
+  const withRib = (...rib: (typeof THROUGH_B | typeof CONNECTED)[]): MachineState => ({
+    routers: { a: { rib } },
+    pings: [],
+  })
+  const backup = {
+    kind: 'rib',
+    router: 'a',
+    prefix: '10.255.0.3/32',
+    protocol: 'static',
+    via: '10.0.1.2',
+    selected: false,
+  } as const
+
+  it('passes when the route through b waits in zebra’s table, not selected', () => {
+    expect(judge(backup, withRib(CONNECTED, WAITING, DIRECT))).toEqual({
+      kind: 'rib',
+      passed: true,
+      failure: null,
+      router: 'a',
+      routes: [WAITING, DIRECT],
+      found: WAITING,
+    })
+  })
+
+  it('fails while that route is selected, alone or sharing the traffic, and once it is gone', () => {
+    expect(judge(backup, withRib(CONNECTED, THROUGH_B))).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.wrongRibRoute,
+      routes: [THROUGH_B],
+      found: null,
+    })
+    expect(judge(backup, withRib(SHARED)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge(backup, withRib(DIRECT)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge(backup, withRib(CONNECTED))).toMatchObject({ failure: CHECK_FAILURES.noRibRoute, routes: [] })
+  })
+
+  it('takes either state when selected is left out, and narrows by protocol', () => {
+    const { selected: _, ...anyState } = backup
+    expect(judge(anyState, withRib(THROUGH_B)).passed).toBe(true)
+    expect(judge(anyState, withRib(WAITING)).passed).toBe(true)
+    expect(judge({ ...anyState, protocol: 'ospf' }, withRib(THROUGH_B)).failure).toBe(CHECK_FAILURES.wrongRibRoute)
+    expect(judge({ kind: 'rib', router: 'a', prefix: '10.0.1.0/30' }, withRib(CONNECTED)).passed).toBe(true)
+  })
+
+  it('is not checked before zebra’s table was read, and finds nothing on a router whose zebra is down', () => {
+    expect(judge(backup).failure).toBe(CHECK_FAILURES.notChecked)
+    expect(judge(backup, withRib()).failure).toBe(CHECK_FAILURES.noRibRoute)
+  })
+
+  it('asks for zebra’s table of the router it names', () => {
+    expect(stateRequestOf({ objectives: [{ id: 'backup', text: '', check: backup }] })).toEqual({
+      routers: { a: ['rib'] },
+      pings: [],
     })
   })
 })
@@ -173,7 +338,8 @@ describe('what a mission needs read', () => {
     expect(hasStateChecks(mission)).toBe(true)
     expect(hasRunChecks(mission)).toBe(false)
     expect(stateRequestOf(mission)).toEqual({
-      routers: { a: ['daemons', 'routes', 'savedConfig'], c: ['routes'] },
+      // zebra's table on a, the router that pings: a ping to a's own address proves nothing.
+      routers: { a: ['daemons', 'routes', 'rib', 'savedConfig'], c: ['routes'] },
       pings: [{ from: 'a', to: '10.0.2.2', count: 3 }],
     })
   })

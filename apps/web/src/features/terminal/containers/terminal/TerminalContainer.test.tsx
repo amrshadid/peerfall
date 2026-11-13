@@ -80,6 +80,17 @@ describe('TerminalContainer', () => {
     expect(mocks.write).not.toHaveBeenCalled()
   })
 
+  it("stays locked while the mission's routing settles, though the Machine is ready", () => {
+    at('ready')
+    const { rerender } = render(<TerminalContainer settling />)
+    expect(options().locked).toBe(true)
+    expect(screen.getByRole('status').textContent).toContain('Routers finding each other')
+
+    rerender(<TerminalContainer settling={false} />)
+    expect(options().locked).toBe(false)
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
   it('keeps the plate but lets keys through while a network that was up is restored: the Machine holds them', () => {
     at('ready')
     const { rerender } = render(<TerminalContainer />)

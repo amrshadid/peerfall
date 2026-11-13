@@ -22,6 +22,10 @@ export function documentTitleOf(route: Route, content: LoadedContent): string {
       return `Peer Map · ${APP}`
     case 'mission':
       return `${content.game.mission(route.missionId)?.title ?? 'Mission'} · ${APP}`
+    case 'codex': {
+      const card = route.cardId === null ? undefined : content.game.card(route.cardId)
+      return `${card ? `${card.card.term} · ` : ''}Codex · ${APP}`
+    }
     case 'settings':
       return `Settings · ${APP}`
     case 'dev-workspace':

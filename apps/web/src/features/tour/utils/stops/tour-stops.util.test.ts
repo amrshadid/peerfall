@@ -1,3 +1,4 @@
+import { MISSION_STEPS } from '@features/mission/utils/layout'
 import type { TourStop } from '@features/tour/types'
 import { describe, expect, it } from 'vitest'
 import { MAX_STOP_TEXT_LENGTH, TOUR_STOPS } from './tour-stops.constants'
@@ -77,5 +78,10 @@ describe('TOUR_STOPS', () => {
     for (const panel of ['guide', 'terminal', 'editor', 'topology', 'timeline']) {
       expect(selectors).toContain(`#mission-${panel}`)
     }
+  })
+
+  it('names the steps as the step rail shows them, in its order', () => {
+    const text = TOUR_STOPS.mission.find((s) => s.id === 'mission:steps')?.text ?? ''
+    expect(text.startsWith(`${MISSION_STEPS.map((step) => step.label).join(', ')}.`)).toBe(true)
   })
 })

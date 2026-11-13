@@ -7,6 +7,71 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-11-14
+
+Stages 1 and 2 are retold for a player who starts knowing nothing, in fourteen missions, with
+a Guide that waits for each command, objectives that tick by themselves, and the Codex.
+Every mission was fact-checked on the Machine by a reviewer who did not write it, and
+played end to end in the app.
+
+### Added
+
+- **Stage 1, First router, in eight missions:** The Dark Cable (a router as plain Linux
+  shows it: interfaces and routes), Nobody Answers (FRR's daemons and vtysh), The Silent
+  Router (FRR's init script and watchfrr), The Router's Language (vtysh's help and modes,
+  `shutdown`), What It Does Now (the running configuration), Gone After the Restart (the
+  saved configuration and `write memory`), The Skipped Line (FRR's log and `vtysh -C -f`),
+  and the capstone A Router from Nothing.
+- **Stage 2, Follow a packet, in six missions:** Two Ends of One Cable (addresses and
+  connected routes), One Hop Further (static routes and next hops), The Reply That Never
+  Came Back (the way back, TTL and `traceroute`), Written but Not Used (zebra's table and
+  the kernel's, next-hop resolution), The Backup Path (administrative distance, floating
+  static routes, equal-cost paths), and the capstone Bring the Line Up.
+- **A paced Guide.** Each mission is told step by step (scene, see it, build it, watch it,
+  debrief), and the Guide waits for the player's command before it goes on. Three staged
+  hints, and command chips that explain a command before it is typed.
+- **Live checking.** Objectives are judged from the network as it is, after each command
+  the player finishes and whenever routing settles; no button to press.
+- **The Codex and the Field Guide.** A card for each idea a mission teaches, deepened by
+  later missions, a title page for each stage, and one Field Guide entry for each command,
+  from the mission it is first met in.
+- **New checks:** a route in zebra's routing table, selected or waiting (`rib`), and a
+  configuration line that must be gone (`config` with `absent: true`).
+- **`pnpm content:report`** measures every mission against the word budgets, the
+  vocabulary and the chain of concepts.
+
+### Changed
+
+- **Stages 1 and 2 rewritten from zero** for players who start knowing nothing: The Silent
+  Router, Gone After the Restart, Two Ends of One Cable and The Reply That Never Came Back
+  keep their ids and are retold; every word is explained next to the output that shows it.
+- **The Link That Never Went Down** has a new story, hints, chips and Codex cards; its
+  network, checks and golden runs are unchanged.
+- **Build it waits for the player.** Once every objective is met, "Next: Watch it" appears;
+  Build it no longer moves on by itself and hides its last lines.
+
+### Fixed
+
+- Every output in the stories matches what the Machine prints in the browser, and every
+  claim was checked against FRR 10.6.1, its source and its docs.
+- A mission starts with the terminal in its first router, and the terminal stays locked
+  until the routers have found each other, so Start over goes back to the network as the
+  mission found it.
+- The Peer Map shows a link down when one of its ends has no carrier.
+- Pinging a router's own address no longer counts as reaching another router, and Two
+  Ends of One Cable judges each end by its own address.
+- The editor opens only in missions that use it, and stays inside its column.
+- "Back to" a step after looking at an earlier one, Start over during the scene, and
+  "Play it again" on the debrief resets the network.
+- The timeline calls a run "Repaired" only when it met the objectives, and the Predict
+  and the hints name the stage's own guide.
+
+### Known gaps
+
+- Stage 3 has no mission, so the journey goes from stage 2 to stage 4.
+- The Guide moves on after any finished command, a wrong one too.
+- The terminal wraps at 80 columns and clips its right edge on narrow panels.
+
 ## [0.1.0-alpha.2] - 2026-11-12
 
 The game now starts from the beginning: stages 1 and 2 each have two missions.
@@ -80,6 +145,7 @@ The first public pre-release.
 - The first visit downloads the Linux image; its size has not been measured yet.
 - The game does not work offline yet beyond what the browser has already cached.
 
-[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.2...HEAD
+[Unreleased]: https://github.com/amrshadid/peerfall/compare/v0.1.0-alpha.3...HEAD
+[0.1.0-alpha.3]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/amrshadid/peerfall/releases/tag/v0.1.0-alpha.1

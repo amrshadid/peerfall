@@ -18,6 +18,23 @@ runs:
         lines: [configure terminal, interface a-b, ip address 10.0.1.1/30]
       - router: b
         lines: [configure terminal, interface b-a, ip address 10.0.2.2/30]
+  # The ends swapped: each kernel has the connected route, and a's ping to 10.0.1.2 is answered
+  # by a itself.
+  - id: swapped-ends
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip address 10.0.1.2/30]
+      - router: b
+        lines: [configure terminal, interface b-a, ip address 10.0.1.1/30]
+  # b copies a's address: b has the connected route, and nobody owns 10.0.1.2.
+  - id: b-takes-as-address
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip address 10.0.1.1/30]
+      - router: b
+        lines: [configure terminal, interface b-a, ip address 10.0.1.1/30]
   - id: both-ends
     passes: true
     changes:
@@ -26,7 +43,7 @@ runs:
       - router: b
         lines: [configure terminal, interface b-a, ip address 10.0.1.2/30]
   # The same outcome reached from Linux instead of FRR: the mission is judged by what the
-  # kernel has, not by which command put it there.
+  # kernel has, not by which command put it there. The Real world says why FRR is the better place.
   - id: addressed-from-linux
     passes: true
     changes:

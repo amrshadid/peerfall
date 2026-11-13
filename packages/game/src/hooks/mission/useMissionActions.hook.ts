@@ -18,7 +18,7 @@ import type { MissionVerdict } from '#types/definitions/checks'
 import type { MissionId } from '#types/definitions/mission'
 import type { RunRole, RunSummary } from '#types/definitions/runs'
 import type { ActiveMission } from '#types/definitions/store'
-import { judgeMission } from '#utils/checks/index'
+import { judgeMission, mergeVerdicts } from '#utils/checks/index'
 import { hintsUsed } from '#utils/hints/index'
 import { findMissionProgress, isCompleted, missionStatus, recordRun, startMission } from '#utils/progress/index'
 import { summariseRun } from '#utils/runs/index'
@@ -35,16 +35,22 @@ export interface UseMissionActionsResult {
    * `state` is the Machine as it was last read, for the checks that read it; without it they are
    * `not_checked`.
    */
-  judge: (events: readonly StampedMachineEvent[], state?: MachineState | null) => ServiceResponse<MissionVerdict>
+  judge: (
+    events: readonly StampedMachineEvent[],
+    state?: MachineState | null,
+    previous?: MissionVerdict | null
+  ) => ServiceResponse<MissionVerdict>
   /** Keeps a run of the fault on the network as it was given, to compare the repaired run with. Not judged. */
   saveBaseline: (events: readonly StampedMachineEvent[]) => Promise<ServiceResponse<RunSummary>>
   /**
    * Judges a run, or the player's work as `state` shows it, keeps it, and completes the mission
-   * the first time it passes. Retries are free.
+   * the first time it passes. Retries are free. With `previous`, objectives it met stay met
+   * (`mergeVerdicts`), and the merged verdict is what is kept.
    */
   submitRun: (
     events: readonly StampedMachineEvent[],
-    state?: MachineState | null
+    state?: MachineState | null,
+    previous?: MissionVerdict | null
   ) => Promise<ServiceResponse<MissionVerdict>>
   /** Only once the mission has passed. */
   showDebrief: () => ServiceResponse<ActiveMission>
@@ -84,23 +90,27 @@ export function createMissionActions(): UseMissionActionsResult {
 
   const judge = (
     events: readonly StampedMachineEvent[],
-    state: MachineState | null = null
+    state: MachineState | null = null,
+    previous: MissionVerdict | null = null
   ): ServiceResponse<MissionVerdict> => {
     const { active } = store()
-    return active ? { success: true, data: judgeMission(active.mission, events, state) } : noActiveMissionError()
+    return active
+      ? { success: true, data: mergeVerdicts(previous, judgeMission(active.mission, events, state)) }
+      : noActiveMissionError()
   }
 
   /** Keeps the run in the progress; `null` when no mission is active. */
   const keep = async (
     events: readonly StampedMachineEvent[],
     role: RunRole,
-    state: MachineState | null = null
+    state: MachineState | null = null,
+    previous: MissionVerdict | null = null
   ): Promise<{ summary: RunSummary; verdict: MissionVerdict } | null> => {
     const { active, progress } = store()
     if (!active) return null
     const { mission } = active
     const at = getGameNow()
-    const verdict = judgeMission(mission, events, state)
+    const verdict = mergeVerdicts(previous, judgeMission(mission, events, state))
     const summary = summariseRun(events, mission)
     const passed = role === 'attempt' && verdict.passed
     const recorded = recordRun(progress, mission.id, {
@@ -127,7 +137,7 @@ export function createMissionActions(): UseMissionActionsResult {
         {
           missionId: mission.id,
           attempts: record?.attempts ?? 1,
-          hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? {}),
+          hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? 0),
           at,
         },
         { source: SOURCE }
@@ -145,8 +155,8 @@ export function createMissionActions(): UseMissionActionsResult {
       const kept = await keep(events, 'baseline')
       return kept ? { success: true, data: kept.summary } : noActiveMissionError()
     },
-    submitRun: async (events, state = null) => {
-      const kept = await keep(events, 'attempt', state)
+    submitRun: async (events, state = null, previous = null) => {
+      const kept = await keep(events, 'attempt', state, previous)
       return kept ? { success: true, data: kept.verdict } : noActiveMissionError()
     },
     showDebrief: () => moveTo('debrief'),

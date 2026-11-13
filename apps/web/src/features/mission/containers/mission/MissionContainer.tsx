@@ -2,8 +2,9 @@ import { useCheatSheet, usePanelSizes, useShowAllPanels } from '@app/store'
 import { useSaveStatus } from '@features/chrome/hooks/save'
 import { useScreenChrome } from '@features/chrome/hooks/screen'
 import { useContent } from '@features/content/hooks/content'
-import { hintsLeftOf, hintTargetOf, waitReasonOf } from '@features/guide/utils/run'
+import { waitReasonOf } from '@features/guide/utils/run'
 import { MissionScreenPresentation } from '@features/mission/components/layout'
+import { useStoryStep } from '@features/mission/hooks/story'
 import type { MissionRunView } from '@features/mission/types'
 import {
   MACHINE_STATUS,
@@ -12,11 +13,11 @@ import {
   openPanelsKey,
   panelsFor,
 } from '@features/mission/utils/layout'
-import { missionStepIndex, panelsOfStep } from '@features/mission/utils/steps'
+import { panelsOfStep } from '@features/mission/utils/steps'
 import { useShortcut } from '@features/shortcuts/hooks/keys'
 import { formatSeconds } from '@features/timeline/utils/runs'
 import { useTourScreen } from '@features/tour/hooks/tour'
-import { useActiveMission, useHints, useMissionActions, useProgress, useRunComparison } from '@peerfall/game/hooks'
+import { useActiveMission, useHints, useMissionActions, useProgress } from '@peerfall/game/hooks'
 import { useMachineStatus, useRouterSelection } from '@peerfall/machine/hooks'
 import { type UseMissionRunResult, useMissionRun } from '@peerfall/missions/hooks'
 import { APP_MANUAL } from '@shared/constants/app'
@@ -33,11 +34,11 @@ export interface MissionContainerProps {
   /** The panels that need the mission's run are handed it; the others read the game and the Machine themselves. */
   guide: (view: MissionView) => ReactNode
   editor: (view: MissionView) => ReactNode
-  terminal: ReactNode
+  terminal: (view: MissionView) => ReactNode
   topology: ReactNode
   timeline: ReactNode
-  /** Laid over the workspace once the player opens it. */
-  debrief: ReactNode
+  /** Laid over the workspace once the player opens it; handed the run for its Play it again. */
+  debrief: (view: MissionView) => ReactNode
   /** Shown for an address that names no mission. */
   notFound: ReactNode
 }
@@ -65,7 +66,7 @@ export function MissionContainer({
   const content = useContent()
   const definition = content.game.mission(missionId) ?? null
   const { isOpen } = useProgress()
-  const { start, begin, leave } = useMissionActions()
+  const { start, begin, showDebrief, leave } = useMissionActions()
   const active = useActiveMission()
   const [refused, setRefused] = useState<string | null>(null)
 
@@ -88,11 +89,22 @@ export function MissionContainer({
 
   const mission = active.mission?.id === missionId ? active.mission : null
   const run = useMissionRun(mission)
-  const { baseline, repaired } = useRunComparison()
   const hints = useHints()
   const machine = useMachineStatus()
   const lock = useMachineLock(machine)
-  const { router } = useRouterSelection()
+  const { router, select } = useRouterSelection()
+  // A network starts with the terminal in the Machine's own shell, which belongs to no router: a
+  // newcomer would type every command there, see nothing work and get no sign why. So the
+  // terminal goes into the router the mission starts from (the probe's, else the first one) as
+  // soon as its namespaces exist (settling comes right after they are built: waiting for ready let
+  // the first commands land in the Machine's shell), and again after Start over brings that shell back.
+  const firstRouter = mission?.probe?.from ?? mission?.network.routers[0]?.name ?? null
+  const routersBuilt = run.phase === 'settling' || run.phase === 'ready'
+  useEffect(() => {
+    if (routersBuilt && router === null && firstRouter !== null) {
+      void select(firstRouter)
+    }
+  }, [routersBuilt, router, firstRouter, select])
   const chrome = useScreenChrome()
   const { sizes, setPanelSize } = usePanelSizes()
   const showAll = useShowAllPanels()
@@ -102,24 +114,42 @@ export function MissionContainer({
   const [restartOpen, setRestartOpen] = useState(false)
 
   const phase = active.phase ?? 'incident'
-  const stepIndex = missionStepIndex({
-    phase,
-    hasBaseline: baseline !== null,
-    hasAttempt: repaired !== null,
-    completed: active.isCompleted,
-  })
-  const panels = panelsFor(panelsOfStep(phase, stepIndex, mission?.fault !== undefined), showAll)
+  // Every reset of the network starts the story's played steps over.
+  const [runs, setRuns] = useState(0)
+  const startedOver = runs > 0
+  // After a reset the saved verdict describes a network that is gone.
+  const verdict = run.verdict ?? (startedOver ? null : active.verdict)
+  const storyKey = `${missionId}#${runs}`
+  const passed = run.verdict?.passed ?? false
+  const story = useStoryStep({ key: storyKey, phase, passed })
+  const { step } = story
+  const stepIndex = MISSION_STEPS.findIndex((entry) => entry.id === step)
+  const panels = panelsFor(panelsOfStep(step, mission?.fault !== undefined), showAll)
   // Each new step can open a panel, which gets its own tour stop once.
   useTourScreen('mission', mission ? openPanelsKey(panels) : 'opening')
 
-  const verdict = run.verdict ?? active.verdict
-  const hintTarget = phase === 'play' ? hintTargetOf(hints.objectives, verdict) : null
+  const onNext =
+    step === 'scene'
+      ? () => {
+          begin()
+          story.goTo('see')
+        }
+      : step === 'see'
+        ? () => story.goTo('build')
+        : step === 'build' && passed
+          ? () => story.goTo('watch')
+          : step === 'watch'
+            ? showDebrief
+            : null
+  useShortcut('next-step', () => onNext?.(), mission !== null && onNext !== null)
+  // Hints are for the steps played on the network, one at a time: a nudge, the concept, the spot.
+  const hintEnabled = phase === 'play' && hints.next !== null
   const revealHint = () => {
-    if (hintTarget !== null) {
-      void hints.reveal(hintTarget)
+    if (hintEnabled) {
+      void hints.reveal()
     }
   }
-  useShortcut('hint', revealHint, mission !== null && hintTarget !== null)
+  useShortcut('hint', revealHint, mission !== null && hintEnabled)
   useShortcut('focus-guide', () => focusPanel(MISSION_PANEL_IDS.guide), mission !== null)
   useShortcut('focus-editor', () => focusPanel(MISSION_PANEL_IDS.editor), mission !== null && panels.editor)
   useShortcut('focus-network', () => focusPanel(MISSION_PANEL_IDS.network), mission !== null)
@@ -141,14 +171,44 @@ export function MissionContainer({
 
   const chapter = content.game.chapters.find((candidate) => candidate.id === mission.chapter)
   const number = content.game.missionsIn(mission.chapter).findIndex((candidate) => candidate.id === mission.id) + 1
-  const step = MISSION_STEPS[Math.min(stepIndex, MISSION_STEPS.length - 1)] ?? MISSION_STEPS[0]
+  // The network is reset whenever the run allows it, the scene included: commands typed while
+  // reading it already change the routers.
+  const restartWait = waitReasonOf(run.phase)
+  // The story starts over in the first router, so the terminal goes back there too.
+  const startOver = () => {
+    setRuns((count) => count + 1)
+    void run.startOver().then(() => {
+      if (firstRouter !== null) {
+        void select(firstRouter)
+      }
+    })
+  }
   const view: MissionView = {
     run,
-    step: step?.id ?? 'inspect',
-    stepLabel: step?.label ?? '',
+    step,
+    reviewing: story.reviewing,
+    onEndReview: () => story.review(null),
+    startedOver,
+    onNext,
+    onSkipToBuild:
+      step === 'scene'
+        ? () => {
+            begin()
+            story.goTo('build')
+          }
+        : null,
     onStartOver: () => setRestartOpen(true),
+    // As Kernelfall's Replay level: the mission again on the network as it found it. While the
+    // network is busy, the Start over dialog says why it has to wait.
+    onPlayAgain: () => {
+      if (restartWait !== null) {
+        setRestartOpen(true)
+        return
+      }
+      startOver()
+      begin()
+    },
   }
-  const target = hints.objectives.find((entry) => entry.objective.id === hintTarget)
   const lastRunFellShort = verdict !== null && !verdict.passed
 
   return (
@@ -165,23 +225,24 @@ export function MissionContainer({
           subheading: chapter ? `Stage ${chapter.stage} · ${chapter.title}` : '',
           steps: MISSION_STEPS,
           currentIndex: stepIndex,
-          reviewing: null,
-          // The only way back from the debrief is to the network; the loop's steps are not replayed.
-          onReview: () => {
-            if (phase === 'debrief') {
-              begin()
+          reviewing: story.reviewing,
+          // A done step is looked at again in the Guide; progress is kept.
+          onReview: (stepId) => {
+            const target = MISSION_STEPS.find((entry) => entry.id === stepId)
+            if (target && MISSION_STEPS.indexOf(target) < stepIndex) {
+              story.toggleReview(target.id)
             }
           },
-          hintsLeft: hintsLeftOf(hints.objectives),
-          // Offered, never pushed: after a run fell short and before this objective's first hint.
-          hintOffered: lastRunFellShort && target !== undefined && target.revealed.length === 0,
-          hintEnabled: hintTarget !== null,
+          hintsLeft: hints.left,
+          // Offered, never pushed: in Build it, after a run fell short and before the first hint.
+          hintOffered: step === 'build' && lastRunFellShort && hints.revealed.length === 0,
+          hintEnabled,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
           onRestart: () => setRestartOpen(true),
         },
         panels,
-        slots: { guide: guide(view), terminal, editor: editor(view), topology, timeline },
+        slots: { guide: guide(view), terminal: terminal(view), editor: editor(view), topology, timeline },
         terminalLabel: router === null ? 'the Machine: select a router on the map' : `router ${router}`,
         terminalStatus: lock?.title ?? null,
         titleBlock: [
@@ -203,13 +264,13 @@ export function MissionContainer({
               ]
             : []),
         ],
-        debrief: phase === 'debrief' ? debrief : null,
+        debrief: phase === 'debrief' ? debrief(view) : null,
         restart: {
           open: restartOpen,
-          unavailable: phase === 'incident' ? 'The mission has not begun yet.' : waitReasonOf(run.phase),
+          unavailable: restartWait,
           onConfirm: () => {
             setRestartOpen(false)
-            void run.startOver()
+            startOver()
           },
           onCancel: () => setRestartOpen(false),
         },

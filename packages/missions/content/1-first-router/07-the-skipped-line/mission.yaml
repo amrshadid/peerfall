@@ -1,0 +1,75 @@
+id: the-skipped-line
+version: 1
+title: The Skipped Line
+summary: Find the line FRR skipped in its saved file, check the file with vtysh, and save it so that a restart brings the label back.
+minutes: 15
+chapter: first-router
+objective: Router a's saved frr.conf describes its interface to c in words FRR reads, and FRR has restarted from it with the description.
+prerequisites: [gone-after-the-restart]
+teaches: [frr-log, config-check]
+names: []
+uses: [saved-config, write-memory, running-config, watchfrr, frr-init-script, interface-description, vtysh, cli-modes]
+
+# Stage 1's three routers. a's frr.conf holds a description of a-c with a misspelt word: FRR
+# skips that line when it starts, and applies the rest.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: watchfrr
+      config: "interface a-c\n descripton link to router c\n!\n"
+    - { name: b, daemons: [], config: "" }
+    - { name: c, daemons: [], config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: fixed
+    text: Put the description of a's interface to c in a's frr.conf, spelled so FRR reads it.
+    # A `descripton` line is not a `description` line, so the mission does not start met.
+    check: { kind: config, router: a, source: saved, block: [interface a-c], line: description }
+  - id: survives
+    text: Restart FRR on a, and have it come back with the description.
+    check: { kind: config, router: a, source: started, block: [interface a-c], line: description }
+
+hints:
+  - text: Compare show running-config with the file /etc/frr/a/frr.conf. Which line of the file never made it into the running configuration?
+  - text: vtysh can check a file without applying it, and names every line it refuses. Typing the line in vtysh and saving it rewrites the whole file from the running configuration.
+  - text: Check the file, type the description properly in a-c's own mode, save it, then restart FRR.
+    command: vtysh -C -f /etc/frr/a/frr.conf
+
+chips:
+  - { command: 'vtysh -c "show running-config"', explain: "what FRR is doing now, without leaving the shell" }
+  - { command: cat /etc/frr/a/frr.conf, explain: "show a's saved configuration" }
+  - { command: 'vtysh -c "show logging"', explain: "where each daemon writes its log" }
+  - { command: tail /var/log/frr/a.log, explain: "show the last lines of FRR's log on a" }
+  - { command: vtysh -C -f /etc/frr/a/frr.conf, explain: "check the saved file without applying it" }
+  - { command: echo $?, explain: "how the last command ended: 0 means no error" }
+  - { command: /usr/lib/frr/frrinit.sh restart a, explain: "stop FRR on a and start it again from the file" }
+
+codex:
+  - id: frr-log
+    term: FRR's log
+    simple: The file each daemon writes its news to. show logging says where, /var/log/frr/a.log on the Machine.
+    deep: The log file line of the configuration sends the daemons' messages there, each with a time, the daemon, such as ZEBRA or STATIC, and a code for the message. watchfrr logs to syslog instead, which on the Machine is the terminal. A line FRR skipped at start leaves nothing in the log. Debugging a protocol, from stage 3 on, adds far more lines to the same file.
+    sources: [lib/zlog.c, lib/log.c, lib/log_vty.c]
+    docs: https://docs.frrouting.org/en/latest/basic.html
+    tryIt: tail -5 /var/log/frr/a.log
+  - id: config-check
+    term: Checking a file
+    simple: vtysh -C -f reads a configuration file, applies nothing, and names each line FRR would refuse.
+    deep: -C is a dry run. Each line is matched against vtysh's commands as if typed, in its mode. A refused line is reported with its line number and, in brackets, the number of the mode it was read in, such as [21] for interface mode, and vtysh ends with status 2. A clean file prints nothing and ends with 0. At start FRR skips the same lines and applies the rest.
+    deepens: saved-config
+    sources: [vtysh/vtysh.c, vtysh/vtysh_main.c, vtysh/vtysh_config.c]
+    docs: https://docs.frrouting.org/en/latest/vtysh.html
+    tryIt: vtysh -C -f /etc/frr/frr.conf; echo $?
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

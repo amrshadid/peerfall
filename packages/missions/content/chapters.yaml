@@ -1,17 +1,44 @@
 # The curriculum, in play order. A chapter's stage number is its place in this list.
+# A chapter with missions also has its Codex title page: `story` (the stage in a few lines),
+# `guide` (the FRR daemon who guides it), `standsFor` (the real part of FRR it is about) and
+# `outcomes` (the "You can now…" lines shown once every mission of the stage is completed).
 chapters:
   - id: first-router
     title: First router
-    summary: Start FRR on Linux, find its daemons, use vtysh, and save and reload a configuration.
+    summary: Meet a router through Linux, start FRR and its daemons, use vtysh, and save a configuration that survives a restart.
+    story: It starts before FRR, with what a router is as plain Linux shows it. Then FRR itself, its daemons and its console, how it is started and kept running, how to ask it for help, what it is doing now, what survives a restart, and what happens when the saved file has a mistake. The last mission brings a router up from nothing.
+    guide: zebra
+    standsFor: Linux interfaces and routes, FRR's daemons, watchfrr, vtysh and frr.conf
+    outcomes:
+      - start FRR on a Linux router and say which daemons run and what keeps them running
+      - use vtysh, its help and its modes
+      - read the running configuration, save it and know what a restart leaves
+      - find a line FRR refused
   - id: follow-a-packet
     title: Follow a packet
-    summary: Connected and static routes, next hops, and a route's way from Zebra into Linux forwarding.
+    summary: Addresses and connected routes, static routes and next hops, the way back, zebra's table and the kernel's, and administrative distance.
+    story: A packet's journey, one step at a time. The address an interface needs and the route it brings, a route written by hand to a network one router away, the route the reply needs to come back, why a route that is written is not always used, and which route wins when there are two. The last mission builds a line of three routers from bare cables and makes it survive a restart.
+    guide: zebra
+    standsFor: zebra, staticd, zebra's table (RIB) and the kernel's (FIB)
+    outcomes:
+      - give interfaces addresses and read the routes they bring
+      - write static routes and their next hops
+      - find a missing way back
+      - follow a route from FRR's configuration through zebra's table into the kernel's
+      - choose between routes with administrative distance
   - id: build-an-underlay
     title: Build an underlay
     summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.
   - id: recover-from-failure
     title: Recover from failure
     summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.
+    story: A link stopped passing packets while both its ends stayed up, and the network took half a minute to notice. Failures are measured here, and made shorter.
+    guide: bfdd
+    standsFor: bfdd and the routing protocols it tells about a dead neighbour
+    outcomes:
+      - measure an outage from a probe's replies
+      - tell which event noticed a failure first
+      - make OSPF notice a dead link in under a second with BFD
   - id: other-interior-protocols
     title: The other interior protocols
     summary: RIP, EIGRP, Babel, OpenFabric and NHRP, and where each one fits.

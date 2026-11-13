@@ -6,6 +6,7 @@ import type {
   MachineState,
   NetworkDefinition,
   ProbeDefinition,
+  RouterStatePart,
   StampedMachineEvent,
   StateRequest,
 } from '@peerfall/machine/types'
@@ -264,6 +265,44 @@ async function waitUntilQuiet(machine: MissionMachine, timings: RunTimings): Pro
 }
 
 /**
+ * A state request that also reads the interfaces of every router of the network, so the map can
+ * show a link switched off as down. No check reads them: the verdict stays the checks' alone.
+ */
+export function withInterfaces(request: StateRequest, network: NetworkDefinition): StateRequest {
+  const routers: Record<string, readonly RouterStatePart[]> = { ...request.routers }
+  for (const { name } of network.routers) {
+    const parts = routers[name] ?? []
+    routers[name] = parts.includes('links') ? parts : [...parts, 'links']
+  }
+  return { ...request, routers }
+}
+
+/**
+ * Reads what a mission's state checks need from the Machine as it is now, as live judging does
+ * after each command the player finishes: nothing is restarted, nothing is waited for. Every
+ * router's interfaces are read too, for the map. Judging is the caller's, with
+ * `judgeMission(mission, events, state)`.
+ */
+export async function liveRead(
+  machine: Pick<MissionMachine, 'events' | 'readState'>,
+  mission: Pick<MissionDefinition, 'objectives' | 'network'>
+): Promise<CheckOutcome> {
+  const request = stateRequestOf(mission)
+  if (!request) {
+    return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
+  }
+  const state = await machine.readState(withInterfaces(request, mission.network))
+  if (!state.ok) {
+    return state
+  }
+  // The events as they are once the read is back: anything the read itself caused is in them.
+  return { ok: true, events: [...machine.events()], state: state.value }
+}
+
+/** Routing changes so far, for knowing when a configuration has finished reaching the kernel. */
+export const routingChangeCount = (events: readonly StampedMachineEvent[]): number => routingChanges(events)
+
+/**
  * Checks the player's work on a mission whose checks read the Machine's state: FRR is restarted
  * on the routers the mission says survive one, the network is left to settle, and the state the
  * checks need is read as root. Nothing is undone afterwards: what the player configured stays, and
@@ -271,11 +310,10 @@ async function waitUntilQuiet(machine: MissionMachine, timings: RunTimings): Pro
  */
 export async function checkRun(
   machine: MissionMachine,
-  mission: Pick<MissionDefinition, 'objectives' | 'restartOnCheck'>,
+  mission: Pick<MissionDefinition, 'objectives' | 'network' | 'restartOnCheck'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<CheckOutcome> {
-  const request = stateRequestOf(mission)
-  if (!request) {
+  if (!stateRequestOf(mission)) {
     return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
   }
   for (const router of mission.restartOnCheck ?? []) {
@@ -284,13 +322,25 @@ export async function checkRun(
       return restarted
     }
   }
+  return settledRead(machine, mission, timings)
+}
+
+/**
+ * What live judging finds once the player has stopped typing and routing has gone quiet: the
+ * network is left to settle, then read as `liveRead` reads it. Nothing is restarted. The golden
+ * runs judge a mission this way, after the scripted player's last change.
+ */
+export async function settledRead(
+  machine: MissionMachine,
+  mission: Pick<MissionDefinition, 'objectives' | 'network'>,
+  timings: RunTimings = DEFAULT_RUN_TIMINGS
+): Promise<CheckOutcome> {
+  if (!stateRequestOf(mission)) {
+    return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
+  }
   // A router that was just configured or restarted is still handing its routes to the kernel.
   if (!(await waitUntilQuiet(machine, timings))) {
     return { ok: false, errors: ['The network did not settle. Try again.'] }
   }
-  const state = await machine.readState(request)
-  if (!state.ok) {
-    return state
-  }
-  return { ok: true, events: [...machine.events()], state: state.value }
+  return liveRead(machine, mission)
 }

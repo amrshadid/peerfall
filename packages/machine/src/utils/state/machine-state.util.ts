@@ -1,15 +1,19 @@
+import { isRecord } from '@peerfall/core/utils'
 import { IPV4, ROUTER_NAME } from '#types/definitions/network'
 import {
+  type InterfaceState,
   type KernelRoute,
   PING_MAX_COUNT,
   type PingRequest,
   type PingResult,
+  type RibRoute,
   ROUTER_STATE_PARTS,
   type RouterState,
   type RouterStatePart,
   type StateRequest,
 } from '#types/definitions/state'
 import { configReadLine, runningConfigText } from '#utils/config/config-diff.util'
+import { startedConfigPath } from '#utils/network/network-script.util'
 
 /** Printed before each part of a router's state, so one control line can read several. */
 const PART_MARK = '__PF_STATE__'
@@ -49,8 +53,13 @@ const PART_COMMANDS: Readonly<Record<RouterStatePart, (router: string) => string
   daemons: (router) => `vtysh -N ${router} -c 'show daemons' 2>&1`,
   // -o keeps a route with several next hops on one line.
   routes: (router) => `ip -n ${router} -o route show 2>&1`,
+  // Through a pipe: straight onto the control channel's terminal, the whole table's JSON came out empty.
+  rib: (router) => `vtysh -N ${router} -c 'show ip route json' 2>&1 | cat`,
   runningConfig: (router) => `${configReadLine(router)} 2>&1`,
   savedConfig: (router) => `cat /etc/frr/${router}/frr.conf 2>/dev/null`,
+  startedConfig: (router) => `cat ${startedConfigPath(router)} 2>/dev/null`,
+  // -o keeps each interface on one line, its flags beside its name.
+  links: (router) => `ip -n ${router} -o link show 2>&1`,
 }
 
 /** Root's line that reads the asked parts of one router, each after a line that names it. */
@@ -103,6 +112,73 @@ export function parseKernelRoutes(output: string): KernelRoute[] {
   return routes
 }
 
+// `3: a-c@if2: <BROADCAST,MULTICAST> mtu 1500 …`: the index, the name (a veth's with its far end's index), the flags.
+const LINK_LINE = /^\d+: ([^:@\s]+)(?:@\S+)?: <([^>]*)>/
+
+/**
+ * A router's interfaces from `ip -o link show`. An interface has carrier when it is switched on
+ * (`UP`) and its far end is too (`LOWER_UP`). Lines that are not interfaces (the namespace gone)
+ * are left out.
+ */
+export function parseInterfaces(output: string): InterfaceState[] {
+  const interfaces: InterfaceState[] = []
+  for (const raw of output.replaceAll('\r', '').split('\n')) {
+    const line = LINK_LINE.exec(raw.trim())
+    if (!line) {
+      continue
+    }
+    const flags = (line[2] ?? '').split(',')
+    interfaces.push({ name: line[1] ?? '', carrier: flags.includes('UP') && flags.includes('LOWER_UP') })
+  }
+  return interfaces
+}
+
+const numberOr = (value: unknown, fallback: number): number => (typeof value === 'number' ? value : fallback)
+
+function readRibRoute(entry: unknown): RibRoute[] {
+  if (!isRecord(entry) || typeof entry.prefix !== 'string' || typeof entry.protocol !== 'string') {
+    return []
+  }
+  const hops = Array.isArray(entry.nexthops) ? entry.nexthops.filter(isRecord) : []
+  return [
+    {
+      prefix: entry.prefix,
+      protocol: entry.protocol,
+      distance: numberOr(entry.distance, 0),
+      metric: numberOr(entry.metric, 0),
+      // FRR leaves `selected` and `installed` out of a route that is neither, rather than writing false.
+      selected: entry.selected === true,
+      installed: entry.installed === true,
+      nextHops: hops.map((hop) => ({
+        via: typeof hop.ip === 'string' ? hop.ip : null,
+        interface: typeof hop.interfaceName === 'string' ? hop.interfaceName : null,
+      })),
+    },
+  ]
+}
+
+/**
+ * Zebra's routes from `show ip route json` (or `show ip route <prefix> json`): an object of
+ * prefixes, each with every route zebra holds for it, selected or not. Anything else (vtysh
+ * reaching no daemon) is no routes.
+ */
+export function parseRibRoutes(output: string): RibRoute[] {
+  const start = output.indexOf('{')
+  if (start < 0) {
+    return []
+  }
+  let table: unknown
+  try {
+    table = JSON.parse(output.slice(start))
+  } catch {
+    return []
+  }
+  if (!isRecord(table)) {
+    return []
+  }
+  return Object.values(table).flatMap((routes) => (Array.isArray(routes) ? routes.flatMap(readRibRoute) : []))
+}
+
 /** What one router's state line printed, split back into its parts. */
 export function parseRouterState(output: string): RouterState {
   const sections = new Map<string, string>()
@@ -118,16 +194,22 @@ export function parseRouterState(output: string): RouterState {
   }
   const daemons = sections.get('daemons')
   const routes = sections.get('routes')
+  const rib = sections.get('rib')
   const running = sections.get('runningConfig')
   const saved = sections.get('savedConfig')
+  const started = sections.get('startedConfig')
+  const links = sections.get('links')
   return {
     ...(daemons !== undefined && { daemons: parseDaemons(daemons) }),
     ...(routes !== undefined && { routes: parseKernelRoutes(routes) }),
+    ...(rib !== undefined && { rib: parseRibRoutes(rib) }),
     // vtysh prints the configuration only when a daemon answered.
     ...(running !== undefined && {
       runningConfig: running.includes('Current configuration:') ? runningConfigText(running) : null,
     }),
     ...(saved !== undefined && { savedConfig: saved.trim() === '' ? null : saved }),
+    ...(started !== undefined && { startedConfig: started.trim() === '' ? null : started }),
+    ...(links !== undefined && { links: parseInterfaces(links) }),
   }
 }
 

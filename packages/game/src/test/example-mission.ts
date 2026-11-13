@@ -35,6 +35,11 @@ export const EXAMPLE_MISSION_YAML = {
   chapter: 'recover-from-failure',
   objective: 'When the link between a and c stops passing packets, traffic is back through b within two seconds.',
   prerequisites: [],
+  summary: 'Make the network notice a dead link in under a second.',
+  minutes: 20,
+  teaches: ['bfd-session'],
+  names: ['bfd-timers'],
+  uses: ['ospf-adjacency'],
   network: {
     routers: ROUTERS.map((name, at) => router(name, at + 1)),
     links: [link('a', 'b', 1), link('a', 'c', 2), link('b', 'c', 3)],
@@ -47,31 +52,36 @@ export const EXAMPLE_MISSION_YAML = {
       id: 'reaches-c',
       text: 'Router a reaches c while the network is healthy.',
       check: { kind: 'reachable', minReplies: 3 },
-      hints: [
-        { text: 'The probe at the top shows whether replies are coming back.' },
-        { text: 'Ask a for its route to c.', command: 'show ip route 10.255.0.3' },
-      ],
     },
     {
       id: 'direct-while-healthy',
       text: 'While the network is healthy, traffic to c takes the direct link.',
       check: { kind: 'path', before: 'a-c' },
-      hints: [
-        { text: 'Look at which interface the route to c leaves through.' },
-        { text: 'Both paths cost the same per link; the direct one has fewer links.', command: 'show ip ospf route' },
-      ],
     },
     {
       id: 'recovers-through-b',
       text: 'After the fault, replies come back through b in under two seconds.',
       check: { kind: 'recovery', via: 'a-b' },
-      hints: [
-        { text: 'Watch how long a keeps its neighbor c after the link breaks.' },
-        { text: 'Something has to notice a dead neighbor faster than the OSPF dead timer.' },
-        { text: 'Turn on BFD for OSPF on both ends of the link.', command: 'ip ospf bfd' },
-      ],
     },
   ],
+  hints: [
+    { text: 'Watch how long a keeps its neighbor c after the link breaks.' },
+    { text: 'Something has to notice a dead neighbor faster than the OSPF dead timer.' },
+    { text: 'Turn on BFD for OSPF on both ends of the link.', command: 'ip ospf bfd' },
+  ],
+  chips: [{ command: 'show ip ospf neighbor', explain: "list a's OSPF neighbors and how long each has left" }],
+  codex: [
+    {
+      id: 'bfd',
+      term: 'BFD',
+      simple: 'A fast hello between two neighbors that notices a dead link in under a second.',
+      deep: 'bfdd sends a control packet every 300 ms and declares the session down after three are missed.',
+      sources: ['bfdd/bfd.c'],
+      docs: 'https://docs.frrouting.org/en/latest/bfd.html',
+      tryIt: 'show bfd peers',
+    },
+  ],
+  story: { scene: 'story.md#scene', debrief: 'story.md#debrief', realWorld: 'story.md#real-world' },
 } as const
 
 /** The example `mission.yaml` with `fields` changed; throws if it doesn't validate. */
@@ -85,14 +95,30 @@ export function exampleMission(fields: Readonly<Record<string, unknown>> = {}): 
 
 export const EXAMPLE_MISSION: MissionDefinition = exampleMission()
 
-/** A second mission that needs the first one, for unlock and status tests. */
+/** A second mission that needs the first one, for unlock and status tests; its card deepens the first's. */
 export const FOLLOW_UP_MISSION: MissionDefinition = exampleMission({
   id: 'faster-than-default',
   title: 'Faster Than Default',
   prerequisites: [EXAMPLE_MISSION.id],
+  teaches: ['bfd-timers'],
+  names: [],
+  uses: ['bfd-session'],
+  codex: [
+    {
+      id: 'bfd-timers',
+      term: 'BFD timers',
+      simple: 'How often BFD sends, and how many missed packets end a session.',
+      deepens: 'bfd',
+      sources: ['bfdd/bfd.c'],
+    },
+  ],
 })
 
-const HINTS = [{ text: 'Look at the router.' }, { text: 'Ask it.', command: 'show running-config' }]
+const HINTS = [
+  { text: 'Look at the router.' },
+  { text: 'FRR keeps what it runs apart from what it saved.' },
+  { text: 'Ask it.', command: 'show running-config' },
+]
 
 /**
  * A parsed `mission.yaml` with no fault and no probe, judged from the Machine's state alone:
@@ -105,6 +131,8 @@ export const STATE_MISSION_YAML = {
   chapter: 'recover-from-failure',
   objective: 'Router a reaches c, and still does after a restart.',
   prerequisites: [],
+  teaches: [],
+  uses: [],
   network: {
     routers: [
       { name: 'a', daemons: ['staticd'], config: '', startup: 'watchfrr' },
@@ -119,33 +147,30 @@ export const STATE_MISSION_YAML = {
       id: 'frr-runs',
       text: 'FRR runs on a.',
       check: { kind: 'daemons', router: 'a', daemons: ['watchfrr', 'zebra', 'mgmtd', 'staticd'] },
-      hints: HINTS,
     },
     {
       id: 'route-out',
       text: 'a has a static route towards c.',
       check: { kind: 'route', router: 'a', to: '10.0.2.2', protocol: 'static', interface: 'a-b' },
-      hints: HINTS,
     },
     {
       id: 'route-back',
       text: 'c has a static route back to a.',
       check: { kind: 'route', router: 'c', prefix: '10.0.1.0/30', protocol: 'static' },
-      hints: HINTS,
     },
     {
       id: 'reaches-c',
       text: 'a reaches c.',
       check: { kind: 'reaches', from: 'a', to: '10.0.2.2' },
-      hints: HINTS,
     },
     {
       id: 'saved',
       text: 'The route is in a’s saved configuration.',
       check: { kind: 'config', router: 'a', source: 'saved', line: 'ip route 10.0.2.0/30' },
-      hints: HINTS,
     },
   ],
+  hints: HINTS,
+  story: { scene: 'story.md#scene', debrief: 'story.md#debrief', realWorld: 'story.md#real-world' },
 } as const
 
 /** The state mission with `fields` changed; throws if it doesn't validate. */
@@ -164,8 +189,20 @@ export const EXAMPLE_CHAPTERS_YAML = {
       id: 'recover-from-failure',
       title: 'Recover from failure',
       summary: 'Notice a dead neighbor quickly and move traffic to another path.',
+      story: 'A link went quiet and nobody noticed for forty seconds.',
+      guide: 'bfdd',
+      standsFor: 'bfdd and the routing protocols it serves',
+      outcomes: ['measure an outage', 'make OSPF notice a dead link in under a second'],
     },
-    { id: 'scale-with-bgp', title: 'Scale with BGP', summary: 'Carry routes between networks.' },
+    {
+      id: 'scale-with-bgp',
+      title: 'Scale with BGP',
+      summary: 'Carry routes between networks.',
+      story: 'Two networks need each other’s routes.',
+      guide: 'bgpd',
+      standsFor: 'bgpd',
+      outcomes: ['bring up a BGP session'],
+    },
   ],
 } as const
 

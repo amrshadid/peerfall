@@ -1,0 +1,42 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `shell` lines are typed at that router's shell, `lines` into its vtysh.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # One daemon by hand: vtysh answers, and FRR is not whole.
+  - id: zebra-by-hand
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/zebra -d -N a]
+  # Every daemon by hand: they answer, and nothing watches them.
+  - id: daemons-by-hand
+    passes: false
+    changes:
+      - router: a
+        shell:
+          - /usr/lib/frr/zebra -d -N a
+          - /usr/lib/frr/mgmtd -d -N a
+          - /usr/lib/frr/staticd -d -N a
+  # The script without the router's name: an FRR runs that vtysh -N a cannot reach.
+  - id: init-script-without-name
+    passes: false
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start]
+  - id: init-script
+    passes: true
+    changes:
+      - router: a
+        shell: [/usr/lib/frr/frrinit.sh start a]
+  # Started by hand first, then again properly: the script stops what runs and starts watchfrr.
+  - id: by-hand-then-init-script
+    passes: true
+    changes:
+      - router: a
+        shell:
+          - /usr/lib/frr/zebra -d -N a
+          - /usr/lib/frr/mgmtd -d -N a
+          - /usr/lib/frr/staticd -d -N a
+          - /usr/lib/frr/frrinit.sh restart a

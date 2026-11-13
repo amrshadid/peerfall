@@ -1,1 +1,1 @@
-export { type MissionStepFacts, missionStepIndex, panelsOfStep } from './mission-step.util'
+export { panelsOfStep } from './mission-step.util'

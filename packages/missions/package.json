@@ -21,7 +21,8 @@
   "scripts": {
     "type-check": "tsc --noEmit -p .",
     "test": "vitest run",
-    "vm:golden": "node scripts/golden-runs.ts"
+    "vm:golden": "node scripts/golden-runs.ts",
+    "content:report": "node scripts/content-report.ts"
   },
   "dependencies": {
     "@peerfall/core": "workspace:*",

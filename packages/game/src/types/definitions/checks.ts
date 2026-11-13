@@ -1,4 +1,4 @@
-import type { KernelRoute } from '@peerfall/machine/types'
+import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
 import type { ObjectiveId } from '#types/definitions/mission'
 
 /** The two things FRR can notice a dead neighbor by, under the names of the Machine's events. */
@@ -10,7 +10,7 @@ export type DetectionEvent = (typeof DETECTION_EVENTS)[number]
 export const RUN_CHECK_KINDS = ['reachable', 'path', 'recovery', 'outage', 'detected-by'] as const
 
 /** Checks that read the Machine as it is when the player's work is checked: no fault is needed. */
-export const STATE_CHECK_KINDS = ['daemons', 'route', 'reaches', 'config'] as const
+export const STATE_CHECK_KINDS = ['daemons', 'route', 'rib', 'reaches', 'config'] as const
 
 export const CHECK_KINDS = [...RUN_CHECK_KINDS, ...STATE_CHECK_KINDS] as const
 
@@ -18,8 +18,11 @@ export type CheckKind = (typeof CHECK_KINDS)[number]
 
 export type StateCheckKind = (typeof STATE_CHECK_KINDS)[number]
 
-/** Where a `config` check looks: what the router runs now, or the frr.conf it would start with. */
-export const CONFIG_SOURCES = ['running', 'saved'] as const
+/**
+ * Where a `config` check looks: what the router runs now, the frr.conf it would start with, or the
+ * frr.conf it was last started from by FRR's init script during play (what survived a restart).
+ */
+export const CONFIG_SOURCES = ['running', 'saved', 'started'] as const
 
 export type ConfigSource = (typeof CONFIG_SOURCES)[number]
 
@@ -48,12 +51,27 @@ export type CheckDefinition =
       readonly via?: string
       readonly interface?: string
     }
+  /**
+   * Zebra's routing table (the RIB) holds a route for exactly `prefix`, from `protocol`, with
+   * `via` among its next hops, selected or not as `selected` says. Each is left out to accept
+   * any. The RIB also holds the routes zebra did not select, which the kernel never sees: a
+   * backup that waits shows only here.
+   */
+  | {
+      readonly kind: 'rib'
+      readonly router: string
+      readonly prefix: string
+      readonly protocol?: string
+      readonly via?: string
+      readonly selected?: boolean
+    }
   /** At least `minReplies` of the few packets sent from the router to the address are answered. */
   | { readonly kind: 'reaches'; readonly from: string; readonly to: string; readonly minReplies: number }
   /**
    * The router's configuration has a line inside the blocks of `block` (outermost first; none for
    * a top-level line). `line` is the whole line or its first words: `description` matches any
-   * description, `ip address 10.0.1.1/30` only that address.
+   * description, `ip address 10.0.1.1/30` only that address. With `absent`, the other way round:
+   * the configuration exists and has no such line in those blocks.
    */
   | {
       readonly kind: 'config'
@@ -61,6 +79,8 @@ export type CheckDefinition =
       readonly source: ConfigSource
       readonly block: readonly string[]
       readonly line: string
+      /** Only present, and true, when the line must be gone. */
+      readonly absent?: boolean
     }
 
 export type RunCheckDefinition =
@@ -98,6 +118,8 @@ export const CHECK_FAILURES = {
   noFault: 'no_fault',
   /** Too few replies before the fault. */
   unreachable: 'unreachable',
+  /** A `reaches` check: the address is the sending router's own, so the router answered itself. */
+  ownAddress: 'own_address',
   /** No route to the probe's destination was seen when one was needed. */
   noRoute: 'no_route',
   wrongPath: 'wrong_path',
@@ -115,6 +137,14 @@ export const CHECK_FAILURES = {
   wrongRoute: 'wrong_route',
   /** The configuration does not have the line. */
   notConfigured: 'not_configured',
+  /** Zebra's routing table holds no route for the prefix at all. */
+  noRibRoute: 'no_rib_route',
+  /** Zebra holds routes for the prefix, but none from that protocol, via that next hop, selected or not as asked. */
+  wrongRibRoute: 'wrong_rib_route',
+  /** An `absent` check: the configuration still has the line. */
+  stillConfigured: 'still_configured',
+  /** An `absent` check: there is no such configuration to read (FRR is down, no frr.conf, or never restarted). */
+  noConfig: 'no_config',
 } as const
 
 export type CheckFailure = (typeof CHECK_FAILURES)[keyof typeof CHECK_FAILURES]
@@ -215,6 +245,16 @@ export type CheckResult =
       readonly route: KernelRoute | null
     }
   | {
+      readonly kind: 'rib'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      /** Every route zebra holds for the prefix, in the order FRR lists them; empty when none. */
+      readonly routes: readonly RibRoute[]
+      /** The one that is what the check asks for; `null` when none is. */
+      readonly found: RibRoute | null
+    }
+  | {
       readonly kind: 'reaches'
       readonly passed: boolean
       readonly failure: CheckFailure | null
@@ -229,7 +269,10 @@ export type CheckResult =
       readonly failure: CheckFailure | null
       readonly router: string
       readonly source: ConfigSource
-      /** The configuration's line that matched, as FRR wrote it; `null` when none did. */
+      /**
+       * The configuration's line that matched, as FRR wrote it; `null` when none did. For an
+       * `absent` check it is the line still there, the reason it failed.
+       */
       readonly found: string | null
     }
 

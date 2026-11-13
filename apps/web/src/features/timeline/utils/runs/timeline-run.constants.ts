@@ -22,11 +22,11 @@ export const MARK_MEANINGS: Readonly<Record<TimelineMarkKind, string>> = {
 
 /** Each moment in plain words, said once under the runs for a player meeting the terms here. */
 export const MARK_EXPLANATIONS: Readonly<Record<TimelineMarkKind, string>> = {
-  fault: 'The game makes the link lose every packet. Its interfaces stay up, so nothing tells the routers.',
+  fault: 'The Machine makes the link lose every packet. Its interfaces stay up, so nothing tells the routers.',
   detection:
-    "A router notices its neighbor is gone. OSPF's dead timer waits the whole dead interval (40 seconds by default) without a hello; BFD, when it runs on both ends, checks the link several times a second.",
+    "A router notices its neighbour is gone. OSPF's dead timer waits the whole dead interval (40 seconds by default) without a hello; BFD, when it runs on both ends, checks the link several times a second.",
   adjacency:
-    'OSPF stops treating the two routers as neighbors. Every router then works out its routes again without that link.',
+    'OSPF stops treating the two routers as neighbours. Every router then works out its routes again without that link.',
   route:
     'The Linux kernel, which is what forwards packets, gets the new route. Traffic can only move once it is there.',
   probe: 'The first probe packet that is answered again: the outage ends here.',
@@ -50,4 +50,5 @@ export const MAX_AXIS_TICKS = 6
 /** An axis with nothing on it still shows a second, so the lanes have a scale. */
 export const EMPTY_AXIS_SECONDS = 1
 
-export const RUN_LABELS = { baseline: 'Baseline', repaired: 'Repaired' } as const
+/** "Repaired" only for a run that met the mission's objectives; one that fell short is the latest attempt. */
+export const RUN_LABELS = { baseline: 'Baseline', repaired: 'Repaired', attempt: 'Latest attempt' } as const

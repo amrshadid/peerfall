@@ -76,14 +76,14 @@ export const TOUR_STOPS: Readonly<Record<TourScreen, readonly TourStop[]>> = {
       id: 'mission:guide',
       selector: '#mission-guide',
       title: 'The Guide',
-      text: 'The incident report, the objectives to meet and the hints you ask for. Objectives tick by what the network does.',
+      text: 'The story, a step at a time: it goes on when you finish a command or press Continue. Objectives tick by themselves.',
       side: 'right',
     },
     {
       id: 'mission:steps',
       selector: '.pf-rail',
-      title: 'The steps',
-      text: 'Inspect the network, predict what a change will do, apply it, then verify. Finished steps stay clickable.',
+      title: 'Five steps',
+      text: 'Scene, See it, Build it, Watch it, Debrief. Finished steps stay clickable so you can look again.',
       side: 'bottom',
     },
     {

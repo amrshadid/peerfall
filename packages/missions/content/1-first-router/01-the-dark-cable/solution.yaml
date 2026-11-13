@@ -1,0 +1,17 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `shell` lines are typed at that router's shell, `lines` into its vtysh.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # The cable that already works: nothing changes.
+  - id: wrong-cable
+    passes: false
+    changes:
+      - router: a
+        shell: [ip link set a-b up]
+  - id: lit
+    passes: true
+    changes:
+      - router: a
+        shell: [ip link set a-c up]

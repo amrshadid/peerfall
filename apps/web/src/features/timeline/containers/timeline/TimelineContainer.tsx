@@ -1,5 +1,6 @@
 import { TimelinePresentation } from '@features/timeline/components/timeline'
 import {
+  attemptLabelOf,
   LIVE_RUN_LABEL,
   liveRunOf,
   RUN_LABELS,
@@ -36,7 +37,7 @@ export function TimelineContainer() {
     }
     return timelineLanesOf(
       baseline ? timelineRunOfSummary(RUN_LABELS.baseline, baseline.summary, setting) : null,
-      repaired ? timelineRunOfSummary(RUN_LABELS.repaired, repaired.summary, setting) : null,
+      repaired ? timelineRunOfSummary(attemptLabelOf(repaired.passed), repaired.summary, setting) : null,
       liveRunOf(LIVE_RUN_LABEL, events, setting)
     )
   }, [setting, baseline, repaired, events])
