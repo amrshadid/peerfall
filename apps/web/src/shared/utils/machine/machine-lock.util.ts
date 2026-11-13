@@ -2,8 +2,9 @@ import type { VmPhase, VmStatus } from '@peerfall/machine/types'
 import type { MachineLock } from '@shared/types'
 import { APPLY_FAILED, APPLY_WAITS, HOLDS_KEYS, MACHINE_LOCK_TEXT } from './machine-lock.constants'
 
-// The Machine holds the terminal's keys while it sets a network up or goes back to a saved one.
-const HOLDING: readonly VmPhase[] = ['restoring', 'setting-up']
+// The Machine holds the terminal's keys while it goes back to a saved network. Not while it builds
+// one: keys typed then were seen lost, so the terminal stays locked rather than promise them.
+const HOLDING: readonly VmPhase[] = ['restoring']
 
 /** Null once the shell is at its prompt; `wasReady` is true once the Machine has been ready since the page opened. */
 export function machineLockOf({ phase, detail }: VmStatus, wasReady: boolean): MachineLock | null {

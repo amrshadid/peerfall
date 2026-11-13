@@ -92,7 +92,17 @@ export function MissionContainer({
   const hints = useHints()
   const machine = useMachineStatus()
   const lock = useMachineLock(machine)
-  const { router } = useRouterSelection()
+  const { router, select } = useRouterSelection()
+  // A network starts with the terminal in the Machine's own shell, which belongs to no router: a
+  // newcomer would type every command there, see nothing work and get no sign why. So the
+  // terminal goes into the router the mission starts from (the probe's, else the first one) as
+  // soon as the network is ready, and again after Start over brings that shell back.
+  const firstRouter = mission?.probe?.from ?? mission?.network.routers[0]?.name ?? null
+  useEffect(() => {
+    if (run.phase === 'ready' && router === null && firstRouter !== null) {
+      void select(firstRouter)
+    }
+  }, [run.phase, router, firstRouter, select])
   const chrome = useScreenChrome()
   const { sizes, setPanelSize } = usePanelSizes()
   const showAll = useShowAllPanels()

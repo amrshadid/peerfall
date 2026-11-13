@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   leave: vi.fn(),
   startOver: vi.fn(),
   missionRunOf: vi.fn(),
+  router: 'a' as string | null,
+  select: vi.fn(),
 }))
 
 vi.mock('@peerfall/game/hooks', () => ({
@@ -40,7 +42,7 @@ vi.mock('@peerfall/missions/hooks', () => ({
 }))
 vi.mock('@peerfall/machine/hooks', () => ({
   useMachineStatus: () => ({ phase: 'ready', detail: null }),
-  useRouterSelection: () => ({ router: 'a', select: vi.fn() }),
+  useRouterSelection: () => ({ router: mocks.router, select: mocks.select }),
 }))
 vi.mock('@features/chrome/hooks/screen', () => ({
   useScreenChrome: () => ({
@@ -116,6 +118,7 @@ beforeEach(() => {
   mocks.active = NONE
   mocks.run = runAt('building')
   mocks.baseline = null
+  mocks.router = 'a'
   mocks.start.mockResolvedValue({ success: true })
 })
 
@@ -129,6 +132,35 @@ describe('MissionContainer', () => {
     mount('no-such-mission')
     expect(screen.getByText('no such page')).toBeTruthy()
     expect(mocks.start).not.toHaveBeenCalled()
+  })
+
+  it("puts the terminal in the mission's first router once the network is ready, and not before", () => {
+    mocks.active = activeAt('play')
+    mocks.router = null
+    mocks.run = runAt('settling')
+    const { rerender } = mount()
+    expect(mocks.select).not.toHaveBeenCalled()
+    mocks.run = runAt('ready')
+    rerender(
+      <MissionContainer
+        missionId={MISSION_ID}
+        guide={() => <p>guide slot</p>}
+        editor={() => <p>editor slot</p>}
+        terminal={<p>terminal slot</p>}
+        topology={<p>topology slot</p>}
+        timeline={<p>timeline slot</p>}
+        debrief={<p>debrief slot</p>}
+        notFound={<p>no such page</p>}
+      />
+    )
+    expect(mocks.select).toHaveBeenCalledWith('a')
+  })
+
+  it('leaves the terminal where it is when a router is already selected', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    mount()
+    expect(mocks.select).not.toHaveBeenCalled()
   })
 
   it('opens the mission by its id and draws nothing until the game has it', () => {
