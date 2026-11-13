@@ -1,6 +1,6 @@
 import type { VmPhase, VmStatus } from '@peerfall/machine/types'
 import type { MachineLock } from '@shared/types'
-import { APPLY_FAILED, APPLY_WAITS, HOLDS_KEYS, MACHINE_LOCK_TEXT } from './machine-lock.constants'
+import { APPLY_FAILED, APPLY_WAITS, HOLDS_KEYS, MACHINE_LOCK_TEXT, SETTLING_TEXT } from './machine-lock.constants'
 
 // The Machine holds the terminal's keys while it goes back to a saved network. Not while it builds
 // one: keys typed then were seen lost, so the terminal stays locked rather than promise them.
@@ -23,4 +23,18 @@ export function machineLockOf({ phase, detail }: VmStatus, wasReady: boolean): M
     holdsKeys,
     applyReason: failed ? APPLY_FAILED : `${text.title}. ${APPLY_WAITS}`,
   }
+}
+
+/**
+ * The lock while a mission's network settles. The network the mission starts from is saved once
+ * routing is quiet, and Start over goes back to it: a change typed before then would be saved
+ * into it, and a newcomer would read empty tables the story shows full.
+ */
+export const SETTLING_LOCK: MachineLock = {
+  phase: 'settling',
+  title: SETTLING_TEXT.title,
+  detail: SETTLING_TEXT.detail,
+  failed: false,
+  holdsKeys: false,
+  applyReason: `${SETTLING_TEXT.title}. ${APPLY_WAITS}`,
 }

@@ -4,16 +4,23 @@ import { type TerminalView, useTerminalView } from '@features/terminal/hooks/vie
 import { vmStatusLine } from '@features/terminal/utils/vm'
 import { useLinuxTerminal, useMachineStatus, useTerminalSize } from '@peerfall/machine/hooks'
 import { useMachineLock } from '@shared/hooks/machine'
+import { SETTLING_LOCK } from '@shared/utils/machine'
 import { useEffect, useRef } from 'react'
 
+export interface TerminalContainerProps {
+  /** The mission's network is still being built or its routing is forming: the terminal waits for it. */
+  settling?: boolean
+}
+
 /** The terminal on the Machine's console: keys go to the selected router's shell, its output comes back as bytes. */
-export function TerminalContainer() {
+export function TerminalContainer({ settling = false }: TerminalContainerProps) {
   const container = useRef<HTMLDivElement>(null)
   // The Machine's bytes can arrive before the view is made; the view keeps what comes before it opens.
   const view = useRef<TerminalView | null>(null)
   const { phase, detail, send } = useLinuxTerminal((bytes) => view.current?.write(bytes))
   const { resize } = useTerminalSize()
-  const lock = useMachineLock(useMachineStatus())
+  const machineLock = useMachineLock(useMachineStatus())
+  const lock = machineLock ?? (settling ? SETTLING_LOCK : null)
   // While a network is set up or restored the Machine holds keys for the new shell, so they are sent, not dropped.
   const locked = lock !== null && !lock.holdsKeys
   const terminal = useTerminalView(container, { onInput: send, onResize: resize, locked })

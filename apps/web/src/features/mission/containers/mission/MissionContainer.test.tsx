@@ -94,7 +94,7 @@ function mount(missionId = MISSION_ID) {
         return <p>guide slot</p>
       }}
       editor={() => <p>editor slot</p>}
-      terminal={<p>terminal slot</p>}
+      terminal={() => <p>terminal slot</p>}
       topology={<p>topology slot</p>}
       timeline={<p>timeline slot</p>}
       debrief={(view) => (
@@ -151,7 +151,7 @@ describe('MissionContainer', () => {
         missionId={MISSION_ID}
         guide={() => <p>guide slot</p>}
         editor={() => <p>editor slot</p>}
-        terminal={<p>terminal slot</p>}
+        terminal={() => <p>terminal slot</p>}
         topology={<p>topology slot</p>}
         timeline={<p>timeline slot</p>}
         debrief={() => <p>debrief slot</p>}

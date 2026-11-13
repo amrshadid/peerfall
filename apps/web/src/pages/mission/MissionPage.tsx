@@ -23,7 +23,7 @@ export function MissionPage({ missionId, cardId }: MissionPageProps) {
         missionId={missionId}
         guide={(view) => <GuideContainer {...view} />}
         editor={({ run }) => <EditorContainer waiting={waitReasonOf(run.phase)} />}
-        terminal={<TerminalContainer />}
+        terminal={({ run }) => <TerminalContainer settling={run.phase === 'building' || run.phase === 'settling'} />}
         topology={<TopologyContainer />}
         timeline={<TimelineContainer />}
         debrief={({ onPlayAgain }) => <DebriefContainer onPlayAgain={onPlayAgain} />}

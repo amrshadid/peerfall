@@ -14,6 +14,7 @@ const CURRENT_STEP: Readonly<Record<MachineLock['phase'], number>> = {
   booting: 1,
   restoring: 2,
   'setting-up': 2,
+  settling: 2,
   failed: 0,
 }
 

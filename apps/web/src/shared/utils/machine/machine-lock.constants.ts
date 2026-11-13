@@ -20,3 +20,8 @@ export const MACHINE_LOCK_TEXT: Readonly<
 export const HOLDS_KEYS = 'What you type now reaches the shell as soon as it opens.'
 export const APPLY_WAITS = 'Apply works once the network is up.'
 export const APPLY_FAILED = 'Apply needs a running Machine. Reload the page to try again.'
+
+export const SETTLING_TEXT = {
+  title: 'Routers finding each other',
+  detail: 'FRR is starting its routing on every router. The terminal opens once routing is quiet.',
+} as const

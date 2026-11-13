@@ -34,7 +34,7 @@ export interface MissionContainerProps {
   /** The panels that need the mission's run are handed it; the others read the game and the Machine themselves. */
   guide: (view: MissionView) => ReactNode
   editor: (view: MissionView) => ReactNode
-  terminal: ReactNode
+  terminal: (view: MissionView) => ReactNode
   topology: ReactNode
   timeline: ReactNode
   /** Laid over the workspace once the player opens it; handed the run for its Play it again. */
@@ -237,7 +237,7 @@ export function MissionContainer({
           onRestart: () => setRestartOpen(true),
         },
         panels,
-        slots: { guide: guide(view), terminal, editor: editor(view), topology, timeline },
+        slots: { guide: guide(view), terminal: terminal(view), editor: editor(view), topology, timeline },
         terminalLabel: router === null ? 'the Machine: select a router on the map' : `router ${router}`,
         terminalStatus: lock?.title ?? null,
         titleBlock: [
