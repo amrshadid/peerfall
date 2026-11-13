@@ -20,6 +20,7 @@ export const ASIDE_BUDGET = 0
 // Machine is real Linux running real FRR, so a story never calls it a simulation.
 export const BANNED_PHRASES: readonly string[] = [
   'the game',
+  'this game',
   'emulator',
   'emulated',
   'simulated',
