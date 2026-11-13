@@ -1,0 +1,54 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another; `restart: true` is the player
+# restarting FRR on that router with its init script. Nothing else ever restarts FRR.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Configured and never saved.
+  - id: not-saved
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a]
+  # Configured and restarted without saving, as the night did: the restart takes it away.
+  - id: restarted-not-saved
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a]
+      - router: a
+        restart: true
+  # Saved, and never restarted: no start has come from the saved file yet.
+  - id: saved-not-restarted
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a, end, write memory]
+  # Restarted, then saved: the restart came before the change, from a file without it.
+  - id: restarted-then-saved
+    passes: false
+    changes:
+      - router: a
+        restart: true
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a, end, write memory]
+  - id: saved-and-restarted
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, description loopback of router a, end, write memory]
+      - router: a
+        restart: true
+  # The way the story goes: restarted without saving first, then given again, saved and restarted.
+  - id: the-story
+    passes: true
+    changes:
+      - router: a
+        lines: [conf t, int lo, descr loopback of router a, end]
+      - router: a
+        restart: true
+      - router: a
+        lines: [conf t, int lo, descr loopback of router a, end, write memory]
+      - router: a
+        restart: true

@@ -1,0 +1,3 @@
+entries:
+  - { name: write memory, kind: vtysh, what: "at a#: copies the running configuration into frr.conf and keeps the old file as frr.conf.sav", firstMet: gone-after-the-restart }
+  - { name: /usr/lib/frr/frrinit.sh restart a, kind: shell, what: "stops FRR on router a and starts it again from its saved frr.conf", firstMet: gone-after-the-restart }

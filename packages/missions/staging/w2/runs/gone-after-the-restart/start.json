@@ -1,0 +1,1 @@
+{"mission":"gone-after-the-restart","version":3,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"savedConfig":"frr defaults traditional\nhostname a\nlog file /var/log/frr/a.log\nlog timestamp precision 3\n!\n\n","startedConfig":null}},"pings":[]}}

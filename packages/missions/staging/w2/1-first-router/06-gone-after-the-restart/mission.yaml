@@ -1,0 +1,75 @@
+id: gone-after-the-restart
+version: 3
+title: Gone After the Restart
+summary: Restart FRR and see what it keeps, then save a change with write memory so that it survives.
+minutes: 15
+chapter: first-router
+objective: Router a's loopback interface has a description in its frr.conf, and FRR came back with it after you restarted it.
+prerequisites: [] # what-it-does-now: the integration step sets the chain
+teaches: [saved-config, write-memory]
+uses: [running-config, interface-description, frr-init-script, watchfrr, cli-modes]
+
+# Stage 1's three routers. FRR runs on a, started by its own init script, with only the lines
+# the Machine writes in frr.conf: nobody has saved anything yet.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: []
+      startup: watchfrr
+      config: ""
+    - name: b
+      daemons: []
+      config: ""
+    - name: c
+      daemons: []
+      config: ""
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+
+objectives:
+  - id: saved
+    text: Give a's interface lo a description and save it in a's frr.conf.
+    check: { kind: config, router: a, source: saved, block: [interface lo], line: description }
+  - id: survives
+    text: Restart FRR on a, and have it come back with the description.
+    # The frr.conf FRR's init script last started a from, during play: met only once the player
+    # has restarted FRR from a file that holds the description.
+    check: { kind: config, router: a, source: started, block: [interface lo], line: description }
+
+hints:
+  - text: Compare `show running-config` with `cat /etc/frr/a/frr.conf` after you change something. Which one does FRR read when it starts?
+  - text: The running configuration is copied into `frr.conf` only when you ask, from `a#`. Then restart FRR with its script to see what it comes back with.
+  - text: Save from `a#`, then restart FRR with `/usr/lib/frr/frrinit.sh restart a` at the shell.
+    command: write memory
+
+chips:
+  - { command: write memory, explain: "in vtysh: save the running configuration in frr.conf" }
+  - { command: frrinit.sh restart, explain: "at the shell: stop FRR and start it again from the file" }
+  - { command: cat, explain: "at the shell: show a file, such as /etc/frr/a/frr.conf" }
+
+codex:
+  - id: saved-config
+    term: The saved configuration
+    simple: "The file `frr.conf`. FRR reads it once, when it starts; a restart brings back only what is in it."
+    deep: "With `service integrated-vtysh-config`, every daemon's settings are in one file: `/etc/frr/a/frr.conf` on the Machine, `/etc/frr/frr.conf` on a router of its own. watchfrr has it read in after a start. A setting that was only running is lost at the restart. `show startup-config` prints nothing on the Machine; `cat` the file instead."
+    deepens: running-config
+    sources: [vtysh/vtysh_config.c, watchfrr/watchfrr.c]
+    docs: https://docs.frrouting.org/en/latest/vtysh.html
+    tryIt: cat /etc/frr/a/frr.conf
+  - id: write-memory
+    term: write memory
+    simple: Copies the running configuration into `frr.conf`, so that the next start brings it back.
+    deep: "vtysh asks watchfrr to write the file, and watchfrr runs `vtysh -w`, which gathers the whole running configuration and writes it in place of the file, keeping the old one as `frr.conf.sav`. The whole file is rewritten, so a line that was in the file but not running is gone afterwards. It prints `Integrated configuration saved to /etc/frr/a/frr.conf` and `[OK]`."
+    sources: [vtysh/vtysh.c, watchfrr/watchfrr_vty.c]
+    docs: https://docs.frrouting.org/en/latest/vtysh.html
+    tryIt: vtysh -c "write memory"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

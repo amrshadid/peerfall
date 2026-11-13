@@ -1,0 +1,29 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another; `shell` at its shell.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Typed where it doesn't belong: refused at a# and at a(config)#.
+  - id: wrong-mode
+    passes: false
+    changes:
+      - router: a
+        lines: [no shutdown, configure terminal, no shutdown]
+  - id: no-shutdown
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-c, no shutdown]
+  # Abbreviated: the same commands.
+  - id: abbreviated
+    passes: true
+    changes:
+      - router: a
+        lines: [conf t, int a-c, no shut]
+  # Switched on from Linux, as in The Dark Cable: judged by outcome, it passes.
+  - id: from-linux
+    passes: true
+    changes:
+      - router: a
+        shell: [ip link set a-c up]
