@@ -53,7 +53,9 @@ result is on the terminal before it is explained.
   something.
 - **One command per pause.** Each command the player finishes releases the next pause, so a
   line that asks for two commands shows the second one's result after the first. Ask for one,
-  pause, then ask for the next; a run of lines typed in one mode is one command each.
+  pause, then ask for the next; a run of lines typed in one mode is one command each. A stage's
+  last mission, which asks for a whole task the player has already learned, may give it in one
+  line, if what follows the pause reads true whenever it appears ("Once c answers…").
 - **Build it asks for every change an objective needs.** Build it gives way to Watch it only
   once every objective is met, so a change asked for in Watch it would never be reached. Watch it
   shows what the finished work does: a probe, a restart, a fault, a Predict about the result.
