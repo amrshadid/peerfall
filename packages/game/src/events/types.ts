@@ -1,4 +1,5 @@
-import type { MissionId, ObjectiveId } from '#types/definitions/mission'
+import type { HintTier } from '#types/definitions/hints'
+import type { MissionId } from '#types/definitions/mission'
 import type { EpochMs } from '#types/definitions/progress'
 import type { RunRole } from '#types/definitions/runs'
 import type { SaveIssue } from '#types/definitions/saves'
@@ -52,8 +53,8 @@ export interface RunRecordedPayload {
 
 export interface HintRevealedPayload {
   missionId: MissionId
-  objectiveId: ObjectiveId
-  /** Which of the objective's hints, from 1. */
+  tier: HintTier
+  /** Which of the mission's three hints, from 1. */
   stage: number
   at: EpochMs
 }

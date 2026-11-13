@@ -1,5 +1,5 @@
 import type { GameContent } from '#types/definitions/content'
-import type { MissionDefinition, MissionId, ObjectiveId } from '#types/definitions/mission'
+import type { MissionDefinition, MissionId } from '#types/definitions/mission'
 import type { ChapterEntry, EpochMs, MissionProgress, MissionStatus, Progress } from '#types/definitions/progress'
 import { MAX_SAVED_ATTEMPTS, type RunComparison, type SavedRun } from '#types/definitions/runs'
 import { hintsUsed, nextHint } from '#utils/hints/index'
@@ -50,7 +50,7 @@ export function missionList(progress: Progress, content: GameContent): readonly 
         mission,
         status: missionStatus(progress, mission),
         attempts: record?.attempts ?? 0,
-        hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? {}),
+        hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? 0),
       }
     }),
   }))
@@ -71,7 +71,7 @@ const freshRecord = (missionId: MissionId, now: EpochMs): MissionProgress => ({
   firstStartedAt: now,
   completedAt: null,
   attempts: 0,
-  hintsRevealed: {},
+  hintsRevealed: 0,
   runs: [],
 })
 
@@ -81,22 +81,13 @@ export function startMission(progress: Progress, missionId: MissionId, now: Epoc
   return { ...withMission(progress, record), lastActive: missionId }
 }
 
-/** Reveals an objective's next hint. `null` when the mission isn't started or nothing is left to reveal. */
-export function revealNextHint(
-  progress: Progress,
-  mission: MissionDefinition,
-  objectiveId: ObjectiveId
-): Progress | null {
+/** Reveals the mission's next hint. `null` when the mission isn't started or nothing is left to reveal. */
+export function revealNextHint(progress: Progress, mission: MissionDefinition): Progress | null {
   const record = findMissionProgress(progress, mission.id)
-  const objective = mission.objectives.find((candidate) => candidate.id === objectiveId)
-  if (!record || !objective) {
+  if (!record || nextHint(mission, record.hintsRevealed) === null) {
     return null
   }
-  const revealed = record.hintsRevealed[objectiveId] ?? 0
-  if (nextHint(objective, revealed) === null) {
-    return null
-  }
-  return withMission(progress, { ...record, hintsRevealed: { ...record.hintsRevealed, [objectiveId]: revealed + 1 } })
+  return withMission(progress, { ...record, hintsRevealed: hintsUsed(mission, record.hintsRevealed) + 1 })
 }
 
 /** The one baseline first, then the newest attempts: an older attempt makes room for a newer one. */

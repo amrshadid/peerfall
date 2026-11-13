@@ -1,0 +1,20 @@
+# Every concept a mission may teach, name or use (docs/MISSIONS.md). A mission's `teaches`,
+# `names` and `uses` point here; `codex` names the card that explains the concept, once one does.
+# part: foundations | linux | frr | forwarding | routing | ospf | isis | bfd | bgp | policy |
+#       vrf | mpls | multicast | operations
+concepts:
+  - { id: frr-daemon, term: FRR daemon, part: frr }
+  - { id: vtysh, term: vtysh, part: frr }
+  - { id: watchfrr, term: watchfrr, part: frr }
+  - { id: zebra, term: zebra, part: frr }
+  - { id: routing-table, term: routing table, part: forwarding }
+  - { id: running-config, term: running configuration, part: frr }
+  - { id: saved-config, term: saved configuration, part: frr }
+  - { id: ip-address, term: IPv4 address, part: foundations }
+  - { id: subnet, term: network and prefix length, part: foundations }
+  - { id: connected-route, term: connected route, part: forwarding }
+  - { id: static-route, term: static route, part: routing }
+  - { id: next-hop, term: next hop, part: forwarding }
+  - { id: ospf-adjacency, term: OSPF neighbor, part: ospf }
+  - { id: ospf-dead-interval, term: OSPF dead interval, part: ospf }
+  - { id: bfd, term: BFD, part: bfd }

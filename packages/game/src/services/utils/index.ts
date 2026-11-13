@@ -9,7 +9,6 @@ export {
   notCompletedError,
   saveFailedError,
   unknownMissionError,
-  unknownObjectiveError,
 } from '#services/utils/error-handling.service'
 export { saveProgress } from '#services/utils/save-progress.service'
 export { queueRemove, queueSave, settleSaves } from '#services/utils/save-queue.service'

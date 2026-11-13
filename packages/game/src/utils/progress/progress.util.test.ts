@@ -65,7 +65,7 @@ describe('mission status', () => {
   })
 
   it('lists every chapter, with attempts and hints used per mission', () => {
-    const hinted = revealNextHint(after(run('attempt', false, 500)), MISSION, 'recovers-through-b') ?? started()
+    const hinted = revealNextHint(after(run('attempt', false, 500)), MISSION) ?? started()
     const list = missionList(hinted, exampleContent())
     expect(list.map((entry) => [entry.chapter.id, entry.missions.length])).toEqual([
       ['recover-from-failure', 2],
@@ -93,18 +93,17 @@ describe('mission status', () => {
 })
 
 describe('revealing hints', () => {
-  it('reveals one more hint of an objective each time, until none is left', () => {
+  it("reveals one more of the mission's hints each time, until none is left", () => {
     let progress = started()
     for (const expected of [1, 2, 3]) {
-      progress = revealNextHint(progress, MISSION, 'recovers-through-b') ?? progress
-      expect(findMissionProgress(progress, ID)?.hintsRevealed).toEqual({ 'recovers-through-b': expected })
+      progress = revealNextHint(progress, MISSION) ?? progress
+      expect(findMissionProgress(progress, ID)?.hintsRevealed).toBe(expected)
     }
-    expect(revealNextHint(progress, MISSION, 'recovers-through-b')).toBeNull()
+    expect(revealNextHint(progress, MISSION)).toBeNull()
   })
 
-  it('reveals nothing for a mission not started or an objective it does not have', () => {
-    expect(revealNextHint(emptyProgress(), MISSION, 'reaches-c')).toBeNull()
-    expect(revealNextHint(started(), MISSION, 'nope')).toBeNull()
+  it('reveals nothing for a mission not started', () => {
+    expect(revealNextHint(emptyProgress(), MISSION)).toBeNull()
   })
 })
 

@@ -2,6 +2,8 @@ import type { Validated } from '@peerfall/core/types'
 import { Issues, ObjectReader, reportDuplicates } from '@peerfall/core/utils'
 import { type ChapterDefinition, KEBAB_ID } from '#types/definitions/mission'
 
+const CHAPTER_KEYS = ['id', 'title', 'summary', 'story', 'guide', 'standsFor', 'outcomes'] as const
+
 /**
  * Checks a parsed `chapters.yaml`: the curriculum's stages in order, whether or not a stage has
  * missions yet. A chapter's stage number is its place in the list.
@@ -13,8 +15,23 @@ export function validateChapters(raw: unknown): Validated<readonly ChapterDefini
   const chapters = reader
     .list('chapters', (value, path) => {
       const chapter = new ObjectReader(value, path, issues)
-      chapter.rejectUnknownKeys(['id', 'title', 'summary'])
-      return { id: chapter.string('id', KEBAB_ID), title: chapter.string('title'), summary: chapter.string('summary') }
+      chapter.rejectUnknownKeys(CHAPTER_KEYS)
+      const text = (key: string) => chapter.optional(key, (name) => chapter.string(name))
+      const read = {
+        id: chapter.string('id', KEBAB_ID),
+        title: chapter.string('title'),
+        summary: chapter.string('summary'),
+      }
+      const story = text('story')
+      const guide = text('guide')
+      const standsFor = text('standsFor')
+      return {
+        ...read,
+        ...(story !== undefined && { story }),
+        ...(guide !== undefined && { guide }),
+        ...(standsFor !== undefined && { standsFor }),
+        outcomes: chapter.has('outcomes') ? chapter.stringList('outcomes') : [],
+      }
     })
     .map((chapter, at): ChapterDefinition => ({ ...chapter, stage: at + 1 }))
   if (reader.has('chapters') && Array.isArray(reader.value('chapters')) && chapters.length === 0) {

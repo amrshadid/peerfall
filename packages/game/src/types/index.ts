@@ -23,21 +23,51 @@ export {
   STATE_CHECK_KINDS,
   type StateCheckKind,
 } from '#types/definitions/checks'
+export type {
+  CodexCardLink,
+  CodexCardState,
+  CodexChapter,
+  CodexChapterCard,
+  CodexEntry,
+  CodexView,
+  GlossaryEntry,
+} from '#types/definitions/codex'
+export {
+  CONCEPT_PARTS,
+  CONCEPT_VIOLATION_KINDS,
+  CORE_CONCEPT_BUDGET,
+  type Concept,
+  type ConceptId,
+  type ConceptPart,
+  type ConceptViolation,
+  type ConceptViolationKind,
+  FOUNDATION_STAGES,
+} from '#types/definitions/concepts'
 export { DEFAULT_GAME_CONFIG, type GameConfig, type WallClock } from '#types/definitions/config'
 export type { GameContent, GameContentParts } from '#types/definitions/content'
 export {
+  FIELD_GUIDE_KINDS,
+  type FieldGuide,
+  type FieldGuideEntry,
+  type FieldGuideKind,
+  type FieldGuideView,
+} from '#types/definitions/field-guide'
+export { HINT_TIERS, type HintTier, type RevealedHint } from '#types/definitions/hints'
+export {
   type ChapterDefinition,
   type ChapterId,
+  type CodexCard,
+  type CommandChip,
   type FaultDefinition,
   type HintDefinition,
   KEBAB_ID,
-  MIN_HINTS,
   type MissionDefinition,
   type MissionId,
   type ObjectiveDefinition,
   type ObjectiveId,
   PROBE_INTERVAL_MS,
   type RunContext,
+  type StoryRefs,
 } from '#types/definitions/mission'
 export {
   type ChapterEntry,

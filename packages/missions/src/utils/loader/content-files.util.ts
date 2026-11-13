@@ -11,17 +11,22 @@ const chapterFiles = import.meta.glob<string>('../../../content/chapters.yaml', 
   import: 'default',
   eager: true,
 })
+const conceptFiles = import.meta.glob<string>('../../../content/concepts.yaml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+const fieldGuideFiles = import.meta.glob<string>('../../../content/field-guide.yaml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 const missionFiles = import.meta.glob<string>('../../../content/*/*/mission.yaml', {
   query: '?raw',
   import: 'default',
   eager: true,
 })
-const incidentFiles = import.meta.glob<string>('../../../content/*/*/incident.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
-const debriefFiles = import.meta.glob<string>('../../../content/*/*/debrief.md', {
+const storyFiles = import.meta.glob<string>('../../../content/*/*/story.md', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -41,7 +46,8 @@ export function relativeToContent<T>(files: Readonly<Record<string, T>>): Record
 export const CONTENT_FILES: ContentFiles = {
   // Empty if it's missing, so the loader reports it.
   chapters: Object.values(chapterFiles)[0] ?? '',
+  concepts: Object.values(conceptFiles)[0] ?? '',
+  fieldGuide: Object.values(fieldGuideFiles)[0] ?? '',
   missions: relativeToContent(missionFiles),
-  incidents: relativeToContent(incidentFiles),
-  debriefs: relativeToContent(debriefFiles),
+  stories: relativeToContent(storyFiles),
 }

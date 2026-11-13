@@ -1,0 +1,4 @@
+# The Codex page of commands (docs/MISSIONS.md). Each entry appears when the mission it is first
+# met in starts. kind: vtysh (typed in FRR's console) or shell (typed at the router's Linux shell).
+# Entries: { name, kind, what, firstMet: <mission id>, deepenedIn: [<mission id>, …] }
+entries: []

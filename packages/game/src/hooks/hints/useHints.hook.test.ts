@@ -9,7 +9,6 @@ import { EXAMPLE_MISSION, installTestGame, uninstallTestGame } from '#test/index
 import { findMissionProgress } from '#utils/progress/index'
 
 const state = useProgressStore.getState
-const OBJECTIVE = 'recovers-through-b'
 
 async function startedGame() {
   const game = installTestGame()
@@ -21,36 +20,41 @@ async function startedGame() {
 describe('revealHint', () => {
   afterEach(uninstallTestGame)
 
-  it("reveals an objective's hints one at a time, the command last, and saves each", async () => {
+  it("reveals the mission's three hints one at a time, the command last, and saves each", async () => {
     const { storage } = await startedGame()
-    const stages: number[] = []
+    const revealed: [string, number][] = []
     const subscription = eventBus.on<HintRevealedPayload>(GAME_EVENTS.HINT_REVEALED, (event) => {
-      stages.push(event.payload.stage)
+      revealed.push([event.payload.tier, event.payload.stage])
     })
 
-    const first = await revealHint(OBJECTIVE)
+    const first = await revealHint()
+    expect(first).toMatchObject({ success: true, data: { tier: 'nudge' } })
     expect(first.data?.command).toBeUndefined()
-    await revealHint(OBJECTIVE)
-    const last = await revealHint(OBJECTIVE)
-    expect(last).toMatchObject({ success: true, data: { command: 'ip ospf bfd' } })
+    await revealHint()
+    const last = await revealHint()
+    expect(last).toMatchObject({ success: true, data: { tier: 'spot', command: 'ip ospf bfd' } })
 
-    expect(stages).toEqual([1, 2, 3])
-    expect(findMissionProgress(state().progress, EXAMPLE_MISSION.id)?.hintsRevealed).toEqual({ [OBJECTIVE]: 3 })
-    expect([...storage.map.values()].some((json) => json.includes(`"${OBJECTIVE}":3`))).toBe(true)
+    expect(revealed).toEqual([
+      ['nudge', 1],
+      ['concept', 2],
+      ['spot', 3],
+    ])
+    expect(findMissionProgress(state().progress, EXAMPLE_MISSION.id)?.hintsRevealed).toBe(3)
+    expect([...storage.map.values()].some((json) => json.includes('"hintsRevealed":3'))).toBe(true)
     subscription.unsubscribe()
   })
 
-  it('fails as a value when nothing is left, the objective is unknown or no mission is active', async () => {
+  it('fails as a value when nothing is left or no mission is active', async () => {
     await startedGame()
-    await revealHint('reaches-c')
-    await revealHint('reaches-c')
+    await revealHint()
+    await revealHint()
+    await revealHint()
     const before = state().progress
 
-    expect(await revealHint('reaches-c')).toMatchObject({ success: false, error: { code: 'NOT_FOUND' } })
-    expect(await revealHint('nope')).toMatchObject({ success: false, error: { code: 'NOT_FOUND' } })
+    expect(await revealHint()).toMatchObject({ success: false, error: { code: 'NOT_FOUND' } })
     expect(state().progress).toBe(before)
 
     createMissionActions().leave()
-    expect(await revealHint(OBJECTIVE)).toMatchObject({ success: false, error: { code: 'NOT_READY' } })
+    expect(await revealHint()).toMatchObject({ success: false, error: { code: 'NOT_READY' } })
   })
 })

@@ -1,17 +1,41 @@
 # The curriculum, in play order. A chapter's stage number is its place in this list.
+# A chapter with missions also has its Codex title page: `story` (the stage in a few lines),
+# `guide` (the FRR daemon who guides it), `standsFor` (the real part of FRR it is about) and
+# `outcomes` (the "You can now…" lines shown once every mission of the stage is completed).
 chapters:
   - id: first-router
     title: First router
     summary: Start FRR on Linux, find its daemons, use vtysh, and save and reload a configuration.
+    story: One router, alone and silent. Before it can find any peer, FRR has to run on it, answer its console, and keep what you tell it across a restart.
+    guide: zebra
+    standsFor: FRR's daemons, watchfrr, vtysh and frr.conf
+    outcomes:
+      - start FRR the way an installed router does, and tell which daemons run
+      - read and change a router's configuration in vtysh
+      - save a change so that it survives a restart
   - id: follow-a-packet
     title: Follow a packet
     summary: Connected and static routes, next hops, and a route's way from Zebra into Linux forwarding.
+    story: The routers run, and still nothing crosses the cables. Each one knows only its own links until someone tells it where the rest of the network is.
+    guide: zebra
+    standsFor: zebra, staticd and the Linux routing table
+    outcomes:
+      - give an interface its address in FRR and find the connected route in Linux
+      - write a static route with its next hop
+      - check that a packet has a route there and its reply a route back
   - id: build-an-underlay
     title: Build an underlay
     summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.
   - id: recover-from-failure
     title: Recover from failure
     summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.
+    story: A link stopped passing packets while both its ends stayed up, and the network took half a minute to notice. Failures are measured here, and made shorter.
+    guide: bfdd
+    standsFor: bfdd and the routing protocols it tells about a dead neighbor
+    outcomes:
+      - measure an outage from a probe's replies
+      - tell which event noticed a failure first
+      - make OSPF notice a dead link in under a second with BFD
   - id: other-interior-protocols
     title: The other interior protocols
     summary: RIP, EIGRP, Babel, OpenFabric and NHRP, and where each one fits.

@@ -1,24 +1,36 @@
-import type { HintDefinition, MissionDefinition, ObjectiveDefinition } from '#types/definitions/mission'
+import { HINT_TIERS, type RevealedHint } from '#types/definitions/hints'
+import type { MissionDefinition } from '#types/definitions/mission'
 
-/** Guards against a count saved for an objective whose hints have since been cut. */
-const clamp = (objective: ObjectiveDefinition, revealed: number): number =>
-  Math.max(0, Math.min(revealed, objective.hints.length))
+/** Guards against a saved count beyond the hints the mission has now. */
+const clamp = (mission: MissionDefinition, revealed: number): number =>
+  Math.max(0, Math.min(revealed, mission.hints.length, HINT_TIERS.length))
 
-/** The hints shown so far for an objective, in order: where to look first. */
-export function revealedHints(objective: ObjectiveDefinition, revealed: number): readonly HintDefinition[] {
-  return objective.hints.slice(0, clamp(objective, revealed))
+function asRevealed(mission: MissionDefinition, at: number): RevealedHint | null {
+  const hint = mission.hints[at]
+  const tier = HINT_TIERS[at]
+  if (!hint || !tier) {
+    return null
+  }
+  return { tier, text: hint.text, ...(hint.command !== undefined && { command: hint.command }) }
+}
+
+/** The hints shown so far, in order: the nudge, the concept, the spot. */
+export function revealedHints(mission: MissionDefinition, revealed: number): readonly RevealedHint[] {
+  return Array.from({ length: clamp(mission, revealed) }, (_, at) => asRevealed(mission, at)).filter(
+    (hint): hint is RevealedHint => hint !== null
+  )
 }
 
 /** The hint revealed next, given how many are already shown; `null` once all are. */
-export function nextHint(objective: ObjectiveDefinition, revealed: number): HintDefinition | null {
-  return objective.hints[clamp(objective, revealed)] ?? null
+export function nextHint(mission: MissionDefinition, revealed: number): RevealedHint | null {
+  return asRevealed(mission, clamp(mission, revealed))
 }
 
-export function hintsLeft(objective: ObjectiveDefinition, revealed: number): number {
-  return objective.hints.length - clamp(objective, revealed)
+export function hintsLeft(mission: MissionDefinition, revealed: number): number {
+  return Math.min(mission.hints.length, HINT_TIERS.length) - clamp(mission, revealed)
 }
 
-/** How many hints a mission's objectives have revealed in all, from the saved counts. */
-export function hintsUsed(mission: MissionDefinition, revealed: Readonly<Record<string, number>>): number {
-  return mission.objectives.reduce((sum, objective) => sum + clamp(objective, revealed[objective.id] ?? 0), 0)
+/** How many hints a mission has revealed, from the saved count. */
+export function hintsUsed(mission: MissionDefinition, revealed: number): number {
+  return clamp(mission, revealed)
 }

@@ -1,9 +1,13 @@
 id: the-link-that-never-went-down
 version: 1
 title: The Link That Never Went Down
+summary: Measure an outage on a link that stays up, and make OSPF notice it in under a second with BFD.
+minutes: 25
 chapter: recover-from-failure
 objective: When the link between a and c stops passing packets, traffic from a to c is back through b in under two seconds.
 prerequisites: []
+teaches: [bfd, ospf-dead-interval]
+uses: [ospf-adjacency, routing-table, next-hop, vtysh]
 
 # Three routers in a triangle. Every link costs 10, so a reaches c directly (cost 10)
 # and keeps the way through b (cost 20) as its backup.
@@ -102,22 +106,24 @@ objectives:
   - id: reaches-c
     text: Send a probe from a to c and see the replies come back.
     check: { kind: reachable, minReplies: 3 }
-    hints:
-      - text: Select router a on the map, then use Send probe. Each reply is one packet that reached c and came back.
-      - text: You can also ask a itself. In a's terminal, send three packets to c's address.
-        command: ping -c 3 10.255.0.3
   - id: direct-while-healthy
     text: Find the way a's traffic takes to c while the network is healthy.
     check: { kind: path, before: a-c }
-    hints:
-      - text: A router's routing table says where each destination's packets leave. Open FRR's console on a with vtysh.
-      - text: Ask a for its route to c's address. The interface at the end of the line is the way out.
-        command: show ip route 10.255.0.3
   - id: recovers-through-b
     text: Break the link and get traffic back through b in under two seconds.
     check: { kind: recovery, via: a-b }
-    hints:
-      - text: Run the fault once as it is and read the timeline. See how long a keeps c as a neighbor after the link stops passing packets, and what finally removes it.
-      - text: OSPF only notices a silent neighbor after its dead timer, 40 seconds. BFD is a small protocol whose only job is to notice sooner. Both routers on the link have to run it.
-      - text: Turn BFD on for OSPF on a's interface to c, and on c's interface to a. On a, inside vtysh, enter configure terminal, then interface a-c, then this line.
-        command: ip ospf bfd
+
+hints:
+  - text: Run the fault once as it is and read the timeline. See how long a keeps c as a neighbor after the link stops passing packets, and what finally removes it.
+  - text: OSPF only notices a silent neighbor after its dead timer, 40 seconds. BFD is a small protocol whose only job is to notice sooner. Both routers on the link have to run it.
+  - text: Turn BFD on for OSPF on a's interface to c, and on c's interface to a. On a, inside vtysh, enter configure terminal, then interface a-c, then this line.
+    command: ip ospf bfd
+
+chips: []
+codex: []
+
+story:
+  scene: story.md#scene
+  buildIt: story.md#build-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

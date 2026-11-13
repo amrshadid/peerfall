@@ -1,4 +1,4 @@
-import type { ChapterDefinition, MissionDefinition, MissionId, ObjectiveId } from '#types/definitions/mission'
+import type { ChapterDefinition, MissionDefinition, MissionId } from '#types/definitions/mission'
 import type { SavedRun } from '#types/definitions/runs'
 
 /** Milliseconds since the Unix epoch, from the injected clock. */
@@ -12,8 +12,8 @@ export interface MissionProgress {
   readonly completedAt: EpochMs | null
   /** Judged runs so far. Retries are free: this is shown, never held against the player. */
   readonly attempts: number
-  /** How many hints are revealed for each objective that has any revealed. */
-  readonly hintsRevealed: Readonly<Record<ObjectiveId, number>>
+  /** How many of the mission's three hints are revealed, from 0. */
+  readonly hintsRevealed: number
   /** The baseline, if one was saved, and the latest attempts, oldest first. */
   readonly runs: readonly SavedRun[]
 }

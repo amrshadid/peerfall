@@ -127,7 +127,7 @@ export function createMissionActions(): UseMissionActionsResult {
         {
           missionId: mission.id,
           attempts: record?.attempts ?? 1,
-          hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? {}),
+          hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? 0),
           at,
         },
         { source: SOURCE }

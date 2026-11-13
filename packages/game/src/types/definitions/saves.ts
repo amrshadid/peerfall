@@ -4,7 +4,7 @@ import type { EpochMs, Progress } from '#types/definitions/progress'
 export const SAVE_FORMAT = 'peerfall-save'
 
 /** Each version up has its migration in SAVE_MIGRATIONS (utils/saves). */
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
 
 export const DEFAULT_SAVE_SLOT = 'main'
 

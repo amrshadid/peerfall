@@ -1,5 +1,6 @@
-import { describeType, type Issues, isRecord, ObjectReader } from '@peerfall/core/utils'
+import { describeType, type Issues, ObjectReader } from '@peerfall/core/utils'
 import { DETECTION_EVENTS, type Detection, type Outage, type RouteHop } from '#types/definitions/checks'
+import { HINT_TIERS } from '#types/definitions/hints'
 import type { MissionProgress, Progress } from '#types/definitions/progress'
 import {
   type AdjacencyChange,
@@ -110,19 +111,13 @@ function readRun(run: ObjectReader): SavedRun {
   }
 }
 
-function readHintCounts(mission: ObjectReader): Readonly<Record<string, number>> {
-  const value = mission.value('hintsRevealed')
-  const counts = mission.object('hintsRevealed')
-  return isRecord(value) ? Object.fromEntries(Object.keys(value).map((id) => [id, counts.integer(id, 0)])) : {}
-}
-
 function readMission(mission: ObjectReader): MissionProgress {
   return {
     missionId: mission.string('missionId'),
     firstStartedAt: mission.integer('firstStartedAt', 0),
     completedAt: mission.nullable('completedAt', (key) => mission.integer(key, 0)),
     attempts: mission.integer('attempts', 0),
-    hintsRevealed: readHintCounts(mission),
+    hintsRevealed: mission.integer('hintsRevealed', 0, HINT_TIERS.length),
     runs: mission.list('runs', (entry, at) => readRun(new ObjectReader(entry, at, mission.issues))),
   }
 }

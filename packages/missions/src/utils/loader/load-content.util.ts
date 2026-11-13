@@ -1,16 +1,24 @@
 import type { Validated } from '@peerfall/core/types'
 import type { MissionDefinition, MissionId } from '@peerfall/game/types'
-import { createGameContent, validateChapters, validateMission } from '@peerfall/game/utils'
+import {
+  createGameContent,
+  validateChapters,
+  validateConcepts,
+  validateFieldGuide,
+  validateMission,
+} from '@peerfall/game/utils'
 import {
   CHAPTERS_FILE,
+  CONCEPTS_FILE,
   type ContentFiles,
-  DEBRIEF_FILE,
-  INCIDENT_FILE,
+  FIELD_GUIDE_FILE,
   type LoadedContent,
   MISSION_FILE,
-  type MissionTexts,
+  STORY_FILE,
 } from '#types/definitions/content'
+import type { Story } from '#types/definitions/story'
 import { readYaml } from '#utils/loader/read-yaml.util'
+import { parseStory, sectionOf, storyProblems } from '#utils/story/index'
 
 // `4-recover-from-failure/01-the-link-that-never-went-down`: numbered in play order, with the
 // ids the YAML carries after the number. The ids never change when folders are renumbered.
@@ -31,12 +39,34 @@ function inPlayOrder(paths: readonly string[]): string[] {
   })
 }
 
+/** The story beside a mission, with every problem it has and every section the mission points at but it lacks. */
+function readStory(text: string, path: string, mission: MissionDefinition | null, errors: string[]): Story | null {
+  if (text.trim() === '') {
+    errors.push(`${path}: missing or empty`)
+    return null
+  }
+  const problems = storyProblems(text)
+  errors.push(...problems.map((problem) => `${path}:${problem.line}: ${problem.message}`))
+  const story = parseStory(text)
+  for (const ref of Object.values(mission?.story ?? {})) {
+    if (!story.sections.has(sectionOf(ref))) {
+      errors.push(`${path}: no section for "${ref}"`)
+    }
+  }
+  if (mission && story.title !== '' && story.title !== mission.title) {
+    errors.push(`${path}:1: the title is "${story.title}", but mission.yaml calls it "${mission.title}"`)
+  }
+  return problems.length === 0 ? story : null
+}
+
 /** Reports every problem at once, with its file and field, so broken content shows a list, not a crash. */
 export function loadContent(files: ContentFiles): Validated<LoadedContent> {
   const errors: string[] = []
   const chapters = readYaml(files.chapters, CHAPTERS_FILE, validateChapters, errors)
+  const concepts = readYaml(files.concepts, CONCEPTS_FILE, validateConcepts, errors)
+  const fieldGuide = readYaml(files.fieldGuide, FIELD_GUIDE_FILE, validateFieldGuide, errors)
   const missions: MissionDefinition[] = []
-  const texts = new Map<MissionId, MissionTexts>()
+  const stories = new Map<MissionId, Story>()
   const folders = new Map<MissionId, string>()
 
   for (const path of inPlayOrder(Object.keys(files.missions))) {
@@ -47,14 +77,8 @@ export function loadContent(files: ContentFiles): Validated<LoadedContent> {
     }
     const mission = readYaml(files.missions[path] ?? '', path, validateMission, errors)
     const folder = folderOf(path)
-    const incident = (files.incidents[`${folder}/${INCIDENT_FILE}`] ?? '').trim()
-    const debrief = (files.debriefs[`${folder}/${DEBRIEF_FILE}`] ?? '').trim()
-    if (incident === '') {
-      errors.push(`${folder}/${INCIDENT_FILE}: missing or empty`)
-    }
-    if (debrief === '') {
-      errors.push(`${folder}/${DEBRIEF_FILE}: missing or empty`)
-    }
+    const storyPath = `${folder}/${STORY_FILE}`
+    const story = readStory(files.stories[storyPath] ?? '', storyPath, mission, errors)
     if (!mission) {
       continue
     }
@@ -66,14 +90,16 @@ export function loadContent(files: ContentFiles): Validated<LoadedContent> {
       errors.push(`${path}: id is "${mission.id}", but the folder is named "${place[4]}"`)
     }
     missions.push(mission)
-    texts.set(mission.id, { incident, debrief })
+    if (story) {
+      stories.set(mission.id, story)
+    }
     folders.set(mission.id, folder)
   }
 
-  if (!chapters || errors.length > 0) {
+  if (!chapters || !concepts || !fieldGuide || errors.length > 0) {
     return { ok: false, errors }
   }
-  const game = createGameContent({ chapters, missions })
+  const game = createGameContent({ chapters, missions, concepts, fieldGuide })
   if (!game.ok) {
     return game
   }
@@ -81,7 +107,7 @@ export function loadContent(files: ContentFiles): Validated<LoadedContent> {
     ok: true,
     value: {
       game: game.value,
-      textsOf: (id) => texts.get(id),
+      storyOf: (id) => stories.get(id),
       folderOf: (id) => folders.get(id),
     },
   }
