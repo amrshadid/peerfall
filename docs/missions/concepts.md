@@ -32,7 +32,7 @@ missions are specified in [stage-1-first-router.md](stage-1-first-router.md) and
 | `vtysh`                   | vtysh, FRR's console                                    | `cli`     | 1.2    |           | 1.3–1.8, stage 2             |
 | `watchfrr`                | watchfrr                                                | `frr`     | 1.3    |           | 1.6, 1.7, 1.8                |
 | `frr-init-script`         | FRR's init script, `frrinit.sh`                         | `frr`     | 1.3    | 1.2       | 1.6, 1.7, 1.8, 2.6           |
-| `daemons-file`            | the `daemons` file                                      | `frr`     | 1.3    | 1.2       | 1.8                          |
+| `daemons-file`            | the `daemons` file                                      | `frr`     | 1.3    | 1.2       | stage 3 (`ospfd=yes`)        |
 | `cli-help`                | `?`, Tab and abbreviations                              | `cli`     | 1.4    |           | 1.5–1.8, stage 2             |
 | `cli-modes`               | vtysh's modes: exec, configure, interface               | `cli`     | 1.4    |           | 1.5–1.8, stage 2             |
 | `interface-shutdown`      | `shutdown`: FRR holding an interface down               | `config`  | 1.4    | 1.1       | 1.8, 2.5                     |
@@ -40,14 +40,14 @@ missions are specified in [stage-1-first-router.md](stage-1-first-router.md) and
 | `interface-description`   | an interface's description                              | `config`  | 1.5    |           | 1.6, 1.7, 1.8                |
 | `saved-config`            | the saved configuration, `frr.conf`                     | `config`  | 1.6    | 1.2       | 1.7, 1.8, 2.6                |
 | `write-memory`            | `write memory`                                          | `config`  | 1.6    |           | 1.7, 1.8, 2.6                |
-| `frr-log`                 | FRR's log and `show logging`                            | `frr`     | 1.7    |           | 1.8                          |
+| `frr-log`                 | FRR's log and `show logging`                            | `frr`     | 1.7    |           | stage 3 (debugging)          |
 | `config-check`            | checking a file with `vtysh -C -f`                      | `config`  | 1.7    |           | 1.8                          |
 | `ip-address`              | an IPv4 address on an interface                         | `linux`   | 2.1    | 1.1       | 2.2–2.6                      |
 | `prefix`                  | a network, its prefix and prefix length                 | `routing` | 2.1    | 1.1       | 2.2–2.6                      |
 | `connected-route`         | connected and local routes                              | `routing` | 2.1    | 1.1       | 2.2–2.6                      |
 | `static-route`            | a static route                                          | `routing` | 2.2    |           | 2.3–2.6                      |
 | `next-hop`                | the next hop                                            | `routing` | 2.2    |           | 2.3–2.6                      |
-| `staticd`                 | staticd                                                 | `frr`     | 2.2    | 1.3       | 2.4, 2.5                     |
+| `staticd`                 | staticd                                                 | `frr`     | 2.2    | 1.3       | 2.4                          |
 | `return-path`             | the way back: a reply needs its own route               | `network` | 2.3    |           | 2.6                          |
 | `ttl`                     | TTL, the hop count each router lowers, and `traceroute` | `network` | 2.3    | 2.2       | 2.5                          |
 | `rib`                     | zebra's routing table (RIB), selected routes            | `routing` | 2.4    | 2.1       | 2.5, 2.6                     |
