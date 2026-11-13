@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { goldenMission } from '#test/index'
 
-// Runs recorded on the real Machine by `pnpm vm:golden gone-after-the-restart`. FRR was restarted
-// on a before each state was read, so what is judged is what the restart left.
+// Runs recorded on the real Machine by `pnpm vm:golden gone-after-the-restart`. Nothing restarts
+// FRR for the player: `survives` reads the frr.conf FRR's init script last started a from.
 const golden = goldenMission('gone-after-the-restart')
 const DESCRIPTION = 'interface lo\n description loopback of router a\n'
 const configs = (id: string) => {
   const router = golden.run(id).state?.routers.a
-  return { running: router?.runningConfig ?? '', saved: router?.savedConfig ?? '' }
+  return {
+    saved: router?.savedConfig ?? '',
+    started: router?.startedConfig ?? null,
+  }
 }
 
 describe('Gone After the Restart, on the Machine', () => {
@@ -29,27 +32,30 @@ describe('Gone After the Restart, on the Machine', () => {
     }
   })
 
-  it('restarts FRR on a before the check', () => {
-    expect(golden.mission.restartOnCheck).toEqual(['a'])
+  it('restarts nothing before the check: the player restarts FRR', () => {
+    expect(golden.mission.restartOnCheck).toBeUndefined()
   })
 
-  it('start: neither configuration has a description, and the mission is not passed', () => {
-    expect(configs('start').running).not.toContain('description')
+  it('start: frr.conf has no description, and the mission is not passed', () => {
     expect(configs('start').saved).not.toContain('description')
     expect(golden.objectives('start')).toEqual({ saved: false, survives: false })
   })
 
-  it('configured and not saved: the restart took the description away', () => {
-    expect(configs('not-saved').running).not.toContain('description')
+  it('configured and not saved: never in frr.conf', () => {
     expect(configs('not-saved').saved).not.toContain('description')
+    expect(configs('not-saved').started).toBeNull()
     expect(golden.objectives('not-saved')).toEqual({ saved: false, survives: false })
   })
 
-  it('saved with write memory: frr.conf has it and the restarted router runs it', () => {
-    for (const id of ['saved', 'saved-and-restarted']) {
-      expect(configs(id).saved).toContain(DESCRIPTION)
-      expect(configs(id).running).toContain(DESCRIPTION)
-      expect(golden.objectives(id)).toEqual({ saved: true, survives: true })
-    }
+  it('saved with write memory and not restarted: in frr.conf, not yet shown to survive', () => {
+    expect(configs('saved').saved).toContain(DESCRIPTION)
+    expect(configs('saved').started).toBeNull()
+    expect(golden.objectives('saved')).toEqual({ saved: true, survives: false })
+  })
+
+  it('saved, then restarted with FRR’s init script: FRR started from a frr.conf that has it', () => {
+    expect(configs('saved-and-restarted').started).toContain(DESCRIPTION)
+    expect(configs('saved-and-restarted').saved).toContain(DESCRIPTION)
+    expect(golden.objectives('saved-and-restarted')).toEqual({ saved: true, survives: true })
   })
 })

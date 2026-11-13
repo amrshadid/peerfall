@@ -1,5 +1,5 @@
 id: gone-after-the-restart
-version: 1
+version: 2
 title: Gone After the Restart
 summary: Change one thing on a router, and make the change survive a restart.
 minutes: 15
@@ -20,16 +20,15 @@ network:
       config: ""
   links: []
 
-# What is judged is what a restart leaves: FRR starts again from frr.conf, and only from it.
-restartOnCheck: [a]
-
 objectives:
   - id: saved
     text: Give a's interface lo a description and save it, so that it is in a's frr.conf.
     check: { kind: config, router: a, source: saved, block: [interface lo], line: description }
   - id: survives
     text: After FRR restarts, a is still running with the description.
-    check: { kind: config, router: a, source: running, block: [interface lo], line: description }
+    # What FRR's init script last started a from: the description survived a restart only if
+    # it was in frr.conf when the player restarted FRR.
+    check: { kind: config, router: a, source: started, block: [interface lo], line: description }
 
 hints:
   - text: A router has two configurations. The running one is what FRR does now, and you read it in vtysh with show running-config. The saved one is the file /etc/frr/a/frr.conf, which FRR reads when it starts. Compare the two after you change something.

@@ -14,7 +14,7 @@
 
 **Your job.** Put a description on `lo` again, with any words you like, and make sure it is still there after FRR restarts.
 
-When you have your work checked, FRR on a is restarted first. What is judged is what the restart leaves.
+Then restart FRR on a yourself, with `/usr/lib/frr/frrinit.sh restart a`, and see what the restart leaves.
 
 ## Debrief
 
