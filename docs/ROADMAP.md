@@ -50,7 +50,6 @@ who did not write it, and was played end to end in the app following its Guide.
 - **Stage 3 missions**, then the rest of stage 4 (graceful restart, VRRP).
 - **The Guide's pace:** it moves on after any finished command, a wrong one too, and then
   runs one beat ahead. A beat could name the output it waits for.
-- **A "next mission" button on the debrief**, and a link back to the Peer Map.
 
 ## Good first contributions
 

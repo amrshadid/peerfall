@@ -7,6 +7,14 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+### Changed
+
+- **The debrief is laid out as Kernelfall's level card:** the debrief's first line as its
+  heading, the result in one line, every Codex card the mission filed printed in full, and
+  Next mission, Replay mission and Back to the map. A stage's last mission closes the stage
+  with what you can now do. The top bar goes back to the Peer Map.
+- **Alt+P looks at the previous step**, as in Kernelfall.
+
 ## [0.1.0-alpha.3] - 2026-11-14
 
 Stages 1 and 2 are retold for a player who starts knowing nothing, in fourteen missions, with
