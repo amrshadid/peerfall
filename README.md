@@ -28,7 +28,13 @@ asks first, and only if you allow it records how you play with Microsoft Clarity
 including what you type in the terminal and the editor; Settings → Privacy changes your
 answer.
 
-Peerfall is in development. Five missions are playable: two in stage 1, two in stage 2
+You start from nothing: one router, a terminal, and zebra, FRR's own core daemon, who tells
+you what each command does before you run it and explains what came back after. Objectives
+tick by themselves as the network changes, hints come in three steps, and every idea you
+meet is filed in the Codex, with the FRR source behind it and a way to try it on a real
+router.
+
+Peerfall is in development. Fifteen missions are playable: eight in stage 1, six in stage 2
 and one in stage 4 ([roadmap](docs/ROADMAP.md)).
 
 ## What you'll learn
@@ -36,19 +42,19 @@ and one in stage 4 ([roadmap](docs/ROADMAP.md)).
 The journey covers FRR from end to end, one stage at a time. Each stage names the FRR
 daemons you work with.
 
-| #   | Stage                        | What you learn to do                                                                                                                                                                     | FRR parts                                                     |
-| --- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| 1   | First router                 | Start FRR on Linux, identify its daemons and what keeps them running, use `vtysh`, read the running configuration, save and reload it, and read the logs.                                | `watchfrr`, `mgmtd`, `vtysh`, `frr-reload`                    |
-| 2   | Follow a packet              | Address interfaces for IPv4 and IPv6, configure connected and static routes, resolve a next hop, compare administrative distances, and trace a route from Zebra into Linux forwarding.   | `zebra`, `staticd`                                            |
-| 3   | Build an underlay            | Form OSPFv2, OSPFv3 and IS-IS adjacencies, read the link-state database, predict the path from costs, split a network into areas and levels, balance over equal paths, and redistribute. | `ospfd`, `ospf6d`, `isisd`                                    |
-| 4   | Recover from failure         | Measure an outage, see why an interface can stay up while packets are lost, detect it with BFD, tune timers, restart a daemon without losing traffic, and share a gateway address.       | `bfdd`, graceful restart, fast reroute, `vrrpd`               |
-| 5   | The other interior protocols | Run the distance-vector and specialised protocols, and say when each one fits: small networks, mesh and wireless links, data-centre fabrics, and overlay tunnels.                        | `ripd`, `ripngd`, `eigrpd`, `babeld`, `fabricd`, `nhrpd`      |
-| 6   | Exchange routes              | Establish iBGP and eBGP sessions, follow best-path selection step by step, use route reflectors, multipath and unnumbered sessions, and carry IPv6 and other address families.           | `bgpd`                                                        |
-| 7   | Control what is advertised   | Filter and rewrite routes with prefix lists, AS-path lists, communities and route maps, validate origins with RPKI, and steer chosen traffic with policy routing.                        | route maps, RPKI, `pbrd`                                      |
-| 8   | Isolate and connect tenants  | Separate tenants with VRFs, leak routes selectively, build an L3VPN, and trace remote MAC and IP reachability across an EVPN/VXLAN fabric.                                               | VRFs, `bgpd` L3VPN and EVPN, `zebra`                          |
-| 9   | Label and steer              | Forward on MPLS labels, distribute them with LDP, replace them with Segment Routing, carry services over SRv6, and pin traffic to an engineered path.                                    | `ldpd`, Segment Routing in `ospfd` and `isisd`, SRv6, `pathd` |
-| 10  | Deliver multicast            | Follow a multicast stream from its source to its receivers: group membership, the distribution tree, the rendezvous point, and sources in another domain.                                | `pimd`, `pim6d`, IGMP, MLD, MSDP                              |
-| 11  | Operate a network            | Diagnose a fault across protocol state and forwarding, read debugs without drowning in them, monitor and automate with JSON output, verify recovery and isolation, and roll back.        | debugs, JSON output, BMP, SNMP, the northbound API            |
+| #   | Stage                        | What you learn to do                                                                                                                                                                                        | FRR parts                                                     |
+| --- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 1   | First router                 | Read a router's interfaces and routes, start FRR and tell which daemons run, use `vtysh` and its modes, change the running configuration, save it so it survives a restart, and find a bad line in the log. | `watchfrr`, `zebra`, `mgmtd`, `vtysh`, `frr.conf`             |
+| 2   | Follow a packet              | Address interfaces, follow connected and static routes, resolve a next hop, give a reply its way back, tell zebra's table from the kernel's, and keep a backup route waiting by its distance.               | `zebra`, `staticd`                                            |
+| 3   | Build an underlay            | Form OSPFv2, OSPFv3 and IS-IS adjacencies, read the link-state database, predict the path from costs, split a network into areas and levels, balance over equal paths, and redistribute.                    | `ospfd`, `ospf6d`, `isisd`                                    |
+| 4   | Recover from failure         | Measure an outage, see why an interface can stay up while packets are lost, detect it with BFD, tune timers, restart a daemon without losing traffic, and share a gateway address.                          | `bfdd`, graceful restart, fast reroute, `vrrpd`               |
+| 5   | The other interior protocols | Run the distance-vector and specialised protocols, and say when each one fits: small networks, mesh and wireless links, data-centre fabrics, and overlay tunnels.                                           | `ripd`, `ripngd`, `eigrpd`, `babeld`, `fabricd`, `nhrpd`      |
+| 6   | Exchange routes              | Establish iBGP and eBGP sessions, follow best-path selection step by step, use route reflectors, multipath and unnumbered sessions, and carry IPv6 and other address families.                              | `bgpd`                                                        |
+| 7   | Control what is advertised   | Filter and rewrite routes with prefix lists, AS-path lists, communities and route maps, validate origins with RPKI, and steer chosen traffic with policy routing.                                           | route maps, RPKI, `pbrd`                                      |
+| 8   | Isolate and connect tenants  | Separate tenants with VRFs, leak routes selectively, build an L3VPN, and trace remote MAC and IP reachability across an EVPN/VXLAN fabric.                                                                  | VRFs, `bgpd` L3VPN and EVPN, `zebra`                          |
+| 9   | Label and steer              | Forward on MPLS labels, distribute them with LDP, replace them with Segment Routing, carry services over SRv6, and pin traffic to an engineered path.                                                       | `ldpd`, Segment Routing in `ospfd` and `isisd`, SRv6, `pathd` |
+| 10  | Deliver multicast            | Follow a multicast stream from its source to its receivers: group membership, the distribution tree, the rendezvous point, and sources in another domain.                                                   | `pimd`, `pim6d`, IGMP, MLD, MSDP                              |
+| 11  | Operate a network            | Diagnose a fault across protocol state and forwarding, read debugs without drowning in them, monitor and automate with JSON output, verify recovery and isolation, and roll back.                           | debugs, JSON output, BMP, SNMP, the northbound API            |
 
 Stages 1, 2 and 4 have missions today; the rest are planned.
 
