@@ -6,7 +6,7 @@
 
 The pager goes off after midnight. Every router here has lost its peers, the routers it talks to. The cables still carry light, and nothing gets across.
 
-> **zebra:** You're the engineer on call? Good. I'm zebra, and I live on these routers. We start with one: router a, and its neighbours b and c. a reaches b. It can't reach c. Lines already on a's screen, above where you type, are its routing software starting; they wait for The Silent Router.
+> **zebra:** You're the engineer on call? Good. I'm zebra, and I live on these routers. We start with one: router a, and its neighbours b and c. a reaches b. It can't reach c. The lines above a's first prompt are its routing software starting; The Silent Router explains them.
 
 ## See it
 
