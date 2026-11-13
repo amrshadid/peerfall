@@ -1,0 +1,1 @@
+{"mission":"one-hop-further","version":1,"run":"start","passes":false,"events":[],"state":{"routers":{"a":{"routes":[{"prefix":"10.0.1.0/30","protocol":"kernel","nextHops":[{"via":null,"interface":"a-b"}]}]}},"pings":[{"from":"a","to":"10.0.2.2","sent":3,"received":0}]}}

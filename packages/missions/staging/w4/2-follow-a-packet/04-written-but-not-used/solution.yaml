@@ -1,0 +1,29 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Another next hop no connected network covers: still unresolved.
+  - id: still-too-far
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, no ip route 10.0.2.0/30 10.0.2.1, ip route 10.0.2.0/30 10.0.2.2]
+  # The wrong route removed and nothing written in its place.
+  - id: removed-only
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, no ip route 10.0.2.0/30 10.0.2.1]
+  - id: fixed
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, no ip route 10.0.2.0/30 10.0.2.1, ip route 10.0.2.0/30 10.0.1.2]
+  # The right route added, the wrong one left: only the right next hop reaches the kernel.
+  - id: added-beside
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.0.2.0/30 10.0.1.2]

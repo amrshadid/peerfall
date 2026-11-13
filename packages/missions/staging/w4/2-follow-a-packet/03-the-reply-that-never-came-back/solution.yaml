@@ -1,0 +1,29 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # The way back through an address c cannot reach: the route is not used.
+  - id: next-hop-too-far
+    passes: false
+    changes:
+      - router: c
+        lines: [configure terminal, ip route 10.0.1.0/30 10.0.1.2]
+  # The way back written on b, which already has a connected route to a: c still has none.
+  - id: route-on-b
+    passes: false
+    changes:
+      - router: b
+        lines: [configure terminal, ip route 10.0.1.0/30 10.0.2.2]
+  - id: way-back
+    passes: true
+    changes:
+      - router: c
+        lines: [configure terminal, ip route 10.0.1.0/30 10.0.2.1]
+  # A default route back: the kernel uses it for 10.0.1.1 too.
+  - id: default-route-back
+    passes: true
+    changes:
+      - router: c
+        lines: [configure terminal, ip route 0.0.0.0/0 10.0.2.1]
