@@ -174,9 +174,14 @@ export function MissionContainer({
   // The network is reset whenever the run allows it, the scene included: commands typed while
   // reading it already change the routers.
   const restartWait = waitReasonOf(run.phase)
+  // The story starts over in the first router, so the terminal goes back there too.
   const startOver = () => {
     setRuns((count) => count + 1)
-    void run.startOver()
+    void run.startOver().then(() => {
+      if (firstRouter !== null) {
+        void select(firstRouter)
+      }
+    })
   }
   const view: MissionView = {
     run,

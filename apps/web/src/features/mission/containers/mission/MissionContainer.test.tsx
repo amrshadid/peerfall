@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
   showDebrief: vi.fn(),
   leave: vi.fn(),
-  startOver: vi.fn(),
+  startOver: vi.fn(() => Promise.resolve()),
   missionRunOf: vi.fn(),
   router: 'a' as string | null,
   select: vi.fn(),
@@ -242,6 +242,17 @@ describe('MissionContainer', () => {
     await act(async () => {})
     expect(screen.getByText('Finish the mission before it.')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Back to the title' })).toBeTruthy()
+  })
+
+  it('puts the terminal back in the first router after starting over', async () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    mocks.router = 'b'
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start again' }))
+    await act(async () => {})
+    expect(mocks.select).toHaveBeenCalledWith('a')
   })
 
   it('starts over only after asking, and only while the network is the player’s to use', () => {
