@@ -46,8 +46,8 @@ describe('the repository’s content', () => {
     firstTwoStages.slice(1).forEach((mission, at) => {
       expect([mission.id, mission.prerequisites]).toEqual([mission.id, [firstTwoStages[at]?.id]])
     })
-    // Stage 3 is not written yet: the mission after it is open from the start.
-    expect(game.mission('the-link-that-never-went-down')?.prerequisites).toEqual([])
+    // Stage 3 is not written yet: the mission after it follows stage 2's capstone, so the journey stays in order.
+    expect(game.mission('the-link-that-never-went-down')?.prerequisites).toEqual(['bring-the-line-up'])
     // A mission that breaks nothing has no fault to run and no recovery target.
     expect(game.missions[0]).not.toHaveProperty('fault')
     expect(game.missions[0]).not.toHaveProperty('recoveryTargetMs')
