@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   parseDaemons,
+  parseInterfaces,
   parseKernelRoutes,
   parsePing,
   parseRibRoutes,
@@ -164,6 +165,53 @@ describe('the kernel routing table', () => {
   it('is empty for an empty table or an error', () => {
     expect(parseKernelRoutes('')).toEqual([])
     expect(parseKernelRoutes('Cannot open network namespace "zz": No such file or directory\n')).toEqual([])
+  })
+})
+
+// `ip -o link show` on The Dark Cable's network: a-c switched off on a (FRR's `shutdown`), then
+// switched on, then dropping every packet with tc netem.
+const LO =
+  '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\\    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n'
+const LINKS_A_DARK = `${LO}${[
+  '2: a-b@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000\\    link/ether 06:fe:4e:bf:aa:a1 brd ff:ff:ff:ff:ff:ff link-netns b',
+  '3: a-c@if2: <BROADCAST,MULTICAST> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000\\    link/ether e6:4b:42:80:55:3b brd ff:ff:ff:ff:ff:ff link-netns c',
+  '',
+].join('\n')}`
+const LINKS_C_DARK = `${LO}2: c-a@if3: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000\\    link/ether 32:5e:4d:c7:ef:30 brd ff:ff:ff:ff:ff:ff link-netns a\n`
+const LINKS_C_NETEM = `${LO}2: c-a@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc netem state UP mode DEFAULT group default qlen 1000\\    link/ether 32:5e:4d:c7:ef:30 brd ff:ff:ff:ff:ff:ff link-netns a\n`
+
+describe('a router’s interfaces', () => {
+  it('has no carrier on an end switched off, nor on its far end', () => {
+    expect(parseInterfaces(LINKS_A_DARK)).toEqual([
+      { name: 'lo', carrier: true },
+      { name: 'a-b', carrier: true },
+      { name: 'a-c', carrier: false },
+    ])
+    expect(parseInterfaces(LINKS_C_DARK)).toEqual([
+      { name: 'lo', carrier: true },
+      { name: 'c-a', carrier: false },
+    ])
+  })
+
+  it('keeps the carrier of a link that drops every packet', () => {
+    expect(parseInterfaces(LINKS_C_NETEM.replaceAll('\n', '\r\n'))).toEqual([
+      { name: 'lo', carrier: true },
+      { name: 'c-a', carrier: true },
+    ])
+  })
+
+  it('is empty when the namespace is gone', () => {
+    expect(parseInterfaces('Cannot open network namespace "zz": No such file or directory\n')).toEqual([])
+  })
+
+  it('is read with the other parts of a router', () => {
+    expect(routerStateLine('a', ['links'])).toBe('echo __PF_STATE__ links; ip -n a -o link show 2>&1; true')
+    expect(parseRouterState(`__PF_STATE__ links\n${LINKS_C_DARK}`)).toEqual({
+      links: [
+        { name: 'lo', carrier: true },
+        { name: 'c-a', carrier: false },
+      ],
+    })
   })
 })
 

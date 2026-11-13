@@ -6,6 +6,7 @@ import type {
   MachineState,
   NetworkDefinition,
   ProbeDefinition,
+  RouterStatePart,
   StampedMachineEvent,
   StateRequest,
 } from '@peerfall/machine/types'
@@ -264,19 +265,33 @@ async function waitUntilQuiet(machine: MissionMachine, timings: RunTimings): Pro
 }
 
 /**
+ * A state request that also reads the interfaces of every router of the network, so the map can
+ * show a link switched off as down. No check reads them: the verdict stays the checks' alone.
+ */
+export function withInterfaces(request: StateRequest, network: NetworkDefinition): StateRequest {
+  const routers: Record<string, readonly RouterStatePart[]> = { ...request.routers }
+  for (const { name } of network.routers) {
+    const parts = routers[name] ?? []
+    routers[name] = parts.includes('links') ? parts : [...parts, 'links']
+  }
+  return { ...request, routers }
+}
+
+/**
  * Reads what a mission's state checks need from the Machine as it is now, as live judging does
- * after each command the player finishes: nothing is restarted, nothing is waited for. Judging is
- * the caller's, with `judgeMission(mission, events, state)`.
+ * after each command the player finishes: nothing is restarted, nothing is waited for. Every
+ * router's interfaces are read too, for the map. Judging is the caller's, with
+ * `judgeMission(mission, events, state)`.
  */
 export async function liveRead(
   machine: Pick<MissionMachine, 'events' | 'readState'>,
-  mission: Pick<MissionDefinition, 'objectives'>
+  mission: Pick<MissionDefinition, 'objectives' | 'network'>
 ): Promise<CheckOutcome> {
   const request = stateRequestOf(mission)
   if (!request) {
     return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
   }
-  const state = await machine.readState(request)
+  const state = await machine.readState(withInterfaces(request, mission.network))
   if (!state.ok) {
     return state
   }
@@ -295,7 +310,7 @@ export const routingChangeCount = (events: readonly StampedMachineEvent[]): numb
  */
 export async function checkRun(
   machine: MissionMachine,
-  mission: Pick<MissionDefinition, 'objectives' | 'restartOnCheck'>,
+  mission: Pick<MissionDefinition, 'objectives' | 'network' | 'restartOnCheck'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<CheckOutcome> {
   if (!stateRequestOf(mission)) {
@@ -317,7 +332,7 @@ export async function checkRun(
  */
 export async function settledRead(
   machine: MissionMachine,
-  mission: Pick<MissionDefinition, 'objectives'>,
+  mission: Pick<MissionDefinition, 'objectives' | 'network'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<CheckOutcome> {
   if (!stateRequestOf(mission)) {

@@ -29,8 +29,28 @@ export interface RibRoute {
   readonly nextHops: readonly { readonly via: string | null; readonly interface: string | null }[]
 }
 
+/** One of a router's interfaces, as `ip -o link show` prints it. */
+export interface InterfaceState {
+  /** As the router names it: `a-c`, without the `@if3` that names the far end of a veth. */
+  readonly name: string
+  /**
+   * Switched on and with a live far end: the flags hold both `UP` and `LOWER_UP`. An end switched
+   * off shows neither; its far end shows `NO-CARRIER,…,UP`. A link that drops every packet with
+   * `tc netem` keeps its carrier on both ends.
+   */
+  readonly carrier: boolean
+}
+
 /** What a mission may ask about one router. Each part is a command of its own, so only what is needed is read. */
-export const ROUTER_STATE_PARTS = ['daemons', 'routes', 'rib', 'runningConfig', 'savedConfig', 'startedConfig'] as const
+export const ROUTER_STATE_PARTS = [
+  'daemons',
+  'routes',
+  'rib',
+  'runningConfig',
+  'savedConfig',
+  'startedConfig',
+  'links',
+] as const
 
 export type RouterStatePart = (typeof ROUTER_STATE_PARTS)[number]
 
@@ -53,6 +73,8 @@ export interface RouterState {
    * start does not count), or there was no frr.conf to start from.
    */
   readonly startedConfig?: string | null
+  /** Every interface of the router's namespace, the loopback included; empty when the namespace is gone. */
+  readonly links?: readonly InterfaceState[]
 }
 
 /** A few packets from one router to an address, sent when the state is read. */

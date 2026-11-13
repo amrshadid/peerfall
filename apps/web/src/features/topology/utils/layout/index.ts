@@ -3,6 +3,7 @@ export {
   adjacencyTextOf,
   linkKeyOf,
   linkStatesOf,
+  linkStatesWithCarrier,
   pathLinkKeys,
   pathTextOf,
   routerPositions,

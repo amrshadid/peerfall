@@ -8,6 +8,7 @@ import { TopologyContainer } from './TopologyContainer'
 const mocks = vi.hoisted(() => ({
   mission: null as unknown,
   events: [] as unknown,
+  interfaces: {} as unknown,
   router: null as string | null,
   select: vi.fn(),
 }))
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@peerfall/game/hooks', () => ({ useActiveMission: () => ({ mission: mocks.mission }) }))
 vi.mock('@peerfall/machine/hooks', () => ({
   useMachineEvents: () => mocks.events,
+  useInterfaceStates: () => mocks.interfaces,
   useRouterSelection: () => ({ router: mocks.router, select: mocks.select }),
 }))
 
@@ -64,6 +66,7 @@ const linkItem = (name: RegExp) =>
 beforeEach(() => {
   mocks.mission = mission
   mocks.events = stamped(HEALTHY)
+  mocks.interfaces = {}
   mocks.router = null
 })
 
@@ -101,6 +104,32 @@ describe('TopologyContainer', () => {
     expect(link?.textContent).toContain('dropping packets')
     expect(link?.textContent).toContain('OSPF Full')
     expect(linkItem(/Link a to b/)?.textContent).not.toContain('dropping packets')
+  })
+
+  it('says a link is down when the Machine showed one of its ends without carrier', () => {
+    mocks.events = []
+    mocks.interfaces = {
+      a: [
+        { name: 'lo', carrier: true },
+        { name: 'a-b', carrier: true },
+        { name: 'a-c', carrier: false },
+      ],
+      c: [
+        { name: 'lo', carrier: true },
+        { name: 'c-a', carrier: false },
+        { name: 'c-b', carrier: true },
+      ],
+    }
+    render(<TopologyContainer />)
+    expect(linkItem(/Link a to c/)?.textContent).toContain('Link a to c: down')
+    expect(linkItem(/Link a to b/)?.textContent).toContain('Link a to b: up')
+  })
+
+  it('says the faulted link drops packets while both its ends keep their carrier', () => {
+    mocks.events = stamped([...HEALTHY, { type: 'fault_injected', link: ['a', 'c'] }])
+    mocks.interfaces = { a: [{ name: 'a-c', carrier: true }], c: [{ name: 'c-a', carrier: true }] }
+    render(<TopologyContainer />)
+    expect(linkItem(/Link a to c/)?.textContent).toContain('dropping packets')
   })
 
   it('shows the adjacency lost and the path through b once the routers have noticed', () => {

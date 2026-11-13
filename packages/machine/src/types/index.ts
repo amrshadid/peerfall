@@ -26,6 +26,7 @@ export {
   type RouterDefinition,
 } from '#types/definitions/network'
 export {
+  type InterfaceState,
   type KernelRoute,
   type MachineState,
   PING_MAX_COUNT,

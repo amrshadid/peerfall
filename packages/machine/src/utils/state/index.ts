@@ -1,5 +1,6 @@
 export {
   parseDaemons,
+  parseInterfaces,
   parseKernelRoutes,
   parsePing,
   parseRibRoutes,

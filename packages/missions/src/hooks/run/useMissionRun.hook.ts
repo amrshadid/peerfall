@@ -81,9 +81,22 @@ const machine: MissionMachine = {
   startProbe: startVmProbe,
   stopProbe: stopVmProbe,
   saveHealthy: saveVmHealthy,
-  restoreHealthy: restoreVmHealthy,
+  restoreHealthy: async (slot) => {
+    // The saved Machine's interfaces may differ from the last reading: the map waits for the next.
+    useVmStore.getState().forgetInterfaces()
+    return restoreVmHealthy(slot)
+  },
   wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  readState: readVmMachineState,
+  readState: async (request) => {
+    const ready = useVmStore.getState().network === 'ready'
+    const read = await readVmMachineState(request)
+    // The map shows a link as down from these, after every read; a read that a network build
+    // overtook speaks of the network before it.
+    if (read.ok && ready && useVmStore.getState().network === 'ready') {
+      useVmStore.getState().recordInterfaces(read.value)
+    }
+    return read
+  },
   restartFrr: restartVmFrr,
 }
 
@@ -305,7 +318,7 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
     setVerdict(null)
     setErrors([])
     checked.current = null
-    await restoreVmHealthy(START_SLOT)
+    await machine.restoreHealthy(START_SLOT)
     live.request(0)
   }, [settled, live, setVerdict])
 

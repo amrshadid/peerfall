@@ -1,6 +1,7 @@
 import { isRecord } from '@peerfall/core/utils'
 import { IPV4, ROUTER_NAME } from '#types/definitions/network'
 import {
+  type InterfaceState,
   type KernelRoute,
   PING_MAX_COUNT,
   type PingRequest,
@@ -57,6 +58,8 @@ const PART_COMMANDS: Readonly<Record<RouterStatePart, (router: string) => string
   runningConfig: (router) => `${configReadLine(router)} 2>&1`,
   savedConfig: (router) => `cat /etc/frr/${router}/frr.conf 2>/dev/null`,
   startedConfig: (router) => `cat ${startedConfigPath(router)} 2>/dev/null`,
+  // -o keeps each interface on one line, its flags beside its name.
+  links: (router) => `ip -n ${router} -o link show 2>&1`,
 }
 
 /** Root's line that reads the asked parts of one router, each after a line that names it. */
@@ -107,6 +110,27 @@ export function parseKernelRoutes(output: string): KernelRoute[] {
     })
   }
   return routes
+}
+
+// `3: a-c@if2: <BROADCAST,MULTICAST> mtu 1500 …`: the index, the name (a veth's with its far end's index), the flags.
+const LINK_LINE = /^\d+: ([^:@\s]+)(?:@\S+)?: <([^>]*)>/
+
+/**
+ * A router's interfaces from `ip -o link show`. An interface has carrier when it is switched on
+ * (`UP`) and its far end is too (`LOWER_UP`). Lines that are not interfaces (the namespace gone)
+ * are left out.
+ */
+export function parseInterfaces(output: string): InterfaceState[] {
+  const interfaces: InterfaceState[] = []
+  for (const raw of output.replaceAll('\r', '').split('\n')) {
+    const line = LINK_LINE.exec(raw.trim())
+    if (!line) {
+      continue
+    }
+    const flags = (line[2] ?? '').split(',')
+    interfaces.push({ name: line[1] ?? '', carrier: flags.includes('UP') && flags.includes('LOWER_UP') })
+  }
+  return interfaces
 }
 
 const numberOr = (value: unknown, fallback: number): number => (typeof value === 'number' ? value : fallback)
@@ -174,6 +198,7 @@ export function parseRouterState(output: string): RouterState {
   const running = sections.get('runningConfig')
   const saved = sections.get('savedConfig')
   const started = sections.get('startedConfig')
+  const links = sections.get('links')
   return {
     ...(daemons !== undefined && { daemons: parseDaemons(daemons) }),
     ...(routes !== undefined && { routes: parseKernelRoutes(routes) }),
@@ -184,6 +209,7 @@ export function parseRouterState(output: string): RouterState {
     }),
     ...(saved !== undefined && { savedConfig: saved.trim() === '' ? null : saved }),
     ...(started !== undefined && { startedConfig: started.trim() === '' ? null : started }),
+    ...(links !== undefined && { links: parseInterfaces(links) }),
   }
 }
 

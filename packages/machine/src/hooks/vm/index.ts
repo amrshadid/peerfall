@@ -1,4 +1,5 @@
 export { useCommandFinished, useCommandsFinished } from '#hooks/vm/useCommandFinished.hook'
+export { useInterfaceStates } from '#hooks/vm/useInterfaceStates.hook'
 export { type UseLinuxTerminalResult, useLinuxTerminal } from '#hooks/vm/useLinuxTerminal.hook'
 export { type UseMachineControlsResult, useMachineControls } from '#hooks/vm/useMachineControls.hook'
 export { useMachineEvents } from '#hooks/vm/useMachineEvents.hook'
