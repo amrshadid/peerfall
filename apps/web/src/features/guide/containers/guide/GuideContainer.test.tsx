@@ -50,13 +50,18 @@ const active = (phase: UseActiveMissionResult['phase']): UseActiveMissionResult 
 
 function mount(
   step: GuideStepId,
-  overrides: { reviewing?: GuideStepId | null; onNext?: () => void; startedOver?: boolean } = {}
+  overrides: {
+    reviewing?: GuideStepId | null
+    onNext?: () => void
+    startedOver?: boolean
+    runVerdict?: UseMissionRunResult['verdict']
+  } = {}
 ) {
   const props = {
     run: {
       phase: 'ready',
       errors: [],
-      verdict: null,
+      verdict: overrides.runVerdict ?? null,
       sendProbe: vi.fn(),
       runFault: vi.fn(),
     } as Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>,
@@ -176,6 +181,22 @@ describe('GuideContainer', () => {
     expect(screen.getByText('1 of 3 met')).toBeTruthy()
     cleanup()
     mount('see', { startedOver: true })
+    expect(screen.getByText('0 of 3 met')).toBeTruthy()
+  })
+
+  it('shows the passing verdict beside the debrief, never the fresh network read live after a reload', () => {
+    const met = { kind: 'reachable', passed: true, failure: null, replies: 60 } as const
+    const unmet = { kind: 'reachable', passed: false, failure: 'unreachable', replies: 0 } as const
+    const ids = MISSION_FIXTURE.objectives.map((objective) => objective.id)
+    const passed = { passed: true, objectives: ids.map((objectiveId) => ({ objectiveId, result: met })) }
+    mocks.active = { ...active('debrief'), verdict: passed }
+    const live = { passed: false, objectives: ids.map((objectiveId) => ({ objectiveId, result: unmet })) }
+    mount('debrief', { runVerdict: live })
+    expect(screen.getByText('3 of 3 met')).toBeTruthy()
+    cleanup()
+    // Back in play, as after Replay, the live reading takes over.
+    mocks.active = { ...active('play'), verdict: passed }
+    mount('build', { runVerdict: live })
     expect(screen.getByText('0 of 3 met')).toBeTruthy()
   })
 

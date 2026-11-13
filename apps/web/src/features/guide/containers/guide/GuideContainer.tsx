@@ -75,8 +75,11 @@ export function GuideContainer({
     return null
   }
 
-  // The live verdict is the run's; the saved one is the last the game recorded.
-  const verdict = run.verdict ?? (startedOver ? null : lastAttempt)
+  // The live verdict is the run's; the saved one is the last the game recorded. Beside the debrief
+  // the objectives are the passing play-through's: after a reload the network is built afresh, and
+  // its live reading would show them unmet next to "Mission complete".
+  const verdict =
+    phase === 'debrief' && lastAttempt !== null ? lastAttempt : (run.verdict ?? (startedOver ? null : lastAttempt))
   const paced = pacedGuideOf(beats, pace, reviewing !== null)
   const wait = waitReasonOf(run.phase)
   const onNetwork = step === 'see' || step === 'build' || step === 'watch'

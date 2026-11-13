@@ -21,6 +21,7 @@ export function DebriefPresentation({
   next,
   onReplay,
   mapHref,
+  onMap,
 }: DebriefPresentationProps) {
   return (
     <section className="debrief" aria-labelledby="debrief-h">
@@ -44,7 +45,7 @@ export function DebriefPresentation({
             </Button>
           )}
           <Button onClick={onReplay}>Replay mission</Button>
-          <ButtonLink variant={next ? 'default' : 'primary'} href={mapHref}>
+          <ButtonLink variant={next ? 'default' : 'primary'} href={mapHref} onClick={onMap}>
             Back to the map
           </ButtonLink>
         </div>

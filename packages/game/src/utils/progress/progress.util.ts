@@ -1,6 +1,14 @@
+import type { MissionVerdict } from '#types/definitions/checks'
 import type { GameContent } from '#types/definitions/content'
 import type { MissionDefinition, MissionId } from '#types/definitions/mission'
-import type { ChapterEntry, EpochMs, MissionProgress, MissionStatus, Progress } from '#types/definitions/progress'
+import type {
+  ChapterEntry,
+  EpochMs,
+  MissionProgress,
+  MissionStatus,
+  OpenDebrief,
+  Progress,
+} from '#types/definitions/progress'
 import { MAX_SAVED_ATTEMPTS, type RunComparison, type SavedRun } from '#types/definitions/runs'
 import { hintsUsed, nextHint } from '#utils/hints/index'
 import { compareRuns } from '#utils/runs/index'
@@ -74,6 +82,23 @@ const freshRecord = (missionId: MissionId, now: EpochMs): MissionProgress => ({
   hintsRevealed: 0,
   runs: [],
 })
+
+/** Marks the mission's debrief as open, with the verdict the Guide shows beside it. */
+export function openDebrief(progress: Progress, missionId: MissionId, verdict: MissionVerdict | null): Progress {
+  return { ...progress, debrief: { missionId, verdict } }
+}
+
+/** The player left the debrief through one of its ways on, or went back to play: nothing is open. */
+export function closeDebrief(progress: Progress): Progress {
+  const { debrief, ...rest } = progress
+  return debrief === undefined ? progress : rest
+}
+
+/** The open debrief's verdict when it is this mission's and the mission is completed; undefined otherwise. */
+export function openDebriefOf(progress: Progress, missionId: MissionId): OpenDebrief | undefined {
+  const open = progress.debrief
+  return open?.missionId === missionId && isCompleted(progress, missionId) ? open : undefined
+}
 
 /** Opens a mission: a first start adds its record; any start makes it where "Continue" goes. */
 export function startMission(progress: Progress, missionId: MissionId, now: EpochMs): Progress {

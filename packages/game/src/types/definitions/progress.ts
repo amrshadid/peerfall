@@ -1,3 +1,4 @@
+import type { MissionVerdict } from '#types/definitions/checks'
 import type { ChapterDefinition, MissionDefinition, MissionId } from '#types/definitions/mission'
 import type { SavedRun } from '#types/definitions/runs'
 
@@ -26,6 +27,19 @@ export interface Progress {
   readonly completionOrder: readonly MissionId[]
   /** Where "Continue" on the title screen takes the player. */
   readonly lastActive: MissionId | null
+  /**
+   * A debrief left open: the player reached it and has not left through one of its ways on, so
+   * the mission opens at it again, as Kernelfall reopens a level at its card. Left out otherwise;
+   * saves from before it was added load without it.
+   */
+  readonly debrief?: OpenDebrief
+}
+
+/** The mission whose debrief is open, and how its passing play-through was judged, for the Guide. */
+export interface OpenDebrief {
+  readonly missionId: MissionId
+  /** `null` when the play-through left no verdict to show. */
+  readonly verdict: MissionVerdict | null
 }
 
 export const MISSION_STATUSES = ['locked', 'available', 'in_progress', 'completed'] as const

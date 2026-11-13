@@ -33,4 +33,6 @@ export interface DebriefPresentationProps {
   next: { readonly label: string; onSelect(): void } | null
   onReplay: () => void
   mapHref: string
+  /** Called as Back to the map is followed: the debrief is closed, as Kernelfall files its card. */
+  onMap: () => void
 }

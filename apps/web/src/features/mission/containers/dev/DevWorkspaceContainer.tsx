@@ -268,6 +268,7 @@ export function DevWorkspaceContainer() {
             next={null}
             onReplay={restart}
             mapHref={hrefOf({ name: 'map' })}
+            onMap={() => setDebriefOpen(false)}
           />
         ) : null,
         restart: { open: restartOpen, onConfirm: restart, onCancel: () => setRestartOpen(false) },

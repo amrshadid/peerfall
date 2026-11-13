@@ -10,12 +10,14 @@ const mocks = vi.hoisted(() => ({
   repaired: null as unknown,
   codex: null as unknown,
   playAgain: vi.fn(),
+  leaveDebrief: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('@peerfall/game/hooks', () => ({
   useActiveMission: () => ({ mission: mocks.mission, isCompleted: true }),
   useRunComparison: () => ({ baseline: null, repaired: mocks.repaired, comparison: null }),
   useCodex: () => mocks.codex,
+  useMissionActions: () => ({ leaveDebrief: mocks.leaveDebrief }),
 }))
 
 // The content on disk changes as missions are written: the screen is tested on a fixed one.
@@ -84,7 +86,12 @@ describe('DebriefContainer', () => {
     render(<DebriefContainer onPlayAgain={mocks.playAgain} />)
     fireEvent.click(screen.getByRole('button', { name: 'Replay mission' }))
     expect(mocks.playAgain).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('link', { name: 'Back to the map' }).getAttribute('href')).toBe('#/map')
+    const map = screen.getByRole('link', { name: 'Back to the map' })
+    expect(map.getAttribute('href')).toBe('#/map')
+    expect(mocks.leaveDebrief).not.toHaveBeenCalled()
+    fireEvent.click(map)
+    // Leaving through the debrief closes it, so the mission no longer reopens at it.
+    expect(mocks.leaveDebrief).toHaveBeenCalledTimes(1)
   })
 
   it('draws nothing when no mission is being played', () => {

@@ -10,12 +10,15 @@ import {
 import { MAX_SAVED_ATTEMPTS, type RunRole, type SavedRun } from '#types/definitions/runs'
 import {
   baselineRun,
+  closeDebrief,
   continueMission,
   emptyProgress,
   findMissionProgress,
   latestAttempt,
   missionList,
   missionStatus,
+  openDebrief,
+  openDebriefOf,
   recordRun,
   repairedRun,
   revealNextHint,
@@ -162,5 +165,25 @@ describe('comparing saved runs', () => {
     expect(baselineRun(progress, changed)).toBeNull()
     expect(latestAttempt(progress, changed)).toBeNull()
     expect(savedComparison(progress, changed)).toBeNull()
+  })
+})
+
+describe('the open debrief', () => {
+  const ID = EXAMPLE_MISSION.id
+  const verdict = { passed: true, objectives: [] }
+  const started = startMission(emptyProgress(), ID, 0)
+  const completed = { ...started, completionOrder: [ID] }
+
+  it('is opened for a mission, and read back only for that mission once it is completed', () => {
+    const open = openDebrief(completed, ID, verdict)
+    expect(openDebriefOf(open, ID)).toEqual({ missionId: ID, verdict })
+    expect(openDebriefOf(open, FOLLOW_UP_MISSION.id)).toBeUndefined()
+    expect(openDebriefOf(openDebrief(started, ID, verdict), ID)).toBeUndefined()
+  })
+
+  it('is closed without a trace, and closing none changes nothing', () => {
+    expect(closeDebrief(openDebrief(completed, ID, verdict))).toEqual(completed)
+    expect('debrief' in closeDebrief(openDebrief(completed, ID, verdict))).toBe(false)
+    expect(closeDebrief(completed)).toBe(completed)
   })
 })

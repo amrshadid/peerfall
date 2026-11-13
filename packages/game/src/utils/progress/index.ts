@@ -1,5 +1,6 @@
 export {
   baselineRun,
+  closeDebrief,
   continueMission,
   emptyProgress,
   findMissionProgress,
@@ -7,6 +8,8 @@ export {
   latestAttempt,
   missionList,
   missionStatus,
+  openDebrief,
+  openDebriefOf,
   recordRun,
   repairedRun,
   revealNextHint,

@@ -7,7 +7,7 @@ import {
   filedCardsOf,
   finishedStageOf,
 } from '@features/debrief/utils'
-import { useActiveMission, useCodex, useRunComparison } from '@peerfall/game/hooks'
+import { useActiveMission, useCodex, useMissionActions, useRunComparison } from '@peerfall/game/hooks'
 import { hrefOf, navigateTo } from '@shared/navigation'
 
 export interface DebriefContainerProps {
@@ -25,6 +25,7 @@ export function DebriefContainer({ onPlayAgain }: DebriefContainerProps) {
   const { baseline, repaired } = useRunComparison()
   const codex = useCodex()
   const content = useContent()
+  const { leaveDebrief } = useMissionActions()
 
   if (!mission) {
     return null
@@ -49,13 +50,16 @@ export function DebriefContainer({ onPlayAgain }: DebriefContainerProps) {
         isCompleted && following
           ? {
               label: `Next mission: ${following.title}`,
-              onSelect: () => navigateTo({ name: 'mission', missionId: following.id }),
+              // Closed before leaving, as Kernelfall files its card, so this mission no longer opens at it.
+              onSelect: () => void leaveDebrief().then(() => navigateTo({ name: 'mission', missionId: following.id })),
             }
           : null
       }
       // As Kernelfall's Replay level: a fresh play-through, never the network as the player left it.
+      // Going back into play closes the debrief.
       onReplay={onPlayAgain}
       mapHref={hrefOf({ name: 'map' })}
+      onMap={() => void leaveDebrief()}
     />
   )
 }

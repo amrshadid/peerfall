@@ -19,6 +19,7 @@ function debrief(overrides: Partial<DebriefPresentationProps> = {}) {
     next: null,
     onReplay: vi.fn(),
     mapHref: '#/map',
+    onMap: vi.fn(),
     ...overrides,
   }
   render(<DebriefPresentation {...props} />)
@@ -68,9 +69,12 @@ describe('DebriefPresentation', () => {
     expect(screen.getByRole('link', { name: 'Back to the map' }).getAttribute('href')).toBe('#/map')
   })
 
-  it('makes the map the primary way on when there is no next mission', () => {
-    debrief()
-    expect(screen.getByRole('link', { name: 'Back to the map' }).className).toContain('primary')
+  it('makes the map the primary way on when there is no next mission, and says when it is followed', () => {
+    const { onMap } = debrief()
+    const link = screen.getByRole('link', { name: 'Back to the map' })
+    expect(link.className).toContain('primary')
+    fireEvent.click(link)
+    expect(onMap).toHaveBeenCalledTimes(1)
   })
 
   it('shows what the player can now do once the mission finishes its stage', () => {
