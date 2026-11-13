@@ -2,11 +2,11 @@
 // game's own flow, and judges each with the mission's checks. A run that is judged the way its
 // solution.yaml says is written to src/test/runs/, where the tests judge it again without a VM.
 // A mission with a fault is judged from its fault run; one without, from the Machine's state as
-// the game's "check my work" reads it, which is recorded beside the events.
+// live judging reads it after the last change, which is recorded beside the events.
 // Usage: pnpm --filter @peerfall/missions vm:golden [mission-id …]
 //        (after pnpm vm:image; several minutes for every mission)
 //        PEERFALL_CONTENT_DIR and PEERFALL_RUNS_DIR read the content and write the runs elsewhere.
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,6 +17,7 @@ import { createVmSession, readMachineState, restartRouterFrr } from '@peerfall/m
 import type { MachineState, StampedMachineEvent, VmPhase } from '@peerfall/machine/types'
 import { applyEventUpdate, EMPTY_EVENT_LOG } from '@peerfall/machine/utils'
 import { type ContentFiles, MISSION_FILE, SOLUTION_FILE } from '#types/definitions/content'
+import { readContentDir } from '#utils/loader/disk-content.util'
 import { loadContent } from '#utils/loader/load-content.util'
 import { readYaml } from '#utils/loader/read-yaml.util'
 import { changeLines, type GoldenRun, validateSolution } from '#utils/run/golden-run.util'
@@ -26,6 +27,7 @@ import {
   type MissionMachine,
   probeRun,
   START_SLOT,
+  settledRead,
   waitUntilSettled,
 } from '#utils/run/mission-run.util'
 
@@ -47,24 +49,7 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 const log = (text: string) => console.log(`[${((Date.now() - started) / 1000).toFixed(1)}s] ${text}`)
 
 // The content from disk: the game reads it through Vite's glob, which Node does not have.
-function contentFiles(): ContentFiles {
-  // A file that is not there yet reads as empty, and the loader says which one is missing.
-  const read = (path: string) => (existsSync(join(content, path)) ? readFileSync(join(content, path), 'utf8') : '')
-  const missions: Record<string, string> = {}
-  const incidents: Record<string, string> = {}
-  const debriefs: Record<string, string> = {}
-  for (const chapter of readdirSync(content, { withFileTypes: true }).filter((entry) => entry.isDirectory())) {
-    for (const mission of readdirSync(join(content, chapter.name), { withFileTypes: true })) {
-      if (mission.isDirectory()) {
-        const folder = `${chapter.name}/${mission.name}`
-        missions[`${folder}/mission.yaml`] = read(`${folder}/mission.yaml`)
-        incidents[`${folder}/incident.md`] = read(`${folder}/incident.md`)
-        debriefs[`${folder}/debrief.md`] = read(`${folder}/debrief.md`)
-      }
-    }
-  }
-  return { chapters: read('chapters.yaml'), missions, incidents, debriefs }
-}
+const contentFiles = (): ContentFiles => readContentDir(content)
 
 // v86 in Node reads its files from disk; the session fetches only manifest.json, so that read is served from disk too.
 const fetchUrl = globalThis.fetch
@@ -101,7 +86,11 @@ async function playFault(mission: MissionDefinition, run: GoldenRun): Promise<Pl
   return outcome.ok ? { ...outcome, state: null } : outcome
 }
 
-/** A mission without one: its probe if it has one, for the record, then the game's "check my work". */
+/**
+ * A mission without one: its probe if it has one, for the record, then the network read as live
+ * judging finds it once the player has stopped and routing is quiet. Nothing is restarted: a run
+ * that needs a restart has a `restart: true` change, the player's own.
+ */
 async function playCheck(mission: MissionDefinition): Promise<Played> {
   await waitUntilSettled(machine, mission)
   if (mission.probe) {
@@ -110,7 +99,12 @@ async function playCheck(mission: MissionDefinition): Promise<Played> {
       return probed
     }
   }
-  return checkRun(machine, mission)
+  if ((mission.restartOnCheck ?? []).length > 0) {
+    // Kept until the mission judges a restart from what FRR really started with.
+    log(`${mission.id}: restartOnCheck restarts FRR before the read, which live judging never does`)
+    return checkRun(machine, mission)
+  }
+  return settledRead(machine, mission)
 }
 
 function describeFault(mission: MissionDefinition, events: readonly StampedMachineEvent[]): string {
