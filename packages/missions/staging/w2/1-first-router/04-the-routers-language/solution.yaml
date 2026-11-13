@@ -10,6 +10,7 @@ runs:
     changes:
       - router: a
         lines: [no shutdown, configure terminal, no shutdown]
+        refused: true # FRR refuses no shutdown in both modes
   - id: no-shutdown
     passes: true
     changes:

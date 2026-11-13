@@ -16,6 +16,7 @@ runs:
     changes:
       - router: a
         lines: [configure terminal, description link to router c]
+        refused: true # FRR refuses a description in configure mode
   - id: labelled
     passes: true
     changes:
