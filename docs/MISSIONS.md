@@ -51,6 +51,12 @@ result is on the terminal before it is explained.
 
 - A line holding only `---` is a pause. Put one after every line that asks the player to do
   something.
+- **One command per pause.** Each command the player finishes releases the next pause, so a
+  line that asks for two commands shows the second one's result after the first. Ask for one,
+  pause, then ask for the next; a run of lines typed in one mode is one command each.
+- **Build it asks for every change an objective needs.** Build it gives way to Watch it only
+  once every objective is met, so a change asked for in Watch it would never be reached. Watch it
+  shows what the finished work does: a probe, a restart, a fault, a Predict about the result.
 - A question followed by a quoted list with one `[x]` is a Predict beat. The Guide waits for
   an answer, then marks the player's call beside what really happens.
 - A code block is the Machine's own output, copied from a real run.
@@ -150,7 +156,7 @@ to judge a mission.
 | `daemons` | `router`, `daemons` (list)                                                                                  | each of those FRR daemons (`watchfrr`, `zebra`, `mgmtd`, `staticd`, …) runs on the router and answers vtysh                                                                                                                                                                                                                  |
 | `route`   | `router`; `prefix` or `to`; optional `protocol`, `via`, `interface`                                         | the router's kernel has a route for exactly `prefix`, or one that covers the address `to` (the longest match), installed by `protocol` (`kernel` for a connected route, `static`, `ospf`…), with that next hop and that way out                                                                                              |
 | `rib`     | `router`, `prefix`; optional `protocol`, `via`, `selected`                                                  | zebra's routing table (`show ip route json`) holds a route for exactly `prefix`, from `protocol` (`static`, `connected`, `ospf`…), with `via` among its next hops, selected for forwarding or not as `selected` says. Unlike `route`, it sees a backup route that waits, which never reaches the kernel                      |
-| `reaches` | `from`, `to`, `minReplies` (2)                                                                              | at least that many of three packets from the router to the address are answered                                                                                                                                                                                                                                              |
+| `reaches` | `from`, `to`, `minReplies` (2)                                                                              | at least that many of three packets from the router to the address are answered, and the address is not the router's own (a `local` route in its zebra)                                                                                                                                                                      |
 | `config`  | `router`, `source` (`running`, `saved` or `started`), `block` (list, optional), `line`, `absent` (optional) | the router's running configuration, its saved `frr.conf`, or the `frr.conf` FRR last started from with its init script during play, has `line` inside those blocks (`block: [interface lo]`). `line` is a whole line or its first words. With `absent: true`, that configuration exists and has no such line in those blocks |
 
 A mission with only state checks needs no `fault:`, no `probe:` and no
