@@ -80,11 +80,13 @@ S>* 10.255.0.3/32 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:02
   *                     via 10.0.2.2, a-c, weight 1, 00:00:02
 ```
 
-> **zebra:** Two next hops, both distance 1, both in the kernel's table. A tie: I install one route with two next hops, and Linux may send a packet out of either. That is _equal-cost multipath_, ECMP. In the shell, `ip route` shows it as one route with two `nexthop via` lines. Shared is not what you want. Write the route through b again, with a distance after it: `ip route 10.255.0.3/32 10.0.1.2 10`.
+> **zebra:** Two next hops, both distance 1, both in the kernel's table. A tie: I install one route with two next hops, and Linux may send a packet out of either. That is _equal-cost multipath_, ECMP. In the shell, `ip route` shows it as one route with two `nexthop via` lines.
+
+> **zebra:** Shared is not what you want. Write the route through b again, with a distance after it: `ip route 10.255.0.3/32 10.0.1.2 10`.
 
 ---
 
-> **zebra:** And look again.
+> **zebra:** And look again: `do show ip route`.
 
 ---
 

@@ -109,7 +109,7 @@ S>* 10.0.2.0/30 [1/0] via 10.0.1.2, a-b, weight 1, 00:00:31
 
 ## Debrief
 
-> **zebra:** Every route here was written by hand, on every router, both ways. Imagine a hundred routers. In stage 3, the routers learn the routes from each other, and the peers come back.
+> **zebra:** Every route here was written by hand, on every router, both ways. Imagine a hundred routers. Next is stage 4, The Link That Never Went Down. There the routers learn their routes from each other, and a cable goes silent while both its ends stay up.
 
 ## Real world
 

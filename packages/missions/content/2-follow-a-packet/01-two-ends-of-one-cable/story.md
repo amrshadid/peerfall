@@ -61,7 +61,7 @@ a#
 
 ---
 
-> **zebra:** Now `interface a-b`.
+> **zebra:** `interface a-b`.
 
 ---
 
@@ -73,7 +73,7 @@ a#
 
 ---
 
-> **zebra:** Then `show ip route` again.
+> **zebra:** `show ip route` again.
 
 ---
 
@@ -127,9 +127,11 @@ pipe 3
 
 ---
 
-> **zebra:** `ip address 10.0.1.2/30`, the other end of a's network.
+> **zebra:** `ip address 10.0.1.2/30`, in a's network.
 
 ---
+
+> **zebra:** Both ends have their address now.
 
 ## Watch it
 

@@ -28,7 +28,9 @@ a:~# ip route get 10.0.2.2
 RTNETLINK answers: Network unreachable
 ```
 
-> **zebra:** `ip route get` looks one address up in the kernel's routing table, as Linux does for every packet. No route covers `10.0.2.2`. a has the connected route of its own cable, `10.0.1.0/30`, and nothing else. Now look from the middle: click b in the topology, and type `vtysh -c "show ip route"`.
+> **zebra:** `ip route get` looks one address up in the kernel's routing table, as Linux does for every packet. No route covers `10.0.2.2`. a has the connected route of its own cable, `10.0.1.0/30`, and nothing else.
+
+> **zebra:** Now look from the middle: click b in the topology, and type `vtysh -c "show ip route"`.
 
 ---
 
