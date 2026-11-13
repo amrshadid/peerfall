@@ -59,7 +59,8 @@ describe('mapDetailOf', () => {
       planned: true,
       status: 'Not built yet',
       about: { term: 'Covers', text: 'Start FRR on Linux, find its daemons, use vtysh, and save a configuration.' },
-      parts: ['watchfrr', 'mgmtd', 'vtysh', 'frr-reload'],
+      // Only what stage 1's missions use: they never run frr-reload.
+      parts: ['watchfrr', 'mgmtd', 'vtysh'],
       needs: null,
       attempts: null,
       hints: null,

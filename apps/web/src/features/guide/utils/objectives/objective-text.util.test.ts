@@ -40,7 +40,7 @@ describe('failureText', () => {
     const none: CheckResult = { kind: 'reachable', passed: false, failure: 'unreachable', replies: 0 }
     const one: CheckResult = { ...none, replies: 1 }
     expect(failureText(REACHABLE, none, NAMES)).toBe(
-      'No reply came back from 10.255.0.3. It takes 3. A reply is one probe packet that reached the far router and came back.'
+      'No reply came back from 10.255.0.3. It takes 3. A reply is one packet that reached the far router and came back.'
     )
     expect(failureText(REACHABLE, one, NAMES)).toContain('Only 1 reply came back from 10.255.0.3.')
   })
@@ -262,7 +262,7 @@ describe('checks that read the routers as they are', () => {
 describe('evidenceText', () => {
   it('puts each term in plain words beside the evidence that shows it', () => {
     expect(evidenceText({ kind: 'reachable', passed: true, failure: null, replies: 60 }, NAMES)).toBe(
-      '60 replies came back from 10.255.0.3. A reply is one probe packet that reached the far router and came back.'
+      '60 replies came back from 10.255.0.3. A reply is one packet that reached the far router and came back.'
     )
     const path = evidenceText({ kind: 'path', passed: true, failure: null, before: DIRECT, after: null }, NAMES)
     expect(path).toContain('a sends traffic for 10.255.0.3 out of `a-c`.')
@@ -285,6 +285,34 @@ describe('evidenceText', () => {
 
 describe('guideObjectivesOf', () => {
   const mission = MISSION_FIXTURE
+
+  it('explains a term under the first objective that brings it up, never again in the list', () => {
+    const daemons = (id: string, router: string) => ({
+      id,
+      text: `FRR runs on ${router}.`,
+      check: { kind: 'daemons', router, daemons: ['zebra'] } as CheckDefinition,
+    })
+    const twoRouters = { ...mission, objectives: [daemons('on-a', 'a'), daemons('on-b', 'b')] }
+    const verdict: MissionVerdict = {
+      passed: true,
+      objectives: ['a', 'b'].map((router) => ({
+        objectiveId: `on-${router}`,
+        result: { kind: 'daemons', passed: true, failure: null, router, running: ['zebra'], missing: [] },
+      })),
+    }
+    const [first, second] = guideObjectivesOf(twoRouters, verdict)
+    expect(first?.evidence).toBe(
+      '`zebra` answers on router a. A daemon is one of the programs FRR is made of: each routing protocol has its own, and `zebra` hands their routes to the kernel.'
+    )
+    expect(second?.evidence).toBe('`zebra` answers on router b.')
+  })
+
+  it('says a router with no route refuses to send, as Linux does', () => {
+    const result: CheckResult = { kind: 'route', passed: false, failure: 'no_route', router: 'a', route: null }
+    expect(failureText({ kind: 'route', router: 'a', to: '10.255.0.3' }, result, NAMES)).toContain(
+      'Without one, Linux refuses to send them: `Network unreachable`.'
+    )
+  })
 
   it('knows whose address the probe is sent to', () => {
     expect(probeNamesOf(mission)).toEqual(NAMES)

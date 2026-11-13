@@ -215,6 +215,7 @@ export function guideObjectivesOf(
   verdict: MissionVerdict | null
 ): readonly GuideObjective[] {
   const names = probeNamesOf(mission)
+  const said = new Set<string>()
   return mission.objectives.map((objective: ObjectiveDefinition) => {
     const result = verdict?.objectives.find((judged) => judged.objectiveId === objective.id)?.result ?? null
     if (result === null) {
@@ -224,8 +225,29 @@ export function guideObjectivesOf(
       id: objective.id,
       text: objective.text,
       passed: result.passed,
-      observed: result.passed ? null : failureText(objective.check, result, names),
-      evidence: result.passed ? evidenceText(result, names) : null,
+      observed: result.passed ? null : sayingTermsOnce(failureText(objective.check, result, names), said),
+      evidence: result.passed ? sayingTermsOnce(evidenceText(result, names), said) : null,
     }
   })
+}
+
+const TERM_TEXTS: readonly string[] = Object.values(TERMS)
+
+/** Drops the explanation of a term an earlier objective already gave, and notes the ones this text gives. */
+function sayingTermsOnce<T extends string | null>(text: T, said: Set<string>): T {
+  if (text === null) {
+    return text
+  }
+  let kept: string = text
+  for (const term of TERM_TEXTS) {
+    if (!kept.includes(term)) {
+      continue
+    }
+    if (said.has(term)) {
+      kept = kept.replace(` ${term}`, '').replace(term, '')
+    } else {
+      said.add(term)
+    }
+  }
+  return kept as T
 }
