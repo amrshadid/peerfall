@@ -1,5 +1,5 @@
 import type { Validated } from '@peerfall/core/types'
-import type { MissionDefinition } from '@peerfall/game/types'
+import type { MissionDefinition, MissionVerdict } from '@peerfall/game/types'
 import { stateRequestOf } from '@peerfall/game/utils'
 import type {
   LinkDefinition,
@@ -264,6 +264,46 @@ async function waitUntilQuiet(machine: MissionMachine, timings: RunTimings): Pro
 }
 
 /**
+ * Reads what a mission's state checks need from the Machine as it is now, as live judging does
+ * after each command the player finishes: nothing is restarted, nothing is waited for. Judging is
+ * the caller's, with `judgeMission(mission, events, state)`.
+ */
+export async function liveRead(
+  machine: Pick<MissionMachine, 'events' | 'readState'>,
+  mission: Pick<MissionDefinition, 'objectives'>
+): Promise<CheckOutcome> {
+  const request = stateRequestOf(mission)
+  if (!request) {
+    return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
+  }
+  const state = await machine.readState(request)
+  if (!state.ok) {
+    return state
+  }
+  // The events as they are once the read is back: anything the read itself caused is in them.
+  return { ok: true, events: [...machine.events()], state: state.value }
+}
+
+/**
+ * The play-through's verdict so far: an objective met by any judging stays met, as in Kernelfall,
+ * since a mission's objectives can be shown one command at a time. The others are the latest's.
+ */
+export function keepMet(previous: MissionVerdict | null, latest: MissionVerdict): MissionVerdict {
+  if (previous === null) {
+    return latest
+  }
+  const objectives = latest.objectives.map(
+    (objective) =>
+      previous.objectives.find(({ objectiveId, result }) => objectiveId === objective.objectiveId && result.passed) ??
+      objective
+  )
+  return { passed: objectives.length > 0 && objectives.every(({ result }) => result.passed), objectives }
+}
+
+/** Routing changes so far, for knowing when a configuration has finished reaching the kernel. */
+export const routingChangeCount = (events: readonly StampedMachineEvent[]): number => routingChanges(events)
+
+/**
  * Checks the player's work on a mission whose checks read the Machine's state: FRR is restarted
  * on the routers the mission says survive one, the network is left to settle, and the state the
  * checks need is read as root. Nothing is undone afterwards: what the player configured stays, and
@@ -274,8 +314,7 @@ export async function checkRun(
   mission: Pick<MissionDefinition, 'objectives' | 'restartOnCheck'>,
   timings: RunTimings = DEFAULT_RUN_TIMINGS
 ): Promise<CheckOutcome> {
-  const request = stateRequestOf(mission)
-  if (!request) {
+  if (!stateRequestOf(mission)) {
     return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
   }
   for (const router of mission.restartOnCheck ?? []) {
@@ -284,13 +323,25 @@ export async function checkRun(
       return restarted
     }
   }
+  return settledRead(machine, mission, timings)
+}
+
+/**
+ * What live judging finds once the player has stopped typing and routing has gone quiet: the
+ * network is left to settle, then read as `liveRead` reads it. Nothing is restarted. The golden
+ * runs judge a mission this way, after the scripted player's last change.
+ */
+export async function settledRead(
+  machine: MissionMachine,
+  mission: Pick<MissionDefinition, 'objectives'>,
+  timings: RunTimings = DEFAULT_RUN_TIMINGS
+): Promise<CheckOutcome> {
+  if (!stateRequestOf(mission)) {
+    return { ok: false, errors: ['This mission is checked by running its fault, not by reading the network.'] }
+  }
   // A router that was just configured or restarted is still handing its routes to the kernel.
   if (!(await waitUntilQuiet(machine, timings))) {
     return { ok: false, errors: ['The network did not settle. Try again.'] }
   }
-  const state = await machine.readState(request)
-  if (!state.ok) {
-    return state
-  }
-  return { ok: true, events: [...machine.events()], state: state.value }
+  return liveRead(machine, mission)
 }
