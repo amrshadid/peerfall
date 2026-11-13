@@ -19,7 +19,7 @@ import { useCommandFinished, useMachineStatus, useTerminalCommand } from '@peerf
 import type { UseMissionRunResult } from '@peerfall/missions/hooks'
 import { useMachineLock } from '@shared/hooks/machine'
 import { hrefOf } from '@shared/navigation'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 
 export interface GuideContainerProps {
   /** The mission's run on the Machine: where it is, what it showed, and how to send a probe or break the link. */
@@ -30,8 +30,6 @@ export interface GuideContainerProps {
   onSkipToBuild: (() => void) | null
   /** Asks before the network goes back to how the mission found it. */
   onStartOver: () => void
-  /** Called once Build it's transcript is shown to its end. */
-  onBuildRead: () => void
 }
 
 const NEXT_LABEL: Readonly<Partial<Record<GuideStepId, string>>> = {
@@ -45,15 +43,7 @@ const NEXT_LABEL: Readonly<Partial<Record<GuideStepId, string>>> = {
  * The mission's story, paced by the player's commands: each one finished at the terminal shows the
  * next beat. Then its objectives, ticking live, its chips, hints and Codex cards, and the run's actions.
  */
-export function GuideContainer({
-  run,
-  step,
-  reviewing,
-  onNext,
-  onSkipToBuild,
-  onStartOver,
-  onBuildRead,
-}: GuideContainerProps) {
+export function GuideContainer({ run, step, reviewing, onNext, onSkipToBuild, onStartOver }: GuideContainerProps) {
   const { mission, phase, verdict: lastAttempt } = useActiveMission()
   const content = useContent()
   const hints = useHints()
@@ -65,21 +55,13 @@ export function GuideContainer({
 
   const story = mission ? content.storyOf(mission.id)?.sections : undefined
   const beats = useMemo(() => beatsOf(blocksFor(shown, story)), [shown, story])
-  const paced = pacedGuideOf(beats, pace, reviewing !== null)
-  // The story waits for this before Build it gives way to Watch it.
-  const buildRead = step === 'build' && reviewing === null && paced.finished
-  useEffect(() => {
-    if (buildRead) {
-      onBuildRead()
-    }
-  }, [buildRead, onBuildRead])
-
   if (!mission || phase === null) {
     return null
   }
 
   // The live verdict is the run's; the saved one is the last the game recorded.
   const verdict = run.verdict ?? lastAttempt
+  const paced = pacedGuideOf(beats, pace, reviewing !== null)
   const wait = waitReasonOf(run.phase)
   const onNetwork = step === 'see' || step === 'build' || step === 'watch'
   const label = stepLabelOf(shown)

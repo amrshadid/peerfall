@@ -62,7 +62,6 @@ function mount(step: GuideStepId, overrides: { reviewing?: GuideStepId | null; o
     onNext: overrides.onNext ?? null,
     onSkipToBuild: step === 'scene' ? vi.fn() : null,
     onStartOver: vi.fn(),
-    onBuildRead: vi.fn(),
   }
   render(<GuideContainer {...props} />)
   return props
@@ -97,17 +96,11 @@ describe('GuideContainer', () => {
     expect(screen.getByText(/That is me answering/)).toBeTruthy()
   })
 
-  it('says Build it is read only once its transcript is shown to its end', () => {
-    const props = mount('build')
-    expect(props.onBuildRead).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: /mgmtd, then zebra/ }))
-    expect(props.onBuildRead).toHaveBeenCalled()
-  })
-
-  it('never says Build it is read from another step or a step looked back at', () => {
-    expect(mount('see').onBuildRead).not.toHaveBeenCalled()
-    cleanup()
-    expect(mount('watch', { reviewing: 'build' }).onBuildRead).not.toHaveBeenCalled()
+  it('offers Watch it from Build it when the container gives the way on', () => {
+    const onNext = vi.fn()
+    mount('build', { onNext })
+    fireEvent.click(screen.getByRole('button', { name: /Next: Watch it/ }))
+    expect(onNext).toHaveBeenCalledOnce()
   })
 
   it('runs a chip in the terminal on a click', () => {

@@ -118,9 +118,8 @@ export function MissionContainer({
   // Every reset of the network starts the story's played steps over.
   const [runs, setRuns] = useState(0)
   const storyKey = `${missionId}#${runs}`
-  const [buildReadIn, setBuildReadIn] = useState<string | null>(null)
   const passed = run.verdict?.passed ?? false
-  const story = useStoryStep({ key: storyKey, phase, passed, buildRead: buildReadIn === storyKey })
+  const story = useStoryStep({ key: storyKey, phase, passed })
   const { step } = story
   const stepIndex = MISSION_STEPS.findIndex((entry) => entry.id === step)
   const panels = panelsFor(panelsOfStep(step, mission?.fault !== undefined), showAll)
@@ -183,7 +182,6 @@ export function MissionContainer({
           }
         : null,
     onStartOver: () => setRestartOpen(true),
-    onBuildRead: () => setBuildReadIn(storyKey),
   }
   const lastRunFellShort = verdict !== null && !verdict.passed
 

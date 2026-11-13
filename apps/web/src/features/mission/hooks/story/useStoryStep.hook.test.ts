@@ -9,12 +9,11 @@ const input = (overrides: Partial<StoryStepInput> = {}): StoryStepInput => ({
   key: 'm#0',
   phase: 'play',
   passed: false,
-  buildRead: false,
   ...overrides,
 })
 
 describe('useStoryStep', () => {
-  it('keeps Build it while its transcript is unread, though every objective is met', () => {
+  it('stays on Build it once every objective is met, so its last beat is read; the player moves on', () => {
     const { result, rerender } = renderHook((props: StoryStepInput) => useStoryStep(props), {
       initialProps: input(),
     })
@@ -22,18 +21,16 @@ describe('useStoryStep', () => {
     rerender(input({ passed: true }))
     expect(result.current.step).toBe('build')
 
-    rerender(input({ passed: true, buildRead: true }))
+    act(() => result.current.goTo('watch'))
     expect(result.current.step).toBe('watch')
   })
 
-  it('moves on once Build it is read and the last objective is met', () => {
+  it('starts a new run over at See it', () => {
     const { result, rerender } = renderHook((props: StoryStepInput) => useStoryStep(props), {
       initialProps: input(),
     })
-    act(() => result.current.goTo('build'))
-    rerender(input({ buildRead: true }))
-    expect(result.current.step).toBe('build')
-    rerender(input({ buildRead: true, passed: true }))
-    expect(result.current.step).toBe('watch')
+    act(() => result.current.goTo('watch'))
+    rerender(input({ key: 'm#1' }))
+    expect(result.current.step).toBe('see')
   })
 })

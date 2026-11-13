@@ -103,8 +103,6 @@ export interface MissionRunView<Run> {
   readonly onSkipToBuild: (() => void) | null
   /** Asks before the network goes back to how the mission found it. */
   readonly onStartOver: () => void
-  /** The Guide calls it once Build it's transcript is shown to its end. */
-  readonly onBuildRead: () => void
 }
 
 export interface MissionUnavailable {
