@@ -4,6 +4,7 @@ import {
   CHECK_FAILURES,
   type CheckDefinition,
   type CheckResult,
+  type ConfigSource,
   REACH_PACKETS,
   STATE_CHECK_KINDS,
   type StateCheckKind,
@@ -26,6 +27,13 @@ export const hasStateChecks = (mission: Pick<MissionDefinition, 'objectives'>): 
 export const hasRunChecks = (mission: Pick<MissionDefinition, 'objectives'>): boolean =>
   mission.objectives.some((objective) => !isStateCheck(objective.check))
 
+/** The part of a router's state each config source reads. */
+const CONFIG_PARTS = {
+  running: 'runningConfig',
+  saved: 'savedConfig',
+  started: 'startedConfig',
+} as const satisfies Record<ConfigSource, RouterStatePart>
+
 const partOf = (check: StateCheck<'daemons' | 'route' | 'config'>): RouterStatePart => {
   switch (check.kind) {
     case 'daemons':
@@ -33,7 +41,7 @@ const partOf = (check: StateCheck<'daemons' | 'route' | 'config'>): RouterStateP
     case 'route':
       return 'routes'
     case 'config':
-      return check.source === 'running' ? 'runningConfig' : 'savedConfig'
+      return CONFIG_PARTS[check.source]
   }
 }
 
@@ -136,7 +144,7 @@ const sameBlock = (first: readonly string[], second: readonly string[]): boolean
 
 function checkConfig(check: StateCheck<'config'>, state: MachineState | null): StateResult<'config'> {
   const router = state?.routers[check.router]
-  const text = check.source === 'running' ? router?.runningConfig : router?.savedConfig
+  const text = router?.[CONFIG_PARTS[check.source]]
   const result = (failure: StateResult<'config'>['failure'], found: string | null) =>
     ({ kind: 'config', passed: failure === null, failure, router: check.router, source: check.source, found }) as const
   if (text === undefined) {

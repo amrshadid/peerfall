@@ -369,7 +369,7 @@ describe('validateMission', () => {
         'objectives[4].check.via: expected an address like 10.0.1.2, got "b"',
         'objectives[5].check.to: expected an address like 10.0.1.2, got "c"',
         'objectives[5].check.minReplies: expected a number from 1 to 3, got 4',
-        'objectives[6].check.source: expected one of running, saved, got "startup"',
+        'objectives[6].check.source: expected one of running, saved, started, got "startup"',
         'objectives[6].check.block: expected a list, got text',
         'objectives[6].check.line: expected non-empty text, got empty text',
       ])

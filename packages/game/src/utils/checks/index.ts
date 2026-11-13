@@ -1,4 +1,5 @@
 export { checkDetectedBy, detectionOf, firstDetection } from '#utils/checks/detection.util'
+export { mergeVerdicts } from '#utils/checks/merge-verdicts.util'
 export { evaluateCheck, judgeMission } from '#utils/checks/mission-checks.util'
 export { checkOutage, measureOutage, outageOf } from '#utils/checks/outage.util'
 export { checkPath, pathAfterRecovery, pathBeforeFault, pathTaken } from '#utils/checks/path.util'

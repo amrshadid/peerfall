@@ -121,6 +121,22 @@ describe('config', () => {
     expect(judge({ ...line, source: 'saved' }).passed).toBe(true)
   })
 
+  it('reads what FRR was last started from, and finds nothing before a restart', () => {
+    const check = { kind: 'config', router: 'a', source: 'started', block: ['interface lo'], line: 'description' }
+    const routerA = STATE.routers.a
+    const restarted = {
+      ...STATE,
+      routers: { ...STATE.routers, a: { ...routerA, startedConfig: 'interface lo\n description kept\nexit\n' } },
+    }
+    const never = { ...STATE, routers: { ...STATE.routers, a: { ...routerA, startedConfig: null } } }
+    expect(judge(check as CheckDefinition, restarted)).toMatchObject({ passed: true, found: 'description kept' })
+    expect(judge(check as CheckDefinition, never)).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.notConfigured,
+    })
+    expect(judge(check as CheckDefinition)).toMatchObject({ passed: false, failure: CHECK_FAILURES.notChecked })
+  })
+
   it('takes the first words of a line for the line', () => {
     const check = { kind: 'config', router: 'a', source: 'running', block: ['interface lo'], line: 'description' }
     expect(judge(check as CheckDefinition)).toMatchObject({ passed: true, found: 'description router a loopback' })

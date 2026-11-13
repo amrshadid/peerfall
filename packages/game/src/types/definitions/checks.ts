@@ -18,8 +18,11 @@ export type CheckKind = (typeof CHECK_KINDS)[number]
 
 export type StateCheckKind = (typeof STATE_CHECK_KINDS)[number]
 
-/** Where a `config` check looks: what the router runs now, or the frr.conf it would start with. */
-export const CONFIG_SOURCES = ['running', 'saved'] as const
+/**
+ * Where a `config` check looks: what the router runs now, the frr.conf it would start with, or the
+ * frr.conf it was last started from by FRR's init script during play (what survived a restart).
+ */
+export const CONFIG_SOURCES = ['running', 'saved', 'started'] as const
 
 export type ConfigSource = (typeof CONFIG_SOURCES)[number]
 
