@@ -34,6 +34,10 @@ describe('precacheFiles', () => {
     ])
     expect(files).toEqual(['assets/index-Drmk3EdP.js', 'assets/v86-DTA5CHKx.wasm', 'favicon.svg', 'index.html'])
   })
+
+  it('leaves out the files only search engines and link previews read', () => {
+    expect(precacheFiles(['index.html', 'og.png', 'robots.txt', 'sitemap.xml'])).toEqual(['index.html'])
+  })
 })
 
 describe('app caches', () => {
