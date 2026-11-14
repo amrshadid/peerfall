@@ -22,12 +22,17 @@ export interface UseStoryStepResult {
   readonly review: (step: GuideStepId | null) => void
   /** Moves between the steps played on the network. */
   readonly goTo: (step: PlayStep) => void
+  /** Moves to Build it without See it, as the scene's Skip does. */
+  readonly skipToBuild: () => void
+  /** Build it was reached by skipping See it; false once the player moves on. */
+  readonly skippedSeeIt: boolean
 }
 
 interface State {
   readonly key: string
   readonly play: PlayStep
   readonly reviewing: GuideStepId | null
+  readonly skipped?: boolean
 }
 
 /**
@@ -42,6 +47,7 @@ export function useStoryStep({ key, phase, passed }: StoryStepInput): UseStorySt
   const step: GuideStepId = phase === 'incident' ? 'scene' : phase === 'debrief' ? 'debrief' : current.play
 
   const goTo = useCallback((play: PlayStep) => setState({ key, play, reviewing: null }), [key])
+  const skipToBuild = useCallback(() => setState({ key, play: 'build', reviewing: null, skipped: true }), [key])
   const review = useCallback(
     (reviewing: GuideStepId | null) =>
       setState((previous) => ({ ...(previous.key === key ? previous : { key, play: 'see' }), reviewing })),
@@ -56,5 +62,13 @@ export function useStoryStep({ key, phase, passed }: StoryStepInput): UseStorySt
     [key]
   )
 
-  return { step, reviewing: current.reviewing === step ? null : current.reviewing, toggleReview, review, goTo }
+  return {
+    step,
+    reviewing: current.reviewing === step ? null : current.reviewing,
+    toggleReview,
+    review,
+    goTo,
+    skipToBuild,
+    skippedSeeIt: step === 'build' && current.skipped === true,
+  }
 }

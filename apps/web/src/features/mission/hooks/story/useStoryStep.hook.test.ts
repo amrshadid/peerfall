@@ -13,6 +13,19 @@ const input = (overrides: Partial<StoryStepInput> = {}): StoryStepInput => ({
 })
 
 describe('useStoryStep', () => {
+  it('remembers that Build it was reached by skipping See it, until the player moves on', () => {
+    const { result } = renderHook(() => useStoryStep(input()))
+    expect(result.current.skippedSeeIt).toBe(false)
+    act(() => result.current.skipToBuild())
+    expect(result.current).toMatchObject({ step: 'build', skippedSeeIt: true })
+    act(() => result.current.review('scene'))
+    expect(result.current.skippedSeeIt).toBe(true)
+    act(() => result.current.goTo('watch'))
+    expect(result.current.skippedSeeIt).toBe(false)
+    act(() => result.current.goTo('build'))
+    expect(result.current.skippedSeeIt).toBe(false)
+  })
+
   it('stays on Build it once every objective is met, so its last beat is read; the player moves on', () => {
     const { result, rerender } = renderHook((props: StoryStepInput) => useStoryStep(props), {
       initialProps: input(),

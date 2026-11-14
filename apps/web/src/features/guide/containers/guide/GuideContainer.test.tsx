@@ -1,19 +1,20 @@
 // @vitest-environment jsdom
-import type { GuideStepId } from '@features/guide/types'
+import { useGuidePace } from '@features/guide/hooks/pace'
+import type { GuidePace, GuideStepId } from '@features/guide/types'
 import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
 import type { UseActiveMissionResult } from '@peerfall/game/hooks'
 import type { RevealedHint } from '@peerfall/game/types'
 import type { UseMissionRunResult } from '@peerfall/missions/hooks'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GuideContainer } from './GuideContainer'
+import { GuideContainer, type GuideContainerProps } from './GuideContainer'
 
 const mocks = vi.hoisted(() => ({
   active: null as unknown,
   revealed: [] as unknown[],
   reveal: vi.fn(),
   run: vi.fn(),
-  finished: null as ((count: number) => void) | null,
+  pace: null as GuidePace | null,
 }))
 
 vi.mock('@peerfall/game/hooks', () => ({
@@ -27,9 +28,6 @@ vi.mock('@peerfall/game/hooks', () => ({
 }))
 
 vi.mock('@peerfall/machine/hooks', () => ({
-  useCommandFinished: (callback: (count: number) => void) => {
-    mocks.finished = callback
-  },
   useMachineStatus: () => ({ phase: 'ready', detail: null }),
   useTerminalCommand: () => ({ run: mocks.run }),
 }))
@@ -55,6 +53,7 @@ function mount(
     onNext?: () => void
     startedOver?: boolean
     runVerdict?: UseMissionRunResult['verdict']
+    skippedSeeIt?: boolean
   } = {}
 ) {
   const props = {
@@ -71,10 +70,18 @@ function mount(
     startedOver: overrides.startedOver ?? false,
     onNext: overrides.onNext ?? null,
     onSkipToBuild: step === 'scene' ? vi.fn() : null,
+    skippedSeeIt: overrides.skippedSeeIt ?? false,
     onStartOver: vi.fn(),
   }
-  render(<GuideContainer {...props} />)
+  render(<Harness {...props} />)
   return props
+}
+
+// The screen keeps the pace beside the step; here a harness does.
+function Harness(props: Omit<GuideContainerProps, 'pace'>) {
+  const pace = useGuidePace(`m#${props.step}`)
+  mocks.pace = pace
+  return <GuideContainer {...props} pace={pace} />
 }
 
 beforeEach(() => {
@@ -99,11 +106,20 @@ describe('GuideContainer', () => {
     expect(screen.getByRole('button', { name: 'Skip to Build it' })).toBeTruthy()
   })
 
-  it('releases a pause when the player finishes a command in the terminal', () => {
+  it('shows the next beat when the screen releases the pause, and offers Continue on every pause', () => {
     mount('see')
     expect(screen.queryByText(/That is me answering/)).toBeNull()
-    act(() => mocks.finished?.(1))
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy()
+    act(() => mocks.pace?.advance())
     expect(screen.getByText(/That is me answering/)).toBeTruthy()
+  })
+
+  it('opens Build it, after See it was skipped, with how to get where See it ends', () => {
+    mount('build', { skippedSeeIt: true })
+    expect(screen.getByText(/You skipped See it\. Build it starts where See it ends: type/)).toBeTruthy()
+    cleanup()
+    mount('build')
+    expect(screen.queryByText(/You skipped See it/)).toBeNull()
   })
 
   it('offers Watch it from Build it when the container gives the way on', () => {

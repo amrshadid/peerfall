@@ -11,7 +11,10 @@ import { useActiveMission, useCodex, useMissionActions, useRunComparison } from 
 import { hrefOf, navigateTo } from '@shared/navigation'
 
 export interface DebriefContainerProps {
-  /** Plays the mission again from See it, on the network as the mission found it. */
+  /**
+   * Plays the mission again from its scene, on the network as the mission found it, with every
+   * hint to ask for again, as Kernelfall's Replay level does.
+   */
   onPlayAgain: () => void
 }
 

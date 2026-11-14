@@ -1,3 +1,4 @@
+import type { GuidePace } from '@features/guide/types'
 import type { PanelId, PanelSizes, RailStep, SaveState, ScreenChrome, TitleBlockEntry } from '@shared/types'
 import type { ReactNode } from 'react'
 
@@ -105,15 +106,26 @@ export interface MissionRunView<Run> {
    * saved before then no longer describes it, so objectives are read from the run alone.
    */
   readonly startedOver: boolean
-  /** Goes on to the next step of the story; null where the story moves on by itself or ends. */
+  /**
+   * Goes on to the next step of the story; null where the story moves on by itself or ends, and
+   * while a question of the step waits for the player's call.
+   */
   readonly onNext: (() => void) | null
   /** Jumps from the scene straight to Build it; null on other steps. */
   readonly onSkipToBuild: (() => void) | null
+  /** Build it was reached by skipping See it, whose commands it may take for granted. */
+  readonly skippedSeeIt: boolean
+  /**
+   * How far into the current step's story the player is. Kept here, beside the step, so the way on
+   * can wait for an unanswered question and a look back at a done step leaves it where it was.
+   */
+  readonly pace: GuidePace
   /** Asks before the network goes back to how the mission found it. */
   readonly onStartOver: () => void
   /**
-   * Plays the mission again from See it, without asking: the network goes back to how the mission
-   * found it and the objectives start unmet. The debrief's Play it again.
+   * Plays the mission again from its scene, as Kernelfall's Replay level does, without asking: the
+   * network goes back to how the mission found it, the objectives start unmet and the hints are
+   * all to ask for again. The debrief's Replay mission.
    */
   readonly onPlayAgain: () => void
 }

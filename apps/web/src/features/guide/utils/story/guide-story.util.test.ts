@@ -1,8 +1,8 @@
 import type { GuidePace, GuidePredict } from '@features/guide/types'
 import { describe, expect, it, vi } from 'vitest'
 import { MISSION_HINTS } from '@/test/fixtures/guide.fixture'
-import { STORY, STORY_BUILD, STORY_SEE } from '@/test/fixtures/story.fixture'
-import { beatsOf, blocksFor, chipsOf, hintsOf, pacedGuideOf, speakerOf } from './guide-story.util'
+import { STORY, STORY_BUILD, STORY_SCENE, STORY_SEE } from '@/test/fixtures/story.fixture'
+import { beatsOf, blocksFor, chipsOf, hintsOf, pacedGuideOf, predictWaitsIn, speakerOf } from './guide-story.util'
 
 const pace = (overrides: Partial<GuidePace> = {}): GuidePace => ({
   shown: 1,
@@ -55,6 +55,14 @@ describe('beatsOf', () => {
     ])
   })
 
+  it('keeps a pause that ends the step as an empty last beat', () => {
+    const blocks = [...STORY_BUILD, { kind: 'pause' } as const]
+    const beats = beatsOf(blocks)
+    expect(beats.at(-1)).toEqual([])
+    expect(beats).toHaveLength(beatsOf(STORY_BUILD).length + 1)
+    expect(beatsOf([{ kind: 'pause' }])).toEqual([])
+  })
+
   it('marks a question followed by a pause as held for the command', () => {
     const [, second] = beatsOf(STORY_SEE)
     expect(second?.find((part) => part.kind === 'predict')).toMatchObject({ held: true, id: 0 })
@@ -103,11 +111,57 @@ describe('pacedGuideOf', () => {
     expect(question).toMatchObject({ revealed: true, picked: 0 })
   })
 
+  it('moves on for a finished command only when it is the one the beat asked for', () => {
+    const advance = vi.fn()
+    const guide = pacedGuideOf(beats, pace({ advance }), false)
+    guide.onCommands(['a:~# ls'])
+    expect(advance).not.toHaveBeenCalled()
+    guide.onCommands(['a:~# ls', 'a:~# vtysh'])
+    expect(advance).toHaveBeenCalledWith(1)
+  })
+
+  it('moves on for any finished command while the Machine does not say what was typed', () => {
+    const advance = vi.fn()
+    pacedGuideOf(beats, pace({ advance }), false).onCommands()
+    expect(advance).toHaveBeenCalledWith(1)
+  })
+
+  it('moves on for no command while a question waits, nor on a step looked back at', () => {
+    const advance = vi.fn()
+    pacedGuideOf(beats, pace({ shown: 2, advance }), false).onCommands()
+    pacedGuideOf(beats, pace({ advance }), true).onCommands()
+    expect(advance).not.toHaveBeenCalled()
+  })
+
+  it('keeps Continue on every pause, so a player is never held by a command', () => {
+    const advance = vi.fn()
+    const guide = pacedGuideOf(beats, pace({ advance }), false)
+    guide.onContinue?.()
+    expect(advance).toHaveBeenCalledWith()
+    expect(pacedGuideOf(beats, pace({ shown: 3, picks: { 0: 1 } }), false).onContinue).toBeNull()
+  })
+
+  it('shows a held answer at the end of a step once the command after it runs', () => {
+    const ending = beatsOf([...STORY_SEE.slice(0, 5), { kind: 'pause' }])
+    const picked = pace({ shown: 2, picks: { 0: 1 } })
+    expect(predictsOf(pacedGuideOf(ending, picked, false).beats)[0]?.revealed).toBe(false)
+    expect(predictsOf(pacedGuideOf(ending, { ...picked, shown: 3 }, false).beats)[0]?.revealed).toBe(true)
+  })
+
   it('shows a step looked back at whole, its questions answered', () => {
     const guide = pacedGuideOf(beats, pace(), true)
     expect(guide.beats).toHaveLength(3)
     expect(guide.finished).toBe(true)
     expect(predictsOf(guide.beats)[0]).toMatchObject({ revealed: true, onPick: null })
+  })
+})
+
+describe('predictWaitsIn', () => {
+  it('holds the way on until every question of the step is answered, "just show me" included', () => {
+    const beats = beatsOf(STORY_SEE)
+    expect(predictWaitsIn(beats, {})).toBe(true)
+    expect(predictWaitsIn(beats, { 0: null })).toBe(false)
+    expect(predictWaitsIn(beatsOf(STORY_SCENE), {})).toBe(false)
   })
 })
 

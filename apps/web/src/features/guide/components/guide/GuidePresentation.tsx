@@ -17,6 +17,7 @@ const showNewest = (element: HTMLElement | null) => element?.scrollIntoView?.({ 
 export function GuidePresentation({
   stepLabel,
   reviewNote,
+  lead = null,
   beats,
   onContinue,
   showObjectives,
@@ -50,6 +51,11 @@ export function GuidePresentation({
     <div className="guide">
       <div className="guide__body">
         {reviewNote !== null && <p className="guide__review">{reviewNote}</p>}
+        {lead != null && (
+          <p className="guide__review">
+            <InlineText text={lead} />
+          </p>
+        )}
 
         {beats.map((beat, index) => {
           const current = index === beats.length - 1

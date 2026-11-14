@@ -1,7 +1,6 @@
 import { useContent } from '@features/content/hooks/content'
 import { GuidePresentation } from '@features/guide/components/guide'
-import { useGuidePace } from '@features/guide/hooks/pace'
-import type { GuideAction, GuideStepId } from '@features/guide/types'
+import type { GuideAction, GuidePace, GuideStepId } from '@features/guide/types'
 import { guideObjectivesOf, probeNamesOf } from '@features/guide/utils/objectives'
 import { runStatusOf, waitReasonOf } from '@features/guide/utils/run'
 import {
@@ -11,11 +10,12 @@ import {
   chipsOf,
   hintsOf,
   pacedGuideOf,
+  skippedLeadOf,
   stepLabelOf,
 } from '@features/guide/utils/story'
 import { shortcutLabelOf } from '@features/shortcuts/utils/keys'
 import { useActiveMission, useHints } from '@peerfall/game/hooks'
-import { useCommandFinished, useMachineStatus, useTerminalCommand } from '@peerfall/machine/hooks'
+import { useMachineStatus, useTerminalCommand } from '@peerfall/machine/hooks'
 import type { UseMissionRunResult } from '@peerfall/missions/hooks'
 import { useMachineLock } from '@shared/hooks/machine'
 import { hrefOf } from '@shared/navigation'
@@ -30,8 +30,13 @@ export interface GuideContainerProps {
   onEndReview: () => void
   /** The network was reset this visit: the verdict saved before it no longer applies. */
   startedOver: boolean
+  /** Null while a question of the step waits for its answer, as well as where there is no way on. */
   onNext: (() => void) | null
   onSkipToBuild: (() => void) | null
+  /** Build it was reached by skipping See it: the Guide says how to get where See it ends. */
+  skippedSeeIt?: boolean
+  /** How far into the current step's story the player is; the screen releases its pauses. */
+  pace: GuidePace
   /** Asks before the network goes back to how the mission found it. */
   onStartOver: () => void
 }
@@ -47,8 +52,9 @@ const NEXT_LABEL: Readonly<Partial<Record<GuideStepId, string>>> = {
 }
 
 /**
- * The mission's story, paced by the player's commands: each one finished at the terminal shows the
- * next beat. Then its objectives, ticking live, its chips, hints and Codex cards, and the run's actions.
+ * The mission's story, paced by the player's commands: the command a beat asks for, finished at
+ * the terminal, shows the next beat, and Continue always does. Then its objectives, ticking live,
+ * its chips, hints and Codex cards, and the run's actions.
  */
 export function GuideContainer({
   run,
@@ -58,6 +64,8 @@ export function GuideContainer({
   startedOver,
   onNext,
   onSkipToBuild,
+  skippedSeeIt = false,
+  pace,
   onStartOver,
 }: GuideContainerProps) {
   const { mission, phase, verdict: lastAttempt } = useActiveMission()
@@ -66,11 +74,17 @@ export function GuideContainer({
   const command = useTerminalCommand()
   const lock = useMachineLock(useMachineStatus())
   const shown = reviewing ?? step
-  const pace = useGuidePace(`${mission?.id ?? ''}#${shown}`)
-  useCommandFinished(pace.advance)
 
   const story = mission ? content.storyOf(mission.id)?.sections : undefined
   const beats = useMemo(() => beatsOf(blocksFor(shown, story)), [shown, story])
+  const lead = useMemo(() => {
+    if (!mission || !skippedSeeIt || reviewing !== null || step !== 'build') {
+      return null
+    }
+    const routers = mission.network.routers.map((router) => router.name)
+    const firstRouter = mission.probe?.from ?? routers[0] ?? null
+    return skippedLeadOf(beatsOf(blocksFor('see', story)), beats, routers, firstRouter)
+  }, [mission, skippedSeeIt, reviewing, step, story, beats])
   if (!mission || phase === null) {
     return null
   }
@@ -132,6 +146,7 @@ export function GuideContainer({
     <GuidePresentation
       stepLabel={label}
       reviewNote={reviewing ? `Looking again at ${label}. Your progress is kept.` : null}
+      lead={lead}
       beats={paced.beats}
       onContinue={paced.onContinue}
       showObjectives={reviewing !== null || shown !== 'scene'}

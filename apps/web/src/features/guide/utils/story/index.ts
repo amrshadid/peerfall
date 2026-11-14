@@ -1,4 +1,13 @@
 export {
+  askedCommandOf,
+  beatCommandsOf,
+  beatLinesOf,
+  releasesPause,
+  skippedLeadOf,
+  type WayIn,
+  wayInOf,
+} from './guide-command.util'
+export {
   BUILD_NOTE,
   GUIDE_STEPS,
   HINT_TIER_NAMES,
@@ -14,6 +23,7 @@ export {
   hintsOf,
   type PacedGuide,
   pacedGuideOf,
+  predictWaitsIn,
   type StepBlock,
   speakerOf,
   stepIndexOf,

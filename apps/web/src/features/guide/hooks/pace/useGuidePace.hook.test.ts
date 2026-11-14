@@ -10,6 +10,8 @@ describe('useGuidePace', () => {
     act(() => result.current.advance())
     act(() => result.current.advance())
     expect(result.current.shown).toBe(3)
+    act(() => result.current.advance(2))
+    expect(result.current.shown).toBe(5)
   })
 
   it('records an answer and jumps to the beat it brings', () => {
