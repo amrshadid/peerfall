@@ -171,6 +171,73 @@ describe('checks that read the routers as they are', () => {
     )
   })
 
+  it('gives the size of a sized ping and what the size is', () => {
+    const result: CheckResult = {
+      kind: 'reaches',
+      passed: false,
+      failure: 'unreachable',
+      from: 'a',
+      to: '10.255.0.3',
+      size: 2000,
+      sent: 3,
+      received: 0,
+    }
+    const text = failureText({ ...REACHES, size: 2000 }, result, NAMES)
+    expect(text).toContain('2000-byte pings from a to 10.255.0.3: 0 of 3 answered.')
+    expect(text).toContain('its MTU')
+    expect(evidenceText({ ...result, passed: true, failure: null, received: 3 }, NAMES)).toContain(
+      '2000-byte pings from a to 10.255.0.3: 3 of 3 answered.'
+    )
+  })
+
+  it('names the neighbor that is missing or not Full, and the states a neighbor passes through', () => {
+    const PEER: CheckDefinition = { kind: 'peer', router: 'a', protocol: 'ospf', peer: '10.255.0.2' }
+    const exstart = { peer: '10.255.0.2', interface: 'a-b', state: 'ExStart' }
+    const stuck: CheckResult = {
+      kind: 'peer',
+      passed: false,
+      failure: 'peer_not_full',
+      router: 'a',
+      protocol: 'ospf',
+      peers: [exstart],
+      found: exstart,
+    }
+    const text = failureText(PEER, stuck, NAMES)
+    expect(text).toContain("Router a's `ospfd` has neighbor 10.255.0.2 on `a-b`, still in ExStart, not Full.")
+    expect(text).toContain('until Full')
+
+    const other = { peer: '10.255.0.3', interface: 'a-c', state: 'Full' }
+    const missing: CheckResult = { ...stuck, failure: 'no_peer', peers: [other], found: null }
+    expect(failureText(PEER, missing, NAMES)).toContain(
+      "Router a's `ospfd` lists no neighbor 10.255.0.2. It lists neighbor 10.255.0.3 on `a-c`, Full."
+    )
+    expect(failureText(PEER, { ...missing, peers: [] }, NAMES)).toContain('or `ospfd` is not running.')
+
+    const up = { peer: 'b', interface: 'a-b', state: 'Up', level: 2 }
+    const isis: CheckResult = { ...stuck, passed: true, failure: null, protocol: 'isis', peers: [up], found: up }
+    expect(evidenceText(isis, NAMES)).toContain("Router a's `isisd` has neighbor b on `a-b` at level 2 in state Up.")
+  })
+
+  it('names the LSA the database lacks or still holds, and says what an LSA is', () => {
+    const LSA: CheckDefinition = { kind: 'lsa', router: 'a', type: 'summary', id: '10.0.9.0', area: '0.0.0.0' }
+    const none: CheckResult = { kind: 'lsa', passed: false, failure: 'no_lsa', router: 'a', found: null }
+    const text = failureText(LSA, none, NAMES)
+    expect(text).toContain("Router a's OSPF database holds no summary LSA for 10.0.9.0, in area 0.0.0.0.")
+    expect(text).toContain('link-state advertisements')
+
+    const lsa = { area: '0.0.0.0', type: 'router', id: '10.255.0.2', advRouter: '10.255.0.2' } as const
+    const still: CheckResult = { ...none, failure: 'lsa_present', found: lsa }
+    expect(failureText({ ...LSA, absent: true }, still, NAMES)).toContain(
+      'still holds a router LSA for 10.255.0.2, sent by 10.255.0.2, in area 0.0.0.0.'
+    )
+    expect(failureText({ ...LSA, absent: true }, { ...none, failure: 'no_database' }, NAMES)).toContain(
+      '`ospfd` did not answer on router a, so there is no OSPF database to read.'
+    )
+    expect(evidenceText({ ...still, passed: true, failure: null }, NAMES)).toContain(
+      "Router a's OSPF database holds a router LSA for 10.255.0.2"
+    )
+  })
+
   it('says when the router answered its own address', () => {
     const result: CheckResult = {
       kind: 'reaches',

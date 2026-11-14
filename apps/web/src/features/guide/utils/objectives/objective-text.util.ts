@@ -8,8 +8,9 @@ import type {
   ObjectiveDefinition,
   RouteHop,
 } from '@peerfall/game/types'
-import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
-import { DETECTOR_NAMES, NOT_CHECKED, NOT_TESTED, TERMS } from './objective-text.constants'
+import { PEER_FINAL_STATES } from '@peerfall/game/types'
+import type { KernelRoute, OspfLsa, PeerState, RibRoute } from '@peerfall/machine/types'
+import { DETECTOR_NAMES, NOT_CHECKED, NOT_TESTED, PEER_PROTOCOL_NAMES, TERMS } from './objective-text.constants'
 
 const MS_PER_SECOND = 1000
 
@@ -75,6 +76,29 @@ const onlyThrough = (route: RouteHop | null, name: string): boolean =>
 
 const replies = (count: number): string => (count === 1 ? '1 reply' : `${count} replies`)
 
+/** A `reaches` result in one sentence; a sized ping says its size and what the size is. */
+const reachesText = (result: Extract<CheckResult, { kind: 'reaches' }>): string => {
+  const answered = `${result.received} of ${result.sent} answered`
+  return result.size === undefined
+    ? `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
+    : `${result.size}-byte pings from ${result.from} to ${result.to}: ${answered}. ${TERMS.reply} ${TERMS.size}`
+}
+
+/** `neighbor 10.255.0.2 on a-b`, with its IS-IS level when it has one. */
+const peerText = (peer: PeerState): string =>
+  `neighbor ${peer.peer} on ${code(peer.interface)}${peer.level === undefined ? '' : ` at level ${peer.level}`}`
+
+/** `a router LSA for 10.255.0.2, sent by 10.255.0.2, in area 0.0.0.0`; without the article after "no". */
+const lsaText = (
+  lsa: Pick<OspfLsa, 'type' | 'id'> & { area?: string | null; advRouter?: string },
+  article = true
+): string =>
+  [
+    `${article ? (lsa.type === 'external' || lsa.type === 'asbr-summary' ? 'an ' : 'a ') : ''}${lsa.type} LSA for ${lsa.id}`,
+    ...(lsa.advRouter ? [`sent by ${lsa.advRouter}`] : []),
+    ...(lsa.area ? [`in area ${lsa.area}`] : []),
+  ].join(', ')
+
 /** Why an objective is still open, for someone who has never met the terms. */
 export function failureText(check: CheckDefinition, result: CheckResult, names: ProbeNames): string {
   switch (result.failure) {
@@ -112,7 +136,7 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
         : `There is no configuration to read yet. ${TERMS.configuration}`
     case 'unreachable': {
       if (result.kind === 'reaches') {
-        return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
+        return reachesText(result)
       }
       const got = result.kind === 'reachable' ? result.replies : 0
       const needed = check.kind === 'reachable' ? ` It takes ${check.minReplies}.` : ''
@@ -158,6 +182,36 @@ export function failureText(check: CheckDefinition, result: CheckResult, names: 
         result.kind === 'detected-by' && result.detection ? DETECTOR_NAMES[result.detection.event] : 'Something else'
       return `${got} noticed the fault first, not ${wanted}. ${TERMS.detectors}`
     }
+    case 'no_peer': {
+      if (check.kind !== 'peer') {
+        return `The routing protocol has no such neighbor. ${TERMS.peer}`
+      }
+      const { name, daemon } = PEER_PROTOCOL_NAMES[check.protocol]
+      const others = result.kind === 'peer' ? result.peers : []
+      const listed =
+        others.length > 0
+          ? ` It lists ${others.map((peer) => `${peerText(peer)}, ${peer.state}`).join(', and ')}.`
+          : ` ${name} has no neighbor there at all, or ${code(daemon)} is not running.`
+      return `Router ${check.router}'s ${code(daemon)} lists no neighbor ${check.peer}.${listed} ${TERMS.peer}`
+    }
+    case 'peer_not_full':
+      if (result.kind === 'peer' && result.found) {
+        const { daemon } = PEER_PROTOCOL_NAMES[result.protocol]
+        return `Router ${result.router}'s ${code(daemon)} has ${peerText(result.found)}, still in ${result.found.state}, not ${PEER_FINAL_STATES[result.protocol]}. ${TERMS.peer}`
+      }
+      return `The neighbor is there, but not yet in its final state. ${TERMS.peer}`
+    case 'no_lsa':
+      return check.kind === 'lsa'
+        ? `Router ${check.router}'s OSPF database holds no ${lsaText(check, false)}. ${TERMS.lsa}`
+        : `The OSPF database holds no such LSA. ${TERMS.lsa}`
+    case 'lsa_present':
+      return result.kind === 'lsa' && result.found
+        ? `Router ${result.router}'s OSPF database still holds ${lsaText(result.found)}. ${TERMS.lsa}`
+        : `The OSPF database still holds that LSA. ${TERMS.lsa}`
+    case 'no_database':
+      return check.kind === 'lsa'
+        ? `${code('ospfd')} did not answer on router ${check.router}, so there is no OSPF database to read. ${TERMS.daemon}`
+        : `${code('ospfd')} did not answer, so there is no OSPF database to read. ${TERMS.daemon}`
     default:
       return 'This objective is not met yet.'
   }
@@ -199,7 +253,15 @@ export function evidenceText(result: CheckResult, names: ProbeNames): string | n
         ? `Router ${result.router}'s zebra holds ${code(ribRouteText(result.found))}. ${TERMS.rib}`
         : null
     case 'reaches':
-      return `${result.received} of ${packets(result.sent)} from ${result.from} to ${result.to} ${result.received === 1 ? 'was' : 'were'} answered. ${TERMS.reply}`
+      return reachesText(result)
+    case 'peer':
+      return result.found
+        ? `Router ${result.router}'s ${code(PEER_PROTOCOL_NAMES[result.protocol].daemon)} has ${peerText(result.found)} in state ${result.found.state}. ${TERMS.peer}`
+        : null
+    case 'lsa':
+      return result.found
+        ? `Router ${result.router}'s OSPF database holds ${lsaText(result.found)}. ${TERMS.lsa}`
+        : `Router ${result.router}'s OSPF database holds no such LSA. ${TERMS.lsa}`
     case 'config':
       return result.found !== null
         ? `Router ${result.router}'s ${result.source} configuration has ${code(result.found.trim())}. ${TERMS.configuration}`
