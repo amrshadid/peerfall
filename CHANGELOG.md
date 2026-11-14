@@ -35,10 +35,6 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 - **Objectives explain the new checks:** an OSPF or IS-IS neighbor missing or not yet Full
   ("still in ExStart"), an LSA missing from the OSPF database or still in it, and pings of a
   given size ("2000-byte pings: 0 of 3 answered"), each with its term in plain words.
-- **The site can be found and shared:** search engines and link previews get a title,
-  description and share image, `robots.txt` and a sitemap, and the page shows what Peerfall
-  is, who it's for, the eleven stages and the download sizes before the game loads, and
-  without JavaScript.
 - **A wrong address on the site shows the game's own "No such page".** An address that is
   no file of the site, like `/nope`, got the host's bare text page. It now gets a page in
   the manual's style, in the theme you chose, with the address as the Machine's `ls` would
