@@ -1,12 +1,22 @@
 import type { StringRule } from '@peerfall/core/types'
 import type { ObjectReader } from '@peerfall/core/utils'
-import { FRR_BASE_DAEMONS, FRR_DAEMONS, IPV4, IPV4_WITH_PREFIX } from '@peerfall/machine/types'
+import {
+  FRR_BASE_DAEMONS,
+  FRR_DAEMONS,
+  IPV4,
+  IPV4_WITH_PREFIX,
+  IPV6,
+  IPV6_WITH_PREFIX,
+  OSPF_LSA_TYPES,
+  PING_MAX_SIZE,
+} from '@peerfall/machine/types'
 import {
   CHECK_KINDS,
   type CheckDefinition,
   type CheckKind,
   CONFIG_SOURCES,
   DETECTION_EVENTS,
+  PEER_PROTOCOLS,
   REACH_PACKETS,
 } from '#types/definitions/checks'
 
@@ -18,17 +28,28 @@ const CHECK_FIELDS: Readonly<Record<CheckKind, readonly string[]>> = {
   outage: ['maxMs'],
   'detected-by': ['event'],
   daemons: ['router', 'daemons'],
-  route: ['router', 'prefix', 'to', 'protocol', 'via', 'interface'],
+  route: ['router', 'prefix', 'to', 'protocol', 'via', 'vias', 'interface'],
   rib: ['router', 'prefix', 'protocol', 'via', 'selected'],
-  reaches: ['from', 'to', 'minReplies'],
+  reaches: ['from', 'to', 'minReplies', 'size'],
   config: ['router', 'source', 'block', 'line', 'absent'],
+  peer: ['router', 'protocol', 'peer', 'interface', 'level'],
+  lsa: ['router', 'type', 'id', 'area', 'advRouter', 'absent'],
 }
 
 /** Every FRR process a `daemons` check may name: watchfrr, which starts the others, counts as one. */
 const CHECKED_DAEMONS = ['watchfrr', ...FRR_BASE_DAEMONS, ...FRR_DAEMONS] as const
 
+const either = (first: RegExp, second: RegExp) => new RegExp(`(?:${first.source})|(?:${second.source})`)
+
 const ADDRESS: StringRule = { pattern: IPV4, expected: 'an address like 10.0.1.2' }
 const PREFIX: StringRule = { pattern: IPV4_WITH_PREFIX, expected: 'a prefix like 10.0.1.0/30' }
+const ANY_ADDRESS: StringRule = { pattern: either(IPV4, IPV6), expected: 'an address like 10.0.1.2 or fd00::2' }
+const ANY_PREFIX: StringRule = {
+  pattern: either(IPV4_WITH_PREFIX, IPV6_WITH_PREFIX),
+  expected: 'a prefix like 10.0.1.0/30 or fd00::2/128',
+}
+// OSPF writes router ids, LSA ids and areas as dotted quads: 10.255.0.2, 0.0.0.1.
+const DOTTED: StringRule = { pattern: IPV4, expected: 'a dotted id like 10.255.0.2 or 0.0.0.1' }
 // As `ip route` names who installed a route: kernel, static, ospf…
 const PROTOCOL: StringRule = { pattern: /^[a-z][a-z0-9]*$/, expected: 'a protocol as ip route names it, like static' }
 // As zebra names a route's source in `show ip route json`: connected, local, static, ospf…
@@ -36,12 +57,12 @@ const RIB_PROTOCOL: StringRule = { pattern: /^[a-z][a-z0-9-]*$/, expected: 'a pr
 
 function readRib(check: ObjectReader): Extract<CheckDefinition, { kind: 'rib' }> {
   const protocol = check.optional('protocol', (key) => check.string(key, RIB_PROTOCOL))
-  const via = check.optional('via', (key) => check.string(key, ADDRESS))
+  const via = check.optional('via', (key) => check.string(key, ANY_ADDRESS))
   const selected = check.optional('selected', (key) => check.flag(key))
   return {
     kind: 'rib',
     router: check.string('router'),
-    prefix: check.string('prefix', PREFIX),
+    prefix: check.string('prefix', ANY_PREFIX),
     ...(protocol !== undefined && { protocol }),
     ...(via !== undefined && { via }),
     ...(selected !== undefined && { selected }),
@@ -53,12 +74,19 @@ function readRoute(check: ObjectReader): Extract<CheckDefinition, { kind: 'route
   const to = check.optional('to', (key) => check.string(key, ADDRESS))
   const protocol = check.optional('protocol', (key) => check.string(key, PROTOCOL))
   const via = check.optional('via', (key) => check.string(key, ADDRESS))
+  const vias = check.optional('vias', (key) => check.stringList(key, ADDRESS))
   const name = check.optional('interface', (key) => check.string(key))
   if ((prefix === undefined) === (to === undefined)) {
     check.issues.add(
       check.path,
       'expected "prefix" (that exact route) or "to" (the route an address would use), not both'
     )
+  }
+  if (via !== undefined && vias !== undefined) {
+    check.issues.add(check.path, 'expected "via" (one next hop) or "vias" (every next hop), not both')
+  }
+  if (vias !== undefined && (vias.length < 2 || new Set(vias).size !== vias.length)) {
+    check.issues.add(check.pathOf('vias'), 'expected two or more different next hops; for one, use "via"')
   }
   return {
     kind: 'route',
@@ -67,7 +95,46 @@ function readRoute(check: ObjectReader): Extract<CheckDefinition, { kind: 'route
     ...(to !== undefined && { to }),
     ...(protocol !== undefined && { protocol }),
     ...(via !== undefined && { via }),
+    ...(vias !== undefined && { vias }),
     ...(name !== undefined && { interface: name }),
+  }
+}
+
+function readPeer(check: ObjectReader): Extract<CheckDefinition, { kind: 'peer' }> {
+  const protocol = check.oneOf('protocol', PEER_PROTOCOLS)
+  const name = check.optional('interface', (key) => check.string(key))
+  const level = check.optional('level', (key) => check.integer(key, 1, 2))
+  if (level !== undefined && protocol !== 'isis') {
+    check.issues.add(check.pathOf('level'), 'only an IS-IS peer has a level')
+  }
+  return {
+    kind: 'peer',
+    router: check.string('router'),
+    protocol,
+    // OSPF names a peer by its router id; IS-IS by its hostname or system id.
+    peer: protocol === 'isis' ? check.string('peer') : check.string('peer', DOTTED),
+    ...(name !== undefined && { interface: name }),
+    ...(level !== undefined && { level }),
+  }
+}
+
+function readLsa(check: ObjectReader): Extract<CheckDefinition, { kind: 'lsa' }> {
+  const type = check.oneOf('type', OSPF_LSA_TYPES)
+  const area = check.optional('area', (key) => check.string(key, DOTTED))
+  const advRouter = check.optional('advRouter', (key) => check.string(key, DOTTED))
+  if (type === 'external' && area !== undefined) {
+    check.issues.add(check.pathOf('area'), 'an external LSA belongs to no area: leave "area" out')
+  } else if (type !== 'external' && area === undefined) {
+    check.issues.add(check.path, `expected "area": a ${type} LSA sits in one area's database`)
+  }
+  return {
+    kind: 'lsa',
+    router: check.string('router'),
+    type,
+    id: check.string('id', DOTTED),
+    ...(area !== undefined && { area }),
+    ...(advRouter !== undefined && { advRouter }),
+    ...(check.flag('absent') && { absent: true }),
   }
 }
 
@@ -113,14 +180,21 @@ export function readCheck(check: ObjectReader): CheckDefinition {
       return readRoute(check)
     case 'rib':
       return readRib(check)
-    case 'reaches':
+    case 'reaches': {
+      const size = check.optional('size', (key) => check.integer(key, 0, PING_MAX_SIZE))
       return {
         kind,
         from: check.string('from'),
-        to: check.string('to', ADDRESS),
+        to: check.string('to', ANY_ADDRESS),
         // One packet may be lost to a neighbor being looked up: two of the three is reaching it.
         minReplies: check.optional('minReplies', (key) => check.integer(key, 1, REACH_PACKETS)) ?? REACH_PACKETS - 1,
+        ...(size !== undefined && { size }),
       }
+    }
+    case 'peer':
+      return readPeer(check)
+    case 'lsa':
+      return readLsa(check)
     case 'config':
       return {
         kind,
@@ -151,6 +225,8 @@ export function checkRouter(check: CheckDefinition): { readonly field: string; r
     case 'route':
     case 'rib':
     case 'config':
+    case 'peer':
+    case 'lsa':
       return { field: 'router', name: check.router }
     case 'reaches':
       return { field: 'from', name: check.from }
