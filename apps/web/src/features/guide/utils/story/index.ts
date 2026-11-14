@@ -20,6 +20,7 @@ export {
   beatsOf,
   blocksFor,
   chipsOf,
+  hintGuideOf,
   hintsOf,
   type PacedGuide,
   pacedGuideOf,

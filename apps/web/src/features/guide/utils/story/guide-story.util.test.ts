@@ -2,7 +2,25 @@ import type { GuidePace, GuidePredict } from '@features/guide/types'
 import { describe, expect, it, vi } from 'vitest'
 import { MISSION_HINTS } from '@/test/fixtures/guide.fixture'
 import { STORY, STORY_BUILD, STORY_SCENE, STORY_SEE } from '@/test/fixtures/story.fixture'
-import { beatsOf, blocksFor, chipsOf, hintsOf, pacedGuideOf, predictWaitsIn, speakerOf } from './guide-story.util'
+import {
+  beatsOf,
+  blocksFor,
+  chipsOf,
+  hintGuideOf,
+  hintsOf,
+  pacedGuideOf,
+  predictWaitsIn,
+  speakerOf,
+} from './guide-story.util'
+
+describe('hintGuideOf', () => {
+  it("is the first guide to speak in Build it, else See it's or the Scene's", () => {
+    const line = (speaker: string | null) => ({ kind: 'line' as const, speaker, text: 'x' })
+    expect(hintGuideOf(new Map([['build-it', [line(null), line('isisd')]]]))).toBe('isisd')
+    expect(hintGuideOf(new Map([['scene', [line('ospf6d')]]]))).toBe('ospf6d')
+    expect(hintGuideOf(undefined)).toBeNull()
+  })
+})
 
 const pace = (overrides: Partial<GuidePace> = {}): GuidePace => ({
   shown: 1,
@@ -20,6 +38,8 @@ describe('speakerOf', () => {
     expect(speakerOf('zebra')).toMatchObject({ portrait: 'zebra', term: "FRR's core daemon, keeper of the routes" })
     expect(speakerOf('watchfrr')).toMatchObject({ portrait: 'watchfrr' })
     expect(speakerOf('ospfd')).toMatchObject({ term: "FRR's OSPF daemon", portrait: 'ospfd' })
+    expect(speakerOf('ospf6d')).toMatchObject({ term: "FRR's OSPFv3 daemon, for IPv6", portrait: 'ospf6d' })
+    expect(speakerOf('isisd')).toMatchObject({ term: "FRR's IS-IS daemon", portrait: 'isisd' })
     expect(speakerOf('bfdd')).toMatchObject({ term: "FRR's BFD daemon", portrait: 'bfdd' })
   })
 

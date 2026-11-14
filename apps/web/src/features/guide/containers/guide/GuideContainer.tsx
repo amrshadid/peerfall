@@ -8,6 +8,7 @@ import {
   beatsOf,
   blocksFor,
   chipsOf,
+  hintGuideOf,
   hintsOf,
   pacedGuideOf,
   skippedLeadOf,
@@ -157,7 +158,10 @@ export function GuideContainer({
           : []
       }
       hints={{
-        by: content.game.chapters.find((chapter) => chapter.id === mission.chapter)?.guide ?? DEFAULT_GUIDE,
+        by:
+          hintGuideOf(story) ??
+          content.game.chapters.find((chapter) => chapter.id === mission.chapter)?.guide ??
+          DEFAULT_GUIDE,
         revealed: hintsOf(hints.revealed, hints.revealed.length),
         left: hints.left,
         onReveal: onNetwork && hints.next !== null ? () => void hints.reveal() : null,

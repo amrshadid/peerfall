@@ -37,7 +37,8 @@ export const SPEAKERS: Readonly<Record<string, SpeakerInfo>> = {
   mgmtd: { id: 'mgmtd', name: 'mgmtd', term: "FRR's configuration daemon", portrait: null },
   staticd: { id: 'staticd', name: 'staticd', term: "FRR's static route daemon", portrait: null },
   ospfd: { id: 'ospfd', name: 'ospfd', term: "FRR's OSPF daemon", portrait: 'ospfd' },
-  isisd: { id: 'isisd', name: 'isisd', term: "FRR's IS-IS daemon", portrait: null },
+  ospf6d: { id: 'ospf6d', name: 'ospf6d', term: "FRR's OSPFv3 daemon, for IPv6", portrait: 'ospf6d' },
+  isisd: { id: 'isisd', name: 'isisd', term: "FRR's IS-IS daemon", portrait: 'isisd' },
   bfdd: { id: 'bfdd', name: 'bfdd', term: "FRR's BFD daemon", portrait: 'bfdd' },
   bgpd: { id: 'bgpd', name: 'bgpd', term: "FRR's BGP daemon", portrait: null },
 }

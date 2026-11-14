@@ -40,6 +40,21 @@ export function stepIndexOf(step: GuideStepId): number {
 }
 
 /**
+ * Who gives the hints: the first guide to speak in Build it, where the hints are for, else in See it
+ * or the Scene. A stage's missions can have different guides (ospf6d and isisd in stage 3).
+ */
+export function hintGuideOf(story: GuideStory | undefined): string | null {
+  for (const step of ['build', 'see', 'scene'] as const) {
+    for (const block of blocksFor(step, story)) {
+      if (block.kind === 'line' && block.speaker !== null) {
+        return block.speaker
+      }
+    }
+  }
+  return null
+}
+
+/**
  * The story the Guide shows for a step: its own section, else the closest one before it. The
  * debrief is followed by the real world, after a pause, so the debrief is read first.
  */
