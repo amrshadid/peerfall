@@ -9,6 +9,18 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ### Added
 
+- **Stage 3, Build an underlay, in eleven missions:** Say Hello, The Shared Map, Never
+  Reached Full, The Cheaper Way, Two Ways at Once, Bring It In, Draw the Borders, The Same Map
+  in IPv6, Another Language, Two Levels, and the capstone Build the Underlay. OSPF peers and
+  their states, the link-state database, an MTU mismatch, costs and path prediction, equal-cost
+  paths, redistribution, areas, OSPFv3, IS-IS and its levels. Guided by ospfd, ospf6d and
+  isisd, each with a portrait. Every mission was fact-checked by a reviewer who did not write
+  it and played end to end in the app. The Link That Never Went Down now opens after it.
+- **New checks for the underlay:** an OSPF, OSPFv3 or IS-IS neighbor and its state, an LSA in
+  the OSPF database, equal-cost next hops, IPv6 routes and pings, pings of a given size, and
+  an MTU on a link end.
+- **A loading sheet** in the manual's frame while the game starts, in the theme you chose.
+
 - **A shared link shows a card, and search engines get the site's address.** A link to the
   public site now carries the title screen as its picture, with the game's name and what
   it teaches. The page names its canonical address, says it is a free game and who made

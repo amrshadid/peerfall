@@ -6,17 +6,18 @@ issue before you start, so two people don't build the same thing.
 ## Where it stands
 
 Real FRR 10.6.1 runs in the browser's Linux machine, and missions are judged by what the
-network really did. Fifteen missions are playable at [peerfall.shadid.dev](https://peerfall.shadid.dev).
-Each has golden runs recorded on the real image, was fact-checked on the Machine by a reviewer
-who did not write it, and was played end to end in the app following its Guide.
+network really did. Twenty-six missions are written, fifteen of them playable at
+[peerfall.shadid.dev](https://peerfall.shadid.dev). Each has golden runs recorded on the real
+image, was fact-checked on the Machine by a reviewer who did not write it, and was played end
+to end in the app following its Guide.
 
-| Stage                  | Missions                                                                                                                                                    | Golden runs | Played in the app | Fact-checked                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------- | ------------------------------- |
-| 1 First router         | The Dark Cable, Nobody Answers, The Silent Router, The Router's Language, What It Does Now, Gone After the Restart, The Skipped Line, A Router from Nothing | all eight   | all eight         | all eight                       |
-| 2 Follow a packet      | Two Ends of One Cable, One Hop Further, The Reply That Never Came Back, Written but Not Used, The Backup Path, Bring the Line Up                            | all six     | all six           | all six                         |
-| 3 Build an underlay    | none                                                                                                                                                        |             |                   |                                 |
-| 4 Recover from failure | The Link That Never Went Down                                                                                                                               | yes         | yes               | yes, and against the native lab |
-| 5 to 11                | none                                                                                                                                                        |             |                   |                                 |
+| Stage                  | Missions                                                                                                                                                                                | Golden runs | Played in the app | Fact-checked                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------- | ------------------------------- |
+| 1 First router         | The Dark Cable, Nobody Answers, The Silent Router, The Router's Language, What It Does Now, Gone After the Restart, The Skipped Line, A Router from Nothing                             | all eight   | all eight         | all eight                       |
+| 2 Follow a packet      | Two Ends of One Cable, One Hop Further, The Reply That Never Came Back, Written but Not Used, The Backup Path, Bring the Line Up                                                        | all six     | all six           | all six                         |
+| 3 Build an underlay    | Say Hello, The Shared Map, Never Reached Full, The Cheaper Way, Two Ways at Once, Bring It In, Draw the Borders, The Same Map in IPv6, Another Language, Two Levels, Build the Underlay | all eleven  | all eleven        | all eleven                      |
+| 4 Recover from failure | The Link That Never Went Down                                                                                                                                                           | yes         | yes               | yes, and against the native lab |
+| 5 to 11                | none                                                                                                                                                                                    |             |                   |                                 |
 
 ## Milestones
 
@@ -49,17 +50,15 @@ who did not write it, and was played end to end in the app following its Guide.
 
 ### Engine
 
-- **Stage 3:** OSPF and IS-IS adjacencies, the link-state database, costs and areas.
-  IS-IS needs `isisd` events in the stream.
-- **Routes that are not routes in the event stream:** address changes show up as
-  `fib_install` events named `local` and `broadcast`.
-- **The terminal's router after a restore** can differ from the one highlighted on the map.
+- **A settled read before broadcast OSPF peers are Full:** a network's routing can look quiet
+  while peers wait out OSPF's 40-second wait timer, so a read judged then misses the routes
+  that follow. Live play catches them with the next read; the golden recorder waits instead.
+- **Stage 4's rest:** `vrrpd` is in the image and starts; a VRRP network needs `macvlan`
+  loaded, and graceful restart needs a check that routes survive a daemon's restart.
 
 ### Content
 
-- **Stage 3 missions**, then the rest of stage 4 (graceful restart, VRRP).
-- **The Guide's pace:** it moves on after any finished command, a wrong one too, and then
-  runs one beat ahead. A beat could name the output it waits for.
+- **The rest of stage 4:** graceful restart and VRRP.
 
 ## Good first contributions
 
