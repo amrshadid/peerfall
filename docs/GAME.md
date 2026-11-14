@@ -70,10 +70,12 @@ the README's eleven stages.
 
 ### What really happened (revealed later)
 
-Weeks before the Peerfall, a change was saved on every router, in the files the routers read
-when they start, and never tried. That night a power cut restarted every router at once, and
-each came back from what was saved, not from what had been running. The saved change gave
-the interfaces a larger largest-packet size (their MTU) than the links between them carried.
+Weeks before the Peerfall, a change was saved on every router, in Linux's network
+configuration, which each router reads when it boots, and never tried. FRR has no command for
+an interface's MTU on Linux: the MTU is Linux's, so that is where the change was. That night a
+power cut restarted every router at once, and each came back from what was saved, not from
+what had been running. The saved change gave the interfaces a larger largest-packet size
+(their MTU) than the links between them carried.
 Small packets still crossed, so pings worked and interfaces stayed up; the large ones were
 dropped. OSPF neighbours stopped exchanging their databases, and BGP sessions came up, then
 dropped each time a large update was lost.
