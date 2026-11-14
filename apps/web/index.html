@@ -3,14 +3,255 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Learn FRRouting by building, breaking and repairing a real network in your browser." />
+    <title>Peerfall: learn FRRouting on a real network</title>
+    <meta
+      name="description"
+      content="A free, open-source game that teaches FRRouting with real FRR in your browser. No install. Eleven stages, from your first router to OSPF, BGP and BFD."
+    />
     <meta name="theme-color" content="#eeeee9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141514" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Peerfall: learn FRRouting on a real network</title>
+    <link rel="canonical" href="https://peerfall.shadid.dev/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Peerfall" />
+    <meta property="og:title" content="Peerfall: learn FRRouting on a real network" />
+    <meta
+      property="og:description"
+      content="A free, open-source game that teaches FRRouting with real FRR in your browser. No install. Eleven stages, from your first router to OSPF, BGP and BFD."
+    />
+    <meta property="og:url" content="https://peerfall.shadid.dev/" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="https://peerfall.shadid.dev/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The Peerfall wordmark cut by a red section line, over the words: Learn FRRouting on a real network, in your browser."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Peerfall: learn FRRouting on a real network" />
+    <meta
+      name="twitter:description"
+      content="A free, open-source game that teaches FRRouting with real FRR in your browser. No install. Eleven stages, from your first router to OSPF, BGP and BFD."
+    />
+    <meta name="twitter:image" content="https://peerfall.shadid.dev/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="The Peerfall wordmark cut by a red section line, over the words: Learn FRRouting on a real network, in your browser."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["WebApplication", "VideoGame", "LearningResource"],
+        "name": "Peerfall",
+        "alternateName": "Peerfall: learn FRRouting on a real network",
+        "url": "https://peerfall.shadid.dev/",
+        "description": "A free, open-source browser game that teaches FRRouting. It runs real FRR 10.6.1 on Linux in an emulated PC inside the browser, with one network namespace per router, so there is nothing to install. Eleven stages lead from a first router to OSPF, BGP and BFD.",
+        "image": "https://peerfall.shadid.dev/og.png",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "license": "https://github.com/amrshadid/peerfall/blob/main/LICENSE",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any desktop web browser",
+        "browserRequirements": "Requires JavaScript and WebAssembly, and a screen at least 1024 pixels wide.",
+        "gamePlatform": "Web browser",
+        "genre": ["Educational", "Simulation"],
+        "playMode": "SinglePlayer",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "educationalLevel": "Beginner",
+        "learningResourceType": "Interactive game",
+        "audience": {
+          "@type": "EducationalAudience",
+          "educationalRole": "student",
+          "audienceType": "People new to routing, and network engineers learning FRRouting"
+        },
+        "teaches": [
+          "FRRouting",
+          "vtysh",
+          "IP routing",
+          "Static routes",
+          "OSPF",
+          "IS-IS",
+          "BFD",
+          "BGP",
+          "Route maps",
+          "VRF",
+          "EVPN",
+          "MPLS",
+          "Multicast"
+        ],
+        "author": { "@type": "Person", "name": "Amr Shadid" },
+        "sameAs": ["https://github.com/amrshadid/peerfall"]
+      }
+    </script>
+
+    <style>
+      /* What the page shows before the app mounts, and all a crawler without JavaScript reads.
+         React replaces everything inside #root on its first render. */
+      .pf-static {
+        --g: #eeeee9;
+        --s: #fafaf7;
+        --i: #141414;
+        --i2: #55554f;
+        --r: #c8201a;
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 1.5rem;
+        background: var(--g);
+        color: var(--i);
+        font: 0.9375rem/1.5 "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        .pf-static {
+          --g: #141514;
+          --s: #1c1e1d;
+          --i: #eaeae4;
+          --i2: #a3a39b;
+          --r: #ff6a5c;
+        }
+      }
+      .pf-static__sheet {
+        max-width: 60rem;
+        margin: 0 auto;
+        background: var(--s);
+        border: 2px solid var(--i);
+      }
+      .pf-static__head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.5rem 1.25rem;
+        border-bottom: 2px solid var(--i);
+        font: 500 0.75rem/1.4 "IBM Plex Mono", ui-monospace, Menlo, monospace;
+        color: var(--i2);
+      }
+      .pf-static__body {
+        padding: 1.5rem 2rem 2rem;
+      }
+      .pf-static h1 {
+        margin: 0;
+        font-size: clamp(3rem, 9vw, 6rem);
+        font-weight: 800;
+        font-variation-settings: "wdth" 125;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        padding-bottom: 0.75rem;
+        border-bottom: 4px dashed var(--r);
+      }
+      .pf-static h2 {
+        margin: 1.75rem 0 0.5rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .pf-static p,
+      .pf-static ol,
+      .pf-static ul {
+        margin: 0.5rem 0 0;
+        max-width: 46rem;
+      }
+      .pf-static__lede {
+        font-size: 1.375rem;
+        font-weight: 600;
+        font-variation-settings: "wdth" 112;
+      }
+      .pf-static ol {
+        padding-left: 1.75rem;
+      }
+      .pf-static li {
+        margin-top: 0.25rem;
+      }
+      .pf-static b {
+        font-weight: 700;
+      }
+      .pf-static__now {
+        color: var(--r);
+        font-weight: 600;
+      }
+      .pf-static a {
+        color: inherit;
+        text-decoration-color: var(--r);
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.18em;
+      }
+      .pf-static__muted {
+        color: var(--i2);
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="pf-static">
+        <div class="pf-static__sheet">
+          <div class="pf-static__head" aria-hidden="true">
+            <span>Peerfall(8)</span><span>Peerfall Network Manual</span><span>Peerfall(8)</span>
+          </div>
+          <main class="pf-static__body">
+            <h1>Peerfall</h1>
+            <p class="pf-static__lede">Learn FRRouting on a real network, in your browser.</p>
+            <p>
+              Peerfall is a free, open-source browser game where you build networks, diagnose outages
+              and verify recovery with <a href="https://frrouting.org">FRRouting</a> (FRR). The network
+              is real: FRR 10.6.1 on a Linux kernel running in an emulated PC inside your browser, with
+              one network namespace per router and FRR's own daemons in each. You type into the real
+              vtysh, and the routes are in the real Linux forwarding table. There is nothing to install
+              and no server: your progress stays in your browser.
+            </p>
+            <noscript>
+              <p><b>Peerfall runs in your browser and needs JavaScript turned on.</b></p>
+            </noscript>
+
+            <h2>Who it's for</h2>
+            <p>
+              Anyone who wants to learn how routers work by running one, and network engineers who want
+              to get hands-on with FRR. You start knowing nothing: one router, a terminal, and a guide who
+              explains each command before you run it and what came back after. Objectives tick by
+              themselves as the network changes, there are no timers, and hints come in three steps.
+            </p>
+
+            <h2>The journey, in eleven stages</h2>
+            <ol>
+              <li><b>First router:</b> read interfaces and routes, start FRR, use vtysh, and save a configuration. <span class="pf-static__now">Playable now.</span></li>
+              <li><b>Follow a packet:</b> address interfaces, follow connected and static routes, and keep a backup route waiting. <span class="pf-static__now">Playable now.</span></li>
+              <li><b>Build an underlay:</b> form OSPF and IS-IS adjacencies, read the link-state database, and predict the path from costs.</li>
+              <li><b>Recover from failure:</b> measure an outage, detect it with BFD, and restart a daemon without losing traffic. <span class="pf-static__now">Playable now.</span></li>
+              <li><b>The other interior protocols:</b> RIP, EIGRP, Babel, OpenFabric and NHRP, and when each one fits.</li>
+              <li><b>Exchange routes:</b> iBGP and eBGP sessions, best-path selection, route reflectors and address families.</li>
+              <li><b>Control what is advertised:</b> prefix lists, communities, route maps, RPKI and policy routing.</li>
+              <li><b>Isolate and connect tenants:</b> VRFs, route leaking, L3VPN, and EVPN over VXLAN.</li>
+              <li><b>Label and steer:</b> MPLS with LDP, Segment Routing, SRv6 and engineered paths.</li>
+              <li><b>Deliver multicast:</b> PIM, IGMP and MLD, rendezvous points and MSDP.</li>
+              <li><b>Operate a network:</b> diagnose across protocol state and forwarding, read debugs, automate with JSON, and roll back.</li>
+            </ol>
+            <p class="pf-static__muted">Stages 1, 2 and 4 have missions today; the rest are planned.</p>
+
+            <h2>Before you play</h2>
+            <ul>
+              <li>Play on a desktop browser with a window at least 1024 pixels wide.</li>
+              <li>
+                The first visit downloads about 0.3 MB before the title screen is usable and about 15 MB
+                until the first mission's terminal is ready, most of it the Linux kernel. Once a network is
+                up, the rest of the machine (about 7 MB) is cached, and the game then plays offline.
+              </li>
+            </ul>
+
+            <h2>Source and docs</h2>
+            <ul>
+              <li><a href="https://github.com/amrshadid/peerfall">Source code on GitHub</a>, under the MIT license</li>
+              <li><a href="https://github.com/amrshadid/peerfall/blob/main/docs/ARCHITECTURE.md">Architecture</a>: how real FRR runs in the browser</li>
+              <li><a href="https://github.com/amrshadid/peerfall/blob/main/docs/MISSIONS.md">Missions</a>: how missions are built and checked</li>
+              <li><a href="https://github.com/amrshadid/peerfall/blob/main/docs/ROADMAP.md">Roadmap</a>: where the game stands</li>
+              <li><a href="https://github.com/amrshadid/peerfall/blob/main/CONTRIBUTING.md">Contributing</a></li>
+            </ul>
+          </main>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

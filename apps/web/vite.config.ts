@@ -13,11 +13,14 @@ const APP_VERSION: string = JSON.parse(readFileSync(new URL('./package.json', im
 const PUBLIC_DIR = fileURLToPath(new URL('./public/', import.meta.url))
 // The machine caches the image's files itself, and they are far too big to precache.
 const VM_DIR = 'vm'
+// For crawlers and link previews, never read by the game: the share image alone would add about
+// 70 KB to every player's install.
+const NOT_FOR_PLAYERS = new Set(['og.png', 'robots.txt', 'sitemap.xml'])
 
 function publicFiles(dir = PUBLIC_DIR, prefix = ''): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = `${prefix}${entry.name}`
-    if (path === VM_DIR) {
+    if (path === VM_DIR || NOT_FOR_PLAYERS.has(path)) {
       return []
     }
     return entry.isDirectory() ? publicFiles(`${dir}${entry.name}/`, `${path}/`) : [path]
