@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { configureApp, resetAppConfig } from '@app/config'
 import { useAppStore } from '@app/store'
-import { cleanup, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTourScreen } from './useTourScreen.hook'
 
@@ -32,6 +33,17 @@ afterEach(() => {
 })
 
 describe('useTourScreen', () => {
+  it('waits for the consent notice to be answered before its tour covers the screen', () => {
+    configureApp({ clarityId: 'abc123' })
+    renderHook(() => useTourScreen('title'))
+    vi.runAllTimers()
+    expect(driver.played).toBe(0)
+    act(() => useAppStore.getState().setClarityConsent('denied'))
+    vi.runAllTimers()
+    expect(driver.played).toBe(1)
+    resetAppConfig()
+  })
+
   it('registers the screen, starts its tour once it has settled, and cleans up on leaving', () => {
     const { unmount } = renderHook(() => useTourScreen('title'))
     expect(useAppStore.getState().tourScreen).toBe('title')

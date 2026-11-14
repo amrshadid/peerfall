@@ -4,10 +4,10 @@ export const LINE_HEIGHT = 1.25
 
 export const SCROLLBACK_LINES = 5000
 
-/** The narrowest the console gets: FRR's tables (`show ip route`, `show ip ospf neighbor`) are laid out for 80 columns. */
+/** The columns the type shrinks to keep: FRR's tables (`show ip route`, `show ip ospf neighbor`) are laid out for 80. */
 export const CONSOLE_COLS = 80
 
-/** The smallest the type shrinks to keep 80 columns in sight; below it the terminal scrolls sideways. */
+/** The smallest the type shrinks to keep 80 columns in sight; below it the console gets fewer columns and wraps. */
 export const MIN_FONT_SIZE_PX = 11
 export const FONT_STEP_PX = 0.5
 

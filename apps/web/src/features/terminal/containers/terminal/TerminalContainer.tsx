@@ -1,8 +1,9 @@
 import { useShortcut } from '@features/shortcuts/hooks/keys'
 import { TerminalPresentation } from '@features/terminal/components/terminal'
 import { type TerminalView, useTerminalView } from '@features/terminal/hooks/view'
-import { vmStatusLine } from '@features/terminal/utils/vm'
+import { clearsTerminal, vmStatusLine } from '@features/terminal/utils/vm'
 import { useLinuxTerminal, useMachineStatus, useTerminalSize } from '@peerfall/machine/hooks'
+import type { VmPhase } from '@peerfall/machine/types'
 import { useMachineLock } from '@shared/hooks/machine'
 import { SETTLING_LOCK } from '@shared/utils/machine'
 import { useEffect, useRef } from 'react'
@@ -26,7 +27,13 @@ export function TerminalContainer({ settling = false }: TerminalContainerProps) 
   const terminal = useTerminalView(container, { onInput: send, onResize: resize, locked })
   view.current = terminal
 
+  // Start over, a replayed run and a new network replace the shell: its old prompt goes with it.
+  const shownPhase = useRef<VmPhase | null>(null)
   useEffect(() => {
+    if (clearsTerminal(shownPhase.current, phase)) {
+      terminal.clear()
+    }
+    shownPhase.current = phase
     const line = vmStatusLine(phase, detail)
     if (line !== null) {
       terminal.write(line)

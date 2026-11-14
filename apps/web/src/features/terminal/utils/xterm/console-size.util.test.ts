@@ -6,8 +6,8 @@ const PLEX = 0.6
 
 describe('consoleSize', () => {
   it("keeps Section 2's 14px when 80 columns fit, and never grows past it", () => {
-    expect(consoleSize(672, PLEX)).toEqual({ fontSize: 14, gridWidth: 672, scrolls: false })
-    expect(consoleSize(1100, PLEX)).toMatchObject({ fontSize: 14, scrolls: false })
+    expect(consoleSize(672, PLEX)).toEqual({ fontSize: 14, gridWidth: 672, narrow: false })
+    expect(consoleSize(1100, PLEX)).toMatchObject({ fontSize: 14, narrow: false })
   })
 
   it('shrinks in half-pixel steps to keep 80 columns: 1440px with X-ray open', () => {
@@ -15,15 +15,15 @@ describe('consoleSize', () => {
     const size = consoleSize(620, PLEX)
     expect(size.fontSize).toBe(12.5)
     expect(size.gridWidth).toBeLessThanOrEqual(620)
-    expect(size.scrolls).toBe(false)
+    expect(size.narrow).toBe(false)
   })
 
-  it('stops at 11px and scrolls sideways when even that is too wide: 1024px with X-ray open', () => {
+  it('stops at 11px when even that is too wide for 80 columns: 1024px with X-ray open', () => {
     // 1024px: a 424px centre column.
-    expect(consoleSize(394, PLEX)).toEqual({ fontSize: 11, gridWidth: 528, scrolls: true })
+    expect(consoleSize(394, PLEX)).toEqual({ fontSize: 11, gridWidth: 528, narrow: true })
   })
 
-  it('fits exactly at the 11px floor without scrolling', () => {
-    expect(consoleSize(528, PLEX)).toEqual({ fontSize: 11, gridWidth: 528, scrolls: false })
+  it('fits exactly at the 11px floor', () => {
+    expect(consoleSize(528, PLEX)).toEqual({ fontSize: 11, gridWidth: 528, narrow: false })
   })
 })

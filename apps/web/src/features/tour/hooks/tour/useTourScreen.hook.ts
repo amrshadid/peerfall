@@ -1,4 +1,5 @@
-import { useAppStore, useTourState } from '@app/store'
+import { appConfig } from '@app/config'
+import { useAppStore, useClarityConsent, useTourState } from '@app/store'
 import { stopTour } from '@features/tour/utils/driver'
 import type { TourScreen } from '@shared/types'
 import { useEffect } from 'react'
@@ -11,6 +12,7 @@ const SETTLE_MS = 700
 export function useTourScreen(screen: TourScreen, panels = ''): void {
   const { setTourScreen } = useTourState()
   const { start } = useTour()
+  const { consent } = useClarityConsent()
 
   useEffect(() => {
     setTourScreen(screen)
@@ -23,9 +25,15 @@ export function useTourScreen(screen: TourScreen, panels = ''): void {
     }
   }, [screen, setTourScreen])
 
+  // The tour's overlay would cover the consent notice: the first visit answers it first.
+  const asking = appConfig().clarityId !== null && consent === 'unset'
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: a newly opened panel re-checks for unseen stops
   useEffect(() => {
+    if (asking) {
+      return
+    }
     const timer = window.setTimeout(() => start('auto'), SETTLE_MS)
     return () => window.clearTimeout(timer)
-  }, [screen, panels, start])
+  }, [screen, panels, start, asking])
 }

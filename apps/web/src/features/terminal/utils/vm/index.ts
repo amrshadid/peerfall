@@ -1,1 +1,1 @@
-export { vmStatusLine } from './vm-status.util'
+export { clearsTerminal, vmStatusLine } from './vm-status.util'

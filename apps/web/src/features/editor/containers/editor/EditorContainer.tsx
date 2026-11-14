@@ -24,13 +24,23 @@ const PICK_A_ROUTER =
   'Select a router on the map, or one of the tabs above, to see the configuration it is running. What you write here reaches the router when you press Apply.'
 
 /**
- * The selected router's running configuration, to edit and apply. It is read from the router
- * when it is selected, after every Apply, and whenever the Machine comes back from a restore
+ * A router's running configuration, to edit and apply: the one whose tab is open, which is the
+ * terminal's router until another tab is chosen. It is read from the router
+ * when its tab opens, after every Apply, and whenever the Machine comes back from a restore
  * (a finished run, Start over), so the editor never shows what a router no longer runs.
  */
 export function EditorContainer({ waiting }: EditorContainerProps) {
   const { mission } = useActiveMission()
-  const { router, select } = useRouterSelection()
+  const { router: terminalRouter } = useRouterSelection()
+  // A tab only chooses the file to edit; the terminal stays where it is. Selecting a router on the
+  // map (or the terminal moving after a restore) opens that router's file here too.
+  const [followed, setFollowed] = useState(terminalRouter)
+  const [picked, setPicked] = useState<string | null>(terminalRouter)
+  if (followed !== terminalRouter) {
+    setFollowed(terminalRouter)
+    setPicked(terminalRouter)
+  }
+  const router = picked
   const { read, apply } = useRouterConfig()
   const machine = useMachineStatus()
   const lock = useMachineLock(machine)
@@ -108,7 +118,7 @@ export function EditorContainer({ waiting }: EditorContainerProps) {
       onSelectFile={(path) => {
         const next = routerOfPath(path, routers)
         if (next !== null) {
-          void select(next)
+          setPicked(next)
         }
       }}
       onChange={(path, content) => {

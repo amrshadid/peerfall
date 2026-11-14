@@ -58,7 +58,8 @@ export function CodeEditorPresentation(props: CodeEditorPresentationProps) {
           onSelect={props.onSelectFile}
         />
         <div className="config-editor__actions">
-          <span role="status" aria-live="polite" className="config-editor__status">
+          {/* Cut short when the bar is tight; the tooltip keeps the whole note. */}
+          <span role="status" aria-live="polite" className="config-editor__status" title={status ?? undefined}>
             {status}
           </span>
           {confirmingReset ? (

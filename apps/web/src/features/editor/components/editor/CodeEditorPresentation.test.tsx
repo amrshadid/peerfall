@@ -81,6 +81,14 @@ describe('CodeEditorPresentation', () => {
     expect(onReset).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the whole note on what Apply did in a tooltip, for when the bar cuts it short', () => {
+    editor({ kind: 'idle' }, { status: 'Applied to router c.' })
+    const note = screen.getByRole('status')
+    expect(note.textContent).toBe('Applied to router c.')
+    expect(note.getAttribute('title')).toBe('Applied to router c.')
+    expect(screen.getByRole('tab', { name: /c\/frr\.conf/ }).textContent).toContain('c/frr.conf')
+  })
+
   it('says what to do while there is nothing to edit', () => {
     editor({ kind: 'idle' }, { notice: 'Select a router on the map.' })
     expect(screen.getByText('Select a router on the map.')).toBeTruthy()

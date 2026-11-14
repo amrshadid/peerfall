@@ -67,6 +67,17 @@ describe('TimelinePresentation', () => {
     expect(screen.getByRole('status').textContent).toBe('Target: traffic back in under 2.00 s.')
   })
 
+  it("sets the target's name beside its line: right of it on a long axis, clear of the first ticks", () => {
+    // The 37.8 s baseline puts a 2 s target near the axis's start.
+    render(<TimelinePresentation baseline={baseline} repaired={null} targetSeconds={2} />)
+    const near = screen.getByText('target 2.00 s')
+    expect(near.className).toBe('timeline__target')
+    cleanup()
+    // With no run the axis ends near the target, past the middle: the name is set to the line's left.
+    render(<TimelinePresentation baseline={null} repaired={null} targetSeconds={2} />)
+    expect(screen.getByText('target 2.00 s').className).toBe('timeline__target timeline__target--end')
+  })
+
   it('says so while a run is still losing traffic', () => {
     render(<TimelinePresentation baseline={timelineRunOf('Baseline', ONGOING_EVENTS)} repaired={null} />)
     expect(screen.getByRole('table', { name: 'Baseline: traffic is still being lost.' })).toBeTruthy()

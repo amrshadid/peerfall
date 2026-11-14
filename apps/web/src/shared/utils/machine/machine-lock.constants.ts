@@ -25,3 +25,9 @@ export const SETTLING_TEXT = {
   title: 'Routers finding each other',
   detail: 'FRR is starting its routing on every router. The terminal opens once routing is quiet.',
 } as const
+
+/** The status bar's words, in the mission status bar's "Network: starting" form, for a network not yet there to use. */
+export const NETWORK_STATUS_TEXT = {
+  building: 'Network: starting',
+  settling: 'Network: routers finding each other',
+} as const

@@ -85,11 +85,25 @@ describe('EditorContainer', () => {
     expect(props().apply).toEqual({ kind: 'idle' })
   })
 
-  it('moves the terminal with the tab that is chosen', async () => {
+  it('opens the chosen tab’s file and leaves the terminal where it is', async () => {
     mocks.router = 'a'
-    await mount()
-    props().onSelectFile('c/frr.conf')
-    expect(mocks.select).toHaveBeenCalledWith('c')
+    const { again } = await mount()
+    await act(async () => props().onSelectFile('c/frr.conf'))
+    expect(mocks.select).not.toHaveBeenCalled()
+    expect(props().activePath).toBe('c/frr.conf')
+    expect(mocks.read).toHaveBeenCalledWith('c')
+    expect(active()?.content).toBe('router c\n')
+
+    // Applying goes to the router whose file is open, not the terminal's.
+    act(() => props().onChange('c/frr.conf', 'router c\n description edited\n'))
+    await act(async () => props().onApply())
+    expect(mocks.apply).toHaveBeenCalledWith('c', 'router c\n description edited\n')
+    expect(props().status).toBe('Applied to router c.')
+
+    // The terminal moving (a router selected on the map) opens that router's file again.
+    mocks.router = 'b'
+    await again()
+    expect(props().activePath).toBe('b/frr.conf')
   })
 
   it('applies the edited text to the selected router, then reads back what it runs', async () => {
