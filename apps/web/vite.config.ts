@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, type Plugin } from 'vite'
+import { type Connect, defineConfig, type Plugin } from 'vite'
 // A relative path: the config is loaded before the app's aliases exist.
 import { injectSwManifest, precacheFiles, SW_FILE } from './src/shared/utils/offline/index.ts'
 
@@ -75,12 +75,40 @@ function serviceWorker(): Plugin {
   }
 }
 
+// Vite answers every page address with the game, as a single-page app. A static host serves
+// 404.html for an address that is no file of the site: do the same locally, in dev and preview,
+// so the page can be seen before it ships. Files (a dot in the last segment) and Vite's own
+// paths keep their usual answer.
+function notFoundPage(): Plugin {
+  const rewrite: Connect.NextHandleFunction = (req, res, next) => {
+    const path = (req.url ?? '/').split('?')[0] ?? '/'
+    const last = path.slice(path.lastIndexOf('/') + 1)
+    const isPage = req.method === 'GET' && (req.headers.accept ?? '').includes('text/html')
+    if (!isPage || path === '/' || path === '/index.html' || last.includes('.') || path.startsWith('/@')) {
+      next()
+      return
+    }
+    req.url = '/404.html'
+    res.statusCode = 404
+    next()
+  }
+  return {
+    name: 'peerfall:not-found-page',
+    configureServer(server) {
+      server.middlewares.use(rewrite)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(rewrite)
+    },
+  }
+}
+
 export default defineConfig({
   // For a host that serves the site under a sub-path; Vercel serves it at the root.
   base: process.env.PF_BASE ?? '/',
   // The one place the version is written is package.json; Settings and the status lines print it.
   define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
-  plugins: [react(), tailwindcss(), serviceWorker()],
+  plugins: [react(), tailwindcss(), serviceWorker(), notFoundPage()],
   build: {
     rolldownOptions: {
       // A static host serves 404.html for an address that is no file of the site.
