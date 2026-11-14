@@ -11,7 +11,6 @@ const KNOWN_CONCEPT_GAPS: Readonly<Record<ConceptViolationKind, Readonly<Record<
   'never-used-again': {
     pathspace: 'a fact about the Machine, explained by a card of 1.2 only: no mission uses it as a skill',
     mgmtd: "named in 1.3; it is taught with FRR's northbound API in stage 11, not written yet",
-    ipv6: 'named in 2.1 for the fe80:: lines; IPv6 needs IPv6 in the network definition and the checks first',
     'floating-static':
       'taught in 2.5, the last lesson of stage 2; no mission after stage 2 that relies on it is written yet',
   },

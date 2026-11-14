@@ -270,6 +270,56 @@ entries:
     kind: vtysh
     what: Each summary-LSA in full, with its network, its mask and the cost the ABR gives it.
     firstMet: draw-the-borders
+  # 3.8 The Same Map in IPv6
+  - name: show ipv6 route
+    kind: vtysh
+    what: "zebra's IPv6 table, apart from the IPv4 one; O marks OSPFv3's routes, and their next hops are fe80:: addresses with the interface beside them."
+    firstMet: the-same-map-in-ipv6
+  - name: show ipv6 ospf6 neighbor
+    kind: vtysh
+    what: OSPFv3's peers on this router, each by its router id, with its state and the interface it is on.
+    firstMet: the-same-map-in-ipv6
+  - name: show ipv6 ospf6 interface
+    kind: vtysh
+    what: OSPFv3 on each interface, with its area, its addresses and its timers; Not Attached to Area where ospf6d is silent.
+    firstMet: the-same-map-in-ipv6
+  - name: ip -6 addr show scope link
+    kind: shell
+    what: "each interface's link-local address, the fe80:: one Linux gives it by itself."
+    firstMet: the-same-map-in-ipv6
+  - name: ipv6 ospf6 area
+    kind: vtysh
+    what: "In interface mode, runs OSPFv3 on the interface, in an area: ipv6 ospf6 area 0. ospfd's ip ospf area, for IPv6."
+    firstMet: the-same-map-in-ipv6
+  - name: show ipv6 ospf6 database
+    kind: vtysh
+    what: OSPFv3's link-state database; Rtr lists a router's peers, INP its networks, Lnk one end's link-local address.
+    firstMet: the-same-map-in-ipv6
+  # 3.9 Another Language
+  - name: show isis neighbor
+    kind: vtysh
+    what: IS-IS's peers on this router, by hostname once known, with the level, the state and the hold time.
+    firstMet: another-language
+    deepenedIn: [two-levels]
+  - name: show isis summary
+    kind: vtysh
+    what: isisd's own state, among it the system id, the NET, the levels it runs and how many hellos it sent, received and dropped.
+    firstMet: another-language
+    deepenedIn: [two-levels]
+  - name: router isis
+    kind: vtysh
+    what: "In configure mode, enters isisd's settings for one instance, named by the word after it: router isis core."
+    firstMet: another-language
+  - name: net
+    kind: vtysh
+    what: "In router isis mode, the NET that names this router: area, system id, then 00. no net removes one; a router can hold several."
+    firstMet: another-language
+    deepenedIn: [two-levels]
+  - name: show isis database
+    kind: vtysh
+    what: IS-IS's map, one LSP per router and one list per level; the ATT column marks the attached bit.
+    firstMet: another-language
+    deepenedIn: [two-levels]
   # 4.1 The Link That Never Went Down
   - name: ip ospf bfd
     kind: vtysh

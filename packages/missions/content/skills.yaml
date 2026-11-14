@@ -114,12 +114,33 @@ skills:
     region: choose-the-way
     # Earned in 3.7, Draw the Borders.
     prerequisites: [ospf-redistribute]
+  # Stage 3, The same map, other languages
+  - id: ospfv3-peers
+    title: Route IPv6 with OSPFv3
+    region: other-languages
+    # Earned in 3.8, The Same Map in IPv6.
+    prerequisites: [ospf-areas]
+  - id: isis-peers
+    title: Make two routers IS-IS peers
+    region: other-languages
+    # Earned in 3.9, Another Language.
+    prerequisites: [ospfv3-peers]
+  - id: isis-levels
+    title: Use IS-IS levels
+    region: other-languages
+    # Earned in 3.10, Two Levels.
+    prerequisites: [isis-peers]
+  - id: ospf-underlay
+    title: Build an OSPF underlay from nothing
+    region: other-languages
+    # Earned in 3.11, Build the Underlay.
+    prerequisites: [isis-levels]
   # Stage 4, Notice it fast
   - id: outage-measure
     title: Measure an outage and tell what noticed it
     region: notice-it-fast
     # Earned in 4.1, The Link That Never Went Down.
-    prerequisites: [ospf-areas]
+    prerequisites: [ospf-underlay]
   - id: bfd-fast-detection
     title: Make OSPF notice a dead link in under a second with BFD
     region: notice-it-fast

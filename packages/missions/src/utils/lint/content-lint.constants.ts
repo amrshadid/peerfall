@@ -110,6 +110,9 @@ export const VOCABULARY: readonly VocabularyRule[] = [
     word: 'stage',
     means: 'one part of the journey; never a level, an act or a chapter',
     pattern: /\b(levels?|acts?|chapters?)\b/i,
+    // IS-IS's levels are FRR's own word (is-type level-1, Level-1 link-state database): the two
+    // IS-IS missions use it for that, and 3.9's Debrief names the next one, Two Levels.
+    only: ['another-language', 'two-levels'],
   },
   {
     word: 'mission',
@@ -141,5 +144,9 @@ export const ENFORCED_MISSIONS: readonly MissionId[] = [
   'two-ways-at-once',
   'bring-it-in',
   'draw-the-borders',
+  'the-same-map-in-ipv6',
+  'another-language',
+  'two-levels',
+  'build-the-underlay',
   'the-link-that-never-went-down',
 ]

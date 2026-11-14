@@ -80,6 +80,12 @@ chapters:
         guide: ospfd, zebra
         source: ospfd/ospf_spf.c, ospfd/ospf_route.c, ospfd/ospf_asbr.c, ospfd/ospf_abr.c, zebra/zebra_nhg.c
         missions: [the-cheaper-way, two-ways-at-once, bring-it-in, draw-the-borders]
+      - id: other-languages
+        name: The same map, other languages
+        caption: OSPFv3 and IPv6, IS-IS peers and levels, an underlay from nothing
+        guide: ospf6d, isisd, ospfd
+        source: ospf6d/ospf6_neighbor.c, isisd/isis_adjacency.c, isisd/isis_pdu.c, isisd/isis_spf.c
+        missions: [the-same-map-in-ipv6, another-language, two-levels, build-the-underlay]
   - id: recover-from-failure
     title: Recover from failure
     summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.

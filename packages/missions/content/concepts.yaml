@@ -51,7 +51,7 @@ concepts:
   # Named in stages 1 and 2, taught later
   - { id: mgmtd, term: "mgmtd, FRR's management daemon", part: frr }
   - { id: pathspace, term: "one Machine, many routers: FRR's -N <name>", part: frr, codex: pathspace }
-  - { id: ipv6, term: IPv6 addresses and routes, part: linux }
+  - { id: ipv6, term: IPv6 addresses and routes, part: linux, codex: ipv6 }
   # Stage 3, Build an underlay
   - { id: ospf, term: "OSPF: routers tell each other what they are connected to", part: ospf, codex: ospf }
   - { id: peer, term: a peer, part: foundations, codex: peer }
@@ -93,6 +93,22 @@ concepts:
       term: "a summary-LSA: another area's network, as the ABR hands it on",
       part: ospf,
       codex: summary-lsa,
+    }
+  - { id: ospfv3, term: "OSPFv3, OSPF for IPv6, run by ospf6d", part: ospf, codex: ospfv3 }
+  - { id: link-local, term: "a link-local address, fe80::, valid on one link only", part: linux, codex: link-local }
+  - { id: isis, term: "IS-IS: a link-state protocol that talks straight onto the link", part: isis, codex: isis }
+  - { id: isis-net, term: "a NET: the area and the system id that name an IS-IS router", part: isis, codex: isis-net }
+  - {
+      id: isis-level,
+      term: "IS-IS levels 1 and 2, and the level-1-2 router between them",
+      part: isis,
+      codex: isis-level,
+    }
+  - {
+      id: attached-bit,
+      term: "the attached bit: a level-1-2 router's offer of a way out",
+      part: isis,
+      codex: attached-bit,
     }
   # Stage 4, Recover from failure
   - { id: ospf-dead-interval, term: OSPF hellos and the dead timer, part: ospf, codex: ospf-dead-interval }

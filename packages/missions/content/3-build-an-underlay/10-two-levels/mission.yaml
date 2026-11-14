@@ -1,0 +1,124 @@
+id: two-levels
+version: 1
+title: Two Levels
+summary: Put a level-1 router in the right area, and watch it reach another area through the default route its level-1-2 router offers.
+minutes: 20
+chapter: build-an-underlay
+objective: Router a is b's level-1 peer, and reaches c in another area by the default route b's attached bit gives it.
+skills: [isis-levels]
+prerequisites: [isis-peers]
+teaches: [isis-level, attached-bit]
+names: []
+uses: [isis, isis-net, peer, lsdb, rib, route, cli-modes]
+
+# A line, a–b–c. a is a level-1 router, meant for b's area 49.0001, with its NET in 49.0002
+# instead. b is level-1-2 in 49.0001; c is level-2 only, in 49.0002. Level 1 needs the same area,
+# so a and b never become peers. b and c, at level 2, are peers whatever their areas.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [isisd]
+      config: |
+        interface a-b
+         ip router isis core
+         isis network point-to-point
+        !
+        interface lo
+         ip router isis core
+         isis passive
+        !
+        router isis core
+         is-type level-1
+         net 49.0002.0000.0000.0001.00
+         log-adjacency-changes
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [isisd]
+      config: |
+        interface b-a
+         ip router isis core
+         isis network point-to-point
+        !
+        interface b-c
+         ip router isis core
+         isis network point-to-point
+        !
+        interface lo
+         ip router isis core
+         isis passive
+        !
+        router isis core
+         net 49.0001.0000.0000.0002.00
+         log-adjacency-changes
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [isisd]
+      config: |
+        interface c-b
+         ip router isis core
+         isis network point-to-point
+        !
+        interface lo
+         ip router isis core
+         isis passive
+        !
+        router isis core
+         is-type level-2-only
+         net 49.0002.0000.0000.0003.00
+         log-adjacency-changes
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: b-is-a-peer
+    text: Make b a's IS-IS peer on a-b at level 1, Up.
+    check: { kind: peer, router: a, protocol: isis, peer: b, interface: a-b, level: 1 }
+  - id: default-route
+    text: a learns a default route, 0.0.0.0/0, from IS-IS.
+    check: { kind: rib, router: a, prefix: 0.0.0.0/0, protocol: isis }
+  - id: a-reaches-c
+    text: a reaches c's loopback, 10.255.0.3.
+    check: { kind: reaches, from: a, to: 10.255.0.3 }
+
+hints:
+  - text: Compare the Net line of show isis summary on a and on b. Which part of the NET is the area?
+  - text: Level-1 peers must share an area. a stays a level-1 router, so its NET must move into b's area, 49.0001. A router can hold several NETs, so remove the wrong one.
+  - text: On a, in router isis core mode, remove the NET in 49.0002, then give a NET in 49.0001 with the same system id.
+    command: no net 49.0002.0000.0000.0001.00
+
+chips:
+  - { command: show isis neighbor, explain: "IS-IS's peers on this router, with the level of each" }
+  - { command: show isis summary, explain: "isisd's own state: its NET and the levels it runs" }
+  - { command: show isis database, explain: "IS-IS's map, one part per level; ATT marks the attached bit" }
+  - { command: show ip route, explain: "zebra's table; IS-IS's routes are marked I" }
+
+codex:
+  - id: isis-level
+    term: IS-IS levels
+    simple: Level 1 joins the routers of one area; level 2 joins the areas. A level-1-2 router stands in both.
+    deep: "A router's is-type says which it runs: level-1, level-2-only, or both, the default. Level-1 peers must share an area in their NETs; level-2 peers need not. Each level keeps its own map, so show isis database prints one per level. By default, a level-1 router never sees another area's networks: it hands their packets to a level-1-2 router of its own area."
+    deepens: isis
+    sources: [isisd/isis_pdu.c, isisd/isis_adjacency.c]
+    docs: https://docs.frrouting.org/en/latest/isisd.html
+    tryIt: vtysh -c "show isis neighbor"
+  - id: attached-bit
+    term: Attached bit
+    simple: A mark in a level-1-2 router's level-1 LSP saying it reaches other areas. Level-1 routers turn it into a default route.
+    deep: "show isis database prints it as the first of ATT/P/OL: 1/0/0. isisd sets it in its level-1 LSP while it has a level-2 peer. A level-1 router that sees it adds a default route, 0.0.0.0/0, towards that router, so a packet for any address it does not know leaves through it. Unlike an ABR's summaries, no network of the other area reaches level 1."
+    sources: [isisd/isis_lsp.c, isisd/isis_spf.c]
+    docs: https://docs.frrouting.org/en/latest/isisd.html
+    tryIt: vtysh -c "show isis database"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

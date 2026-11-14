@@ -10,7 +10,7 @@ objective: When the link between a and c stops passing packets, traffic from a t
 # cards are new. Peers and adjacencies are stage 3's, and the story recalls them.
 skills: [outage-measure, bfd-fast-detection]
 # It follows stage 3's last mission.
-prerequisites: [ospf-areas]
+prerequisites: [ospf-underlay]
 teaches: [bfd, ospf-dead-interval]
 names: []
 uses: [peer, ospf-adjacency, route, next-hop, administrative-distance, vtysh, cli-modes]

@@ -1,11 +1,20 @@
 import type { SpeakerInfo } from '@features/guide/types'
-import { BfddPortrait, OspfdPortrait, WatchfrrPortrait, ZebraPortrait } from '@shared/components/ui'
+import {
+  BfddPortrait,
+  IsisdPortrait,
+  Ospf6dPortrait,
+  OspfdPortrait,
+  WatchfrrPortrait,
+  ZebraPortrait,
+} from '@shared/components/ui'
 import type { Speaker } from '@shared/types'
 
 const PORTRAITS = {
   zebra: ZebraPortrait,
   watchfrr: WatchfrrPortrait,
   ospfd: OspfdPortrait,
+  ospf6d: Ospf6dPortrait,
+  isisd: IsisdPortrait,
   bfdd: BfddPortrait,
 } as const
 

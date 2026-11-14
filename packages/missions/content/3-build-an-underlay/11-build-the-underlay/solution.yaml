@@ -1,0 +1,311 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another; `shell` at its shell.
+# The links keep OSPF's default network type, so a new peer can sit in 2-Way for up to 40
+# seconds, the wait timer, before Full, and no route changes meanwhile. A run is judged once routing has been
+# quiet for a few seconds, so each run that builds OSPF ends with the player waiting a minute, as
+# the story asks (`sleep 50` at a's shell); without it the second path is not there yet.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Everything right in the running configurations, never saved: the routes work, and no
+  # router's frr.conf holds a line of OSPF.
+  - id: not-saved
+    passes: false
+    changes:
+      - router: a
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface a-b,
+            ip ospf area 0,
+            exit,
+            interface a-c,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+          ]
+      - router: b
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface b-a,
+            ip ospf area 0,
+            exit,
+            interface b-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+          ]
+      - router: c
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface c-a,
+            ip ospf area 0,
+            exit,
+            interface c-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+          ]
+      - router: d
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface d-b,
+            ip ospf area 0,
+            exit,
+            interface d-c,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+          ]
+      - router: a
+        shell: [sleep 50]
+  # Routes written by hand on the two ends only, as a first try from stage 2: a's two static
+  # routes reach the kernel, but b and c have no route to d's loopback, so nothing gets through;
+  # the routes are not OSPF's, and no loopback is in OSPF.
+  - id: statics
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.4/32 10.0.1.2, ip route 10.255.0.4/32 10.0.2.2, end, write memory]
+      - router: d
+        lines: [configure terminal, ip route 10.0.1.0/30 10.0.3.1, ip route 10.0.2.0/30 10.0.4.1, end, write memory]
+  # OSPF on every link, saved, and on no loopback: the routers become peers and learn the
+  # links' networks, and no router hears of another's loopback.
+  - id: no-loopbacks
+    passes: false
+    changes:
+      - router: a
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface a-b,
+            ip ospf area 0,
+            exit,
+            interface a-c,
+            ip ospf area 0,
+            end,
+            write memory,
+          ]
+      - router: b
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface b-a,
+            ip ospf area 0,
+            exit,
+            interface b-d,
+            ip ospf area 0,
+            end,
+            write memory,
+          ]
+      - router: c
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface c-a,
+            ip ospf area 0,
+            exit,
+            interface c-d,
+            ip ospf area 0,
+            end,
+            write memory,
+          ]
+      - router: d
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface d-b,
+            ip ospf area 0,
+            exit,
+            interface d-c,
+            ip ospf area 0,
+            end,
+            write memory,
+          ]
+      - router: a
+        shell: [sleep 50]
+  # Everything right and saved, and a cost raised on a's a-c: the path through c costs more,
+  # so a uses one path only.
+  - id: one-path
+    passes: false
+    changes:
+      - router: a
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface a-b,
+            ip ospf area 0,
+            exit,
+            interface a-c,
+            ip ospf area 0,
+            ip ospf cost 20,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: b
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface b-a,
+            ip ospf area 0,
+            exit,
+            interface b-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: c
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface c-a,
+            ip ospf area 0,
+            exit,
+            interface c-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: d
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface d-b,
+            ip ospf area 0,
+            exit,
+            interface d-c,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: a
+        shell: [sleep 50]
+  - id: underlay
+    passes: true
+    changes:
+      - router: a
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface a-b,
+            ip ospf area 0,
+            exit,
+            interface a-c,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: b
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface b-a,
+            ip ospf area 0,
+            exit,
+            interface b-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: c
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface c-a,
+            ip ospf area 0,
+            exit,
+            interface c-d,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: d
+        lines:
+          [
+            configure terminal,
+            router ospf,
+            exit,
+            interface d-b,
+            ip ospf area 0,
+            exit,
+            interface d-c,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            ip ospf area 0,
+            ip ospf passive,
+            end,
+            write memory,
+          ]
+      - router: a
+        shell: [sleep 50]

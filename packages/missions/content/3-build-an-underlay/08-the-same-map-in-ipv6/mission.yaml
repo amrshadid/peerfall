@@ -1,0 +1,129 @@
+id: the-same-map-in-ipv6
+version: 1
+title: The Same Map in IPv6
+summary: Run OSPFv3 on the last interface that lacks it, and route IPv6 between loopbacks over link-local next hops.
+minutes: 15
+chapter: build-an-underlay
+objective: Routers a and b are OSPFv3 peers, and a learns c's IPv6 loopback from OSPFv3 and reaches it.
+skills: [ospfv3-peers]
+prerequisites: [ospf-areas]
+teaches: [ospfv3, link-local, ipv6]
+names: []
+uses: [ospf, peer, ospf-interface-area, ospf-adjacency, lsdb, ospf-cost, rib, cli-modes]
+
+# A line, a–b–c, with an IPv6 loopback on each router and IPv4 on the links only. ospf6d runs
+# everywhere, in area 0 on every interface but a's a-b: a has no OSPFv3 peer and no IPv6 route
+# but its own. No IPv4 routing protocol runs.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      loopback6: fd00::1/128
+      daemons: [ospf6d]
+      config: |
+        interface a-b
+         ipv6 ospf6 network point-to-point
+        !
+        interface lo
+         ipv6 ospf6 area 0
+        !
+        router ospf6
+         ospf6 router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      loopback6: fd00::2/128
+      daemons: [ospf6d]
+      config: |
+        interface b-a
+         ipv6 ospf6 area 0
+         ipv6 ospf6 network point-to-point
+        !
+        interface b-c
+         ipv6 ospf6 area 0
+         ipv6 ospf6 network point-to-point
+        !
+        interface lo
+         ipv6 ospf6 area 0
+        !
+        router ospf6
+         ospf6 router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      loopback6: fd00::3/128
+      daemons: [ospf6d]
+      config: |
+        interface c-b
+         ipv6 ospf6 area 0
+         ipv6 ospf6 network point-to-point
+        !
+        interface lo
+         ipv6 ospf6 area 0
+        !
+        router ospf6
+         ospf6 router-id 10.255.0.3
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: b-is-a-peer
+    text: Make b a's OSPFv3 peer on a-b, Full.
+    check: { kind: peer, router: a, protocol: ospf6, peer: 10.255.0.2, interface: a-b }
+  - id: a-learns-c
+    text: a learns c's IPv6 loopback, fd00::3/128, from OSPFv3.
+    check: { kind: rib, router: a, prefix: fd00::3/128, protocol: ospf6 }
+  - id: a-reaches-c
+    text: a reaches c's IPv6 loopback, fd00::3.
+    check: { kind: reaches, from: a, to: "fd00::3" }
+
+hints:
+  - text: Compare show ipv6 ospf6 interface on a and on b. Which of a's interfaces is not attached to an area?
+  - text: ospf6d speaks on an interface only once that interface is in an area, as ospfd does. Its commands say ipv6 ospf6 where ospfd's say ip ospf.
+  - text: On a, in interface mode for a-b, put the interface in area 0, as b-a is.
+    command: ipv6 ospf6 area 0
+
+chips:
+  - { command: show ipv6 route, explain: "zebra's IPv6 table; OSPFv3's routes are marked O" }
+  - { command: show ipv6 ospf6 neighbor, explain: "OSPFv3's peers on this router and their state" }
+  - { command: show ipv6 ospf6 interface, explain: "OSPFv3 on each interface, with its area and addresses" }
+  - { command: ipv6 ospf6 area, explain: "in interface mode: run OSPFv3 on the interface, in that area" }
+  - { command: ping -c 3, explain: "send three packets and count the replies; IPv6 addresses work too" }
+
+codex:
+  - id: ipv6
+    term: IPv6
+    simple: "The newer kind of address, 128 bits long, written in groups of hexadecimal digits with colons. :: stands for a run of zeros."
+    deep: "fd00::3 is fd00:0:0:0:0:0:0:3, and fd00:: addresses are for private networks, as 10. ones are in IPv4. A /128 network holds one address, as /32 does in IPv4. zebra keeps IPv6 routes in a table of their own, show ipv6 route, and the kernel's is ip -6 route. One link carries both kinds of packet: here the links have IPv4 addresses, and IPv6 crosses them all the same."
+    sources: [lib/prefix.c, zebra/zebra_rib.c]
+    docs: https://docs.frrouting.org/en/latest/ipv6.html
+    tryIt: vtysh -c "show ipv6 route"
+  - id: link-local
+    term: Link-local address
+    simple: "An IPv6 address starting fe80:: that Linux gives every interface by itself. It is valid on its own link only."
+    deep: "Linux builds it from the interface's MAC address, so no one has to give it. No router forwards a packet for one beyond its link, so every link holds the same network, fe80::/64: show ipv6 route lists it once per interface. A next hop on a link-local address therefore always comes with its interface, as in via fe80::…, a-b."
+    sources: [zebra/connected.c]
+    docs: https://docs.frrouting.org/en/latest/ipv6.html
+    tryIt: ip -6 addr show scope link
+  - id: ospfv3
+    term: OSPFv3
+    simple: OSPF for IPv6, run by ospf6d. The same peers, areas, costs and shared map as OSPF, for IPv6 networks.
+    deep: "ospf6d sends its hellos from each interface's link-local address, names routers by a router id written like an IPv4 address, and gives its routes distance 110, protocol ospf6. Its database splits what an OSPF router-LSA holds: Rtr lists a router's links, INP its networks, and one Lnk per interface carries that end's link-local address. Commands say ipv6 ospf6 where ospfd's say ip ospf."
+    deepens: ospf
+    sources: [ospf6d/ospf6_interface.c, ospf6d/ospf6_neighbor.c, ospf6d/ospf6_intra.c]
+    docs: https://docs.frrouting.org/en/latest/ospf6d.html
+    tryIt: vtysh -c "show ipv6 ospf6 database"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

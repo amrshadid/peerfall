@@ -1,0 +1,25 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # a made a level-2 router instead, its NET unchanged: a and b become peers at level 2, a learns
+  # c's loopback itself and reaches it, with no default route and no level-1 peer.
+  - id: level-2
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, is-type level-2-only]
+  # The right NET added beside the wrong one: a is in both areas, shares 49.0001 with b, and
+  # becomes its level-1 peer. Passes by outcome.
+  - id: second-net
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, net 49.0001.0000.0000.0001.00]
+  - id: move-net
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, no net 49.0002.0000.0000.0001.00, net 49.0001.0000.0000.0001.00]

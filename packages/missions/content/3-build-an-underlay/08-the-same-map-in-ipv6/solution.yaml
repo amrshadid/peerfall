@@ -1,0 +1,24 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # ospfd's line instead of ospf6d's: ospfd does not run on a, and vtysh says so.
+  - id: ospfv2-instead
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf area 0]
+        refused: true
+  # Area 1 on a's end, area 0 on b's: the two ends disagree, so no peer and no route.
+  - id: wrong-area
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ipv6 ospf6 area 1]
+  - id: area-0
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ipv6 ospf6 area 0]

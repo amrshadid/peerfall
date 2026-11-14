@@ -1,0 +1,90 @@
+id: build-the-underlay
+version: 1
+title: Build the Underlay
+summary: "Stage 3's capstone: from bare FRR on four routers, run OSPF everywhere, reach every loopback over both equal paths, and save it all."
+minutes: 25
+chapter: build-an-underlay
+objective: Router a reaches d's loopback over both of its paths, d learns a's loopback from OSPF, and every router's loopback is in OSPF in its saved frr.conf.
+skills: [ospf-underlay]
+prerequisites: [isis-levels]
+teaches: []
+names: []
+uses:
+  [
+    ospf,
+    peer,
+    ospf-interface-area,
+    ospf-passive,
+    ospf-adjacency,
+    ospf-cost,
+    ecmp,
+    ospf-maximum-paths,
+    rib,
+    fib,
+    saved-config,
+    write-memory,
+  ]
+
+# A square, a–b–d and a–c–d. FRR started by its init script on every router, ospfd among its
+# daemons, and nothing configured: the links and loopbacks have their addresses from Linux. The
+# links keep OSPF's default network type, so new peers wait 40 seconds in 2-Way before Full.
+network:
+  routers:
+    - { name: a, loopback: 10.255.0.1/32, daemons: [ospfd], startup: watchfrr, config: "" }
+    - { name: b, loopback: 10.255.0.2/32, daemons: [ospfd], startup: watchfrr, config: "" }
+    - { name: c, loopback: 10.255.0.3/32, daemons: [ospfd], startup: watchfrr, config: "" }
+    - { name: d, loopback: 10.255.0.4/32, daemons: [ospfd], startup: watchfrr, config: "" }
+  links:
+    - ends: [{ router: a, address: 10.0.1.1/30 }, { router: b, address: 10.0.1.2/30 }]
+    - ends: [{ router: a, address: 10.0.2.1/30 }, { router: c, address: 10.0.2.2/30 }]
+    - ends: [{ router: b, address: 10.0.3.1/30 }, { router: d, address: 10.0.3.2/30 }]
+    - ends: [{ router: c, address: 10.0.4.1/30 }, { router: d, address: 10.0.4.2/30 }]
+
+# None is met at the start: no OSPF runs, no route crosses more than one link, nothing is saved.
+objectives:
+  - id: a-reaches-d
+    text: Reach d's loopback, 10.255.0.4, from a.
+    check: { kind: reaches, from: a, to: 10.255.0.4 }
+  - id: both-paths
+    text: a's route to d's loopback is OSPF's, through b and through c at once.
+    check: { kind: route, router: a, to: 10.255.0.4, protocol: ospf, vias: [10.0.1.2, 10.0.2.2] }
+  - id: d-learns-a
+    text: d learns a's loopback, 10.255.0.1/32, from OSPF.
+    check: { kind: rib, router: d, prefix: 10.255.0.1/32, protocol: ospf }
+  - id: a-saved
+    text: a's saved frr.conf runs OSPF on its loopback.
+    check: { kind: config, router: a, source: saved, block: [interface lo], line: ip ospf area }
+  - id: b-saved
+    text: b's saved frr.conf runs OSPF on its loopback.
+    check: { kind: config, router: b, source: saved, block: [interface lo], line: ip ospf area }
+  - id: c-saved
+    text: c's saved frr.conf runs OSPF on its loopback.
+    check: { kind: config, router: c, source: saved, block: [interface lo], line: ip ospf area }
+  - id: d-saved
+    text: d's saved frr.conf runs OSPF on its loopback.
+    check: { kind: config, router: d, source: saved, block: [interface lo], line: ip ospf area }
+
+hints:
+  - text: Follow one packet from a to d's loopback and its reply back. Which interfaces must OSPF run on, on which routers, for each router on the way to know the next step?
+  - text: "ospfd works only once router ospf exists, as in Two Ways at Once. Every interface goes in area 0, the loopback too, as in The Shared Map. And only frr.conf is kept, as in Gone After the Restart."
+  - text: On each router, type router ospf, put each interface in area 0 in its own mode, lo included and passive, then save.
+    command: ip ospf area 0
+
+chips:
+  - { command: ip -br addr, explain: "each interface and its addresses, as Linux has them" }
+  - { command: router ospf, explain: "in configure mode: start OSPF and enter its settings" }
+  - { command: ip ospf area 0, explain: "in interface mode: run OSPF on the interface, in area 0" }
+  - { command: ip ospf passive, explain: "in interface mode: on the map, but no hellos sent" }
+  - { command: show ip ospf neighbor, explain: "OSPF's peers on this router and their state" }
+  - { command: ip route, explain: "in the shell: the kernel's routes, with every next hop" }
+  - { command: write memory, explain: "save the running configuration to frr.conf" }
+
+codex: []
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world
