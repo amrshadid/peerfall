@@ -1,20 +1,16 @@
-import type { StampedMachineEvent } from '@peerfall/machine/types'
+import { IPV4, type StampedMachineEvent } from '@peerfall/machine/types'
 import type { RouteHop } from '#types/definitions/checks'
 import { inTimeOrder } from '#utils/events/index'
 
-const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
-
 /** An IPv4 address as an unsigned 32-bit number, or `null` if it isn't one. */
 export function ipv4ToNumber(address: string): number | null {
-  const match = IPV4.exec(address)
-  if (!match) {
+  if (!IPV4.test(address)) {
     return null
   }
-  const octets = match.slice(1).map(Number)
-  if (octets.some((octet) => octet > 255)) {
-    return null
-  }
-  return octets.reduce((sum, octet) => sum * 256 + octet, 0)
+  return address
+    .split('.')
+    .map(Number)
+    .reduce((sum, octet) => sum * 256 + octet, 0)
 }
 
 interface Prefix {

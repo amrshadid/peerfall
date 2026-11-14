@@ -65,7 +65,6 @@ export {
   type MissionId,
   type ObjectiveDefinition,
   type ObjectiveId,
-  PROBE_INTERVAL_MS,
   type RunContext,
   type StoryRefs,
 } from '#types/definitions/mission'

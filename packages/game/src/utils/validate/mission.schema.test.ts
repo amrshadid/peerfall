@@ -1,3 +1,4 @@
+import { probeProblems } from '@peerfall/machine/utils'
 import { describe, expect, it } from 'vitest'
 import { EXAMPLE_CHAPTERS_YAML, EXAMPLE_MISSION_YAML, STATE_MISSION_YAML } from '#test/index'
 import { validateChapters } from '#utils/validate/chapters.schema'
@@ -138,6 +139,25 @@ describe('validateMission', () => {
         'probe.destination: expected an address like 10.255.0.3, got "c"',
         'probe.intervalMs: expected a number from 10 to 10000, got 5',
       ])
+    })
+
+    it('accepts a probe exactly when the Machine would run it', () => {
+      const probes = [
+        YAML.probe,
+        { ...YAML.probe, id: 'a-name-of-sixteen' },
+        { ...YAML.probe, id: 'a-name-of-sixteen!' },
+        { ...YAML.probe, id: '1st' },
+        { ...YAML.probe, destination: '10.255.0.256' },
+        { ...YAML.probe, destination: '10.255.0.255' },
+        { ...YAML.probe, intervalMs: 10_000 },
+        { ...YAML.probe, intervalMs: 10_001 },
+      ]
+      for (const probe of probes) {
+        const accepted = validateMission({ ...YAML, probe }).ok
+        const network = validateMission(YAML)
+        const runs = network.ok && probeProblems(probe, network.value.network).length === 0
+        expect({ probe, accepted }).toEqual({ probe, accepted: runs })
+      }
     })
   })
 

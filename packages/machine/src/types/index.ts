@@ -22,6 +22,7 @@ export {
   type LinkEnd,
   type NetworkDefinition,
   PROBE_ID,
+  PROBE_INTERVAL_MS,
   ROUTER_NAME,
   type RouterDefinition,
 } from '#types/definitions/network'

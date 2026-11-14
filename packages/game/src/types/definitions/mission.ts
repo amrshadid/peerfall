@@ -91,9 +91,6 @@ export interface FaultDefinition {
   readonly link: LinkName
 }
 
-/** The bounds of a probe's interval: fast enough to measure a sub-second outage, slow enough for the Machine. */
-export const PROBE_INTERVAL_MS = { min: 10, max: 10_000 } as const
-
 /** A parsed and validated `mission.yaml`. */
 export interface MissionDefinition {
   readonly id: MissionId
