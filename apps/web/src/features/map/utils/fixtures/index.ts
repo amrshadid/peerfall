@@ -1,1 +1,7 @@
-export { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from './journey-fixture.util'
+export {
+  FIRST_MISSION,
+  JOURNEY_SKILLS,
+  journeyFixture,
+  longerJourneyFixture,
+  SECOND_MISSION,
+} from './journey-fixture.util'

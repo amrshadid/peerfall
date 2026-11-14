@@ -12,6 +12,7 @@ const NOTES: MapNotes = {
     ['a', note('Stop A')],
     ['b', note('Stop B')],
   ]),
+  regions: new Map(),
   chapters: new Map([
     ['first-router', note('First router')],
     ['exchange-routes', note('Exchange routes')],

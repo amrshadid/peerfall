@@ -57,6 +57,14 @@ export interface SceneStop {
   readonly texts: readonly SceneText[]
 }
 
+export interface SceneRegion {
+  readonly key: string
+  readonly texts: readonly SceneText[]
+  /** The band from the region's name to its last row, in drawing px. */
+  readonly top: number
+  readonly bottom: number
+}
+
 export interface SceneChapter {
   readonly id: ChapterId
   readonly stage: number
@@ -66,6 +74,8 @@ export interface SceneChapter {
   /** The sheet the header is printed on, over the hatching. */
   readonly panel: SceneRect
   readonly texts: readonly SceneText[]
+  /** Its regions' headings and bands; none for a planned stage. */
+  readonly regions: readonly SceneRegion[]
   /** The group's accessible name; its printed words follow as the summary. */
   readonly name: string
   readonly summary: string

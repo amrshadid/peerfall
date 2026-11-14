@@ -1,7 +1,16 @@
-import type { JourneyChapter, JourneyChapterSource, JourneyNeed, JourneyStop, Tone } from '@features/map/types'
+import type {
+  JourneyChapter,
+  JourneyChapterSource,
+  JourneyNeed,
+  JourneyRegion,
+  JourneySkill,
+  JourneyStop,
+  MapView,
+  Tone,
+} from '@features/map/types'
 import { partsOf } from '@features/map/utils/parts'
-import type { ChapterDefinition, MissionId, MissionStatus } from '@peerfall/game/types'
-import { DONE_STATES, HERE_WORDS, PLANNED_PROGRESS, PLANNED_STOP, STATUS_WORDS } from './journey.constants'
+import type { ChapterDefinition, MissionId, MissionStatus, SkillDefinition, SkillId } from '@peerfall/game/types'
+import { DONE_STATES, HERE_WORDS, PLANNED_PROGRESS, PLANNED_STOP, STATUS_WORDS, TONE_WORDS } from './journey.constants'
 
 export function isDone(stop: Pick<JourneyStop, 'state'>): boolean {
   return DONE_STATES.has(stop.state)
@@ -38,12 +47,16 @@ export function plannedStopOf(chapter: ChapterDefinition): JourneyStop {
     title: PLANNED_STOP.title,
     chapterId: chapter.id,
     stage: chapter.stage,
+    regionId: null,
     state: 'locked',
     status: PLANNED_STOP.status,
     playable: false,
     here: false,
     summary: chapter.summary,
+    skills: [],
     needs: [],
+    minutes: null,
+    codex: [],
     attempts: 0,
     hintsUsed: 0,
     recoveryTargetMs: 0,
@@ -72,38 +85,78 @@ export function progressOf(done: number, total: number): string {
   return total === 0 ? PLANNED_PROGRESS : `${done} of ${total} passed`
 }
 
+/** "in progress · 0 of 4", as a Kernelfall region says "in progress · 0 of 4". */
+export function regionProgressOf(tone: Tone, done: number, total: number): string {
+  return `${TONE_WORDS[tone]} · ${done} of ${total}`
+}
+
+/** A chapter's regions with their stops; a mission the regions don't list is left out of them. */
+function regionsOf(chapter: ChapterDefinition, stops: readonly JourneyStop[]): readonly JourneyRegion[] {
+  return chapter.regions.map((region) => {
+    const own = stops.filter((stop) => stop.regionId === region.id)
+    const tone = toneOf(own)
+    const done = own.filter(isDone).length
+    return {
+      key: `${chapter.id}/${region.id}`,
+      id: region.id,
+      name: region.name,
+      caption: region.caption,
+      guide: region.guide,
+      source: region.source,
+      stops: own,
+      done,
+      tone,
+      progress: regionProgressOf(tone, done, own.length),
+    }
+  })
+}
+
 /**
- * The journey as the map draws it: every stage in play order with its missions as stops. A stage
- * with no missions yet is kept, as planned. `next` is where Continue goes: the "You are here" stop.
+ * The journey as the map draws it: every stage in play order with its missions as stops, grouped in
+ * its regions. A stage with no missions yet is kept, as planned. `next` is where Continue goes: the
+ * "You are here" stop. `skills` is the skill tree, for the skills' titles. In the Skills view a stop
+ * is named by the first skill its mission earns, as Kernelfall names a level by its first skill.
  */
 export function journeyChapters(
   chapters: readonly JourneyChapterSource[],
-  next: { readonly id: MissionId } | null
+  next: { readonly id: MissionId } | null,
+  skills: readonly Pick<SkillDefinition, 'id' | 'title'>[] = [],
+  view: MapView = 'missions'
 ): readonly JourneyChapter[] {
   const entries = chapters.flatMap((entry) => entry.missions)
-  const needOf = (id: MissionId): JourneyNeed => {
-    const entry = entries.find((candidate) => candidate.mission.id === id)
-    // A prerequisite the content doesn't list is named by its id and stays unmet.
-    return { id, title: entry?.mission.title ?? id, met: entry?.status === 'completed' }
-  }
+  const earned = new Set(
+    entries.filter((entry) => entry.status === 'completed').flatMap((entry) => entry.mission.skills)
+  )
+  // A skill the tree doesn't list is named by its id.
+  const skillOf = (id: SkillId): JourneySkill => ({ id, title: skills.find((skill) => skill.id === id)?.title ?? id })
+  const needOf = (id: SkillId): JourneyNeed => ({
+    ...skillOf(id),
+    met: earned.has(id),
+    earnedIn: entries.find((entry) => entry.mission.skills.includes(id))?.mission.title ?? null,
+  })
 
   return chapters.map(({ chapter, missions }) => {
     const stops = missions.map(({ mission, status, attempts, hintsUsed }, index): JourneyStop => {
       const state = markStateOf(status, attempts, hintsUsed)
       const here = mission.id === next?.id
+      const first = mission.skills[0]
       return {
         key: mission.id,
         planned: false,
         number: `${chapter.stage}.${index + 1}`,
-        title: mission.title,
+        title: view === 'skills' && first !== undefined ? skillOf(first).title : mission.title,
         chapterId: chapter.id,
         stage: chapter.stage,
+        regionId: chapter.regions.find((region) => region.missions.includes(mission.id))?.id ?? null,
         state,
         status: here ? `${STATUS_WORDS[state]}, ${HERE_WORDS}` : STATUS_WORDS[state],
         playable: status !== 'locked',
         here,
         summary: mission.objective,
+        skills: mission.skills.map(skillOf),
         needs: mission.prerequisites.map(needOf),
+        minutes: mission.minutes ?? null,
+        codex: mission.codex.map((card) => ({ id: card.id, term: card.term })),
         attempts,
         hintsUsed,
         // Zero stands for "none", as on a planned stop: a mission that breaks nothing has no target.
@@ -120,6 +173,7 @@ export function journeyChapters(
       caption: chapter.summary,
       parts: partsOf(chapter.id),
       stops,
+      regions: regionsOf(chapter, stops),
       marks: stops.length === 0 ? [plannedStopOf(chapter)] : stops,
       done,
       total: stops.length,

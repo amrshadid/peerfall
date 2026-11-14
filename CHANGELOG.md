@@ -16,6 +16,13 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 - **Alt+P looks at the previous step**, as in Kernelfall.
 - **A reload on the debrief brings it back**, with every step clickable, as Kernelfall brings
   back its level card; leaving through one of its buttons closes it.
+- **The Peer Map has regions and skills, as Kernelfall's Kernel Map:** each stage's missions
+  sit in regions (Meet the router, Configure it and keep it, Routes by hand, zebra's choice,
+  Notice it fast), each with its own heading, what it covers, its guide, its place in FRR's
+  source and its own progress. Missions open by the skills earlier missions earn, in the same
+  order as before. A Missions / Skills switch names each stop by its mission or its first
+  skill, and the side panel adds Skill, Needs (each skill met or not), Time and the
+  mission's Codex cards.
 
 ## [0.1.0-alpha.3] - 2026-11-14
 

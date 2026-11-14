@@ -1,11 +1,13 @@
 import type {
   JourneyChapter,
+  JourneyRegion,
   JourneyStop,
   MapScene,
   MapVariant,
   SceneChapter,
   ScenePoint,
   SceneRect,
+  SceneRegion,
   SceneStop,
   SceneTerminus,
   SceneText,
@@ -109,6 +111,34 @@ class Builder {
     return { texts, panel: { x: PAD - 14, y: top, width: this.contentWidth + 28, height: bottom - top } }
   }
 
+  /** A region's name and progress, then what it covers and its guide, then its place in FRR's source. */
+  regionHead(region: JourneyRegion): SceneText[] {
+    const texts: SceneText[] = []
+    let y = this.y + 34
+    texts.push(text(PAD, y, region.name, 'region'))
+    const fits =
+      PAD + textWidth(region.name, GLYPH.region) + 20 + textWidth(region.progress, GLYPH.meta) <= this.width - PAD
+    if (!fits) {
+      y += 17
+    }
+    texts.push(text(fits ? this.width - PAD : PAD, y, region.progress, `tone-${region.tone}`, fits ? 'end' : 'start'))
+    if (this.full) {
+      for (const line of wrapWords(
+        `${region.caption} · guide: ${region.guide}`,
+        charsIn(this.contentWidth, GLYPH.meta)
+      )) {
+        y += 16
+        texts.push(text(PAD, y, line, 'meta'))
+      }
+      for (const line of wrapWords(region.source, charsIn(this.contentWidth, GLYPH.mono))) {
+        y += 16
+        texts.push(text(PAD, y, line, 'mono'))
+      }
+    }
+    this.y = y
+    return texts
+  }
+
   row(stops: readonly JourneyStop[]): void {
     const y = this.y + STOP_DROP
     const { xs, cell } = cellsOf(stops.length, this.width)
@@ -168,8 +198,22 @@ export function layoutMap(chapters: readonly JourneyChapter[], width: number, va
   for (const chapter of chapters) {
     const top = b.y
     const head = b.header(chapter)
-    // A stage with no missions yet keeps its place on the road: one planned stop.
-    for (const row of rowsOf(chapter.marks, perRow)) {
+    const regions: SceneRegion[] = []
+    for (const region of chapter.regions) {
+      const regionTop = b.y
+      const texts = b.regionHead(region)
+      for (const row of rowsOf(region.stops, perRow)) {
+        b.row(row)
+      }
+      regions.push({ key: region.key, texts, top: regionTop, bottom: b.y })
+    }
+    // A stage with no missions yet keeps its place on the road: one planned stop. Missions no region
+    // lists, which only a test's content has, follow on the stage's own road.
+    const grouped = new Set(chapter.regions.flatMap((region) => region.stops.map((stop) => stop.key)))
+    for (const row of rowsOf(
+      chapter.marks.filter((stop) => !grouped.has(stop.key)),
+      perRow
+    )) {
       b.row(row)
     }
     b.y += 22
@@ -181,6 +225,7 @@ export function layoutMap(chapters: readonly JourneyChapter[], width: number, va
       tone: chapter.tone,
       panel: head.panel,
       texts: head.texts,
+      regions,
       name: `Stage ${chapter.stage}: ${chapter.name}`,
       summary: chapter.summary,
     })

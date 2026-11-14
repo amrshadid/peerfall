@@ -1,4 +1,4 @@
-import type { StopState } from '@features/map/types'
+import type { StopState, Tone } from '@features/map/types'
 
 /** The states of a mission whose checks have passed. */
 export const DONE_STATES: ReadonlySet<StopState> = new Set(['done', 'clean', 'helped'])
@@ -11,6 +11,14 @@ export const STATUS_WORDS: Readonly<Record<StopState, string>> = {
   done: 'done',
   clean: 'done, first try',
   helped: 'done with help',
+}
+
+/** How a region's tone is printed before its count, as Kernelfall's "rebuilt", "in progress" and "dark". */
+export const TONE_WORDS: Readonly<Record<Tone, string>> = {
+  passed: 'passed',
+  progress: 'in progress',
+  ahead: 'ahead',
+  planned: 'planned',
 }
 
 /** Added to the status of the stop Continue goes to. */

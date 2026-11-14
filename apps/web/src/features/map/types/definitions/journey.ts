@@ -1,4 +1,11 @@
-import type { ChapterDefinition, ChapterId, MissionDefinition, MissionEntry, MissionId } from '@peerfall/game/types'
+import type {
+  ChapterDefinition,
+  ChapterId,
+  MissionDefinition,
+  MissionEntry,
+  MissionId,
+  SkillId,
+} from '@peerfall/game/types'
 
 /**
  * The shape a stop is drawn in; `progress` is a mission under way. A completed mission is `clean`
@@ -6,13 +13,16 @@ import type { ChapterDefinition, ChapterId, MissionDefinition, MissionEntry, Mis
  */
 export type StopState = 'locked' | 'available' | 'progress' | 'done' | 'clean' | 'helped'
 
+/** What the map's stops are named by: their mission, or the first skill it earns. */
+export type MapView = 'missions' | 'skills'
+
 /** How far a stage is: every mission passed, some open, none open yet, or no missions written. */
 export type Tone = 'passed' | 'progress' | 'ahead' | 'planned'
 
 /** What the map reads of a mission; a `MissionDefinition` is one. */
 export type JourneyMissionSource = Pick<
   MissionDefinition,
-  'id' | 'title' | 'objective' | 'prerequisites' | 'recoveryTargetMs'
+  'id' | 'title' | 'objective' | 'skills' | 'prerequisites' | 'recoveryTargetMs' | 'minutes' | 'codex'
 >
 
 /** What the map reads of the mission list; a `ChapterEntry` is one. */
@@ -23,11 +33,17 @@ export interface JourneyChapterSource {
   })[]
 }
 
-/** A mission that must be completed before another opens. */
-export interface JourneyNeed {
-  readonly id: MissionId
+/** A skill as the map names it: its id, and its title from `skills.yaml`. */
+export interface JourneySkill {
+  readonly id: SkillId
   readonly title: string
+}
+
+/** A skill a mission needs: whether a completed mission has earned it, and which mission earns it. */
+export interface JourneyNeed extends JourneySkill {
   readonly met: boolean
+  /** The title of the mission that earns it; null when no mission on the map does. */
+  readonly earnedIn: string | null
 }
 
 /** One mission: a stop on the road. A stage with no missions yet has one planned stop in their place. */
@@ -41,6 +57,8 @@ export interface JourneyStop {
   readonly title: string
   readonly chapterId: ChapterId
   readonly stage: number
+  /** The region it is drawn under; null for a planned stop. */
+  readonly regionId: string | null
   readonly state: StopState
   /** Spoken and printed status, e.g. "in progress, you are here". */
   readonly status: string
@@ -49,10 +67,34 @@ export interface JourneyStop {
   readonly here: boolean
   /** The whole mission in one sentence. */
   readonly summary: string
+  /** The skills it earns, in its mission.yaml's order: the Skills view names the stop by the first. */
+  readonly skills: readonly JourneySkill[]
   readonly needs: readonly JourneyNeed[]
+  /** About how long it takes a new player, when its mission.yaml says. */
+  readonly minutes: number | null
+  /** The Codex cards it adds. */
+  readonly codex: readonly { readonly id: string; readonly term: string }[]
   readonly attempts: number
   readonly hintsUsed: number
   readonly recoveryTargetMs: number
+}
+
+/** A region of a stage: a few missions on one subject, under their own heading, as Kernelfall's regions. */
+export interface JourneyRegion {
+  /** `first-router/meet-the-router`: unique across the map. */
+  readonly key: string
+  readonly id: string
+  readonly name: string
+  readonly caption: string
+  /** The FRR daemons who speak in its missions. */
+  readonly guide: string
+  /** Where it lives in FRR's source tree. */
+  readonly source: string
+  readonly stops: readonly JourneyStop[]
+  readonly done: number
+  readonly tone: Tone
+  /** "passed · 3 of 3", "in progress · 0 of 4", "ahead · 0 of 5". */
+  readonly progress: string
 }
 
 /** One stage of the journey with its missions in play order. */
@@ -68,6 +110,8 @@ export interface JourneyChapter {
   readonly parts: readonly string[]
   /** Its missions; none for a planned stage. */
   readonly stops: readonly JourneyStop[]
+  /** Its missions grouped under their headings; none for a planned stage. */
+  readonly regions: readonly JourneyRegion[]
   /** What the road passes through, in travel order: the missions, or the one planned stop. */
   readonly marks: readonly JourneyStop[]
   readonly done: number

@@ -87,10 +87,13 @@ describe('MapDrawing', () => {
     expect(html.match(/class="map-fig__tone-planned"/g)).toHaveLength(10)
   })
 
-  it('prints the FRR parts of every stage in mono', () => {
+  it("prints the FRR parts of every stage in mono, and each region's place in FRR's source", () => {
     const { html } = render()
-    expect(html.match(/class="map-fig__mono"/g)).toHaveLength(11)
+    // Eleven stages, and stage 4's one region.
+    expect(html.match(/class="map-fig__mono"/g)).toHaveLength(12)
     expect(html).toContain('>FRR parts: zebra, staticd</text>')
+    expect(html).toContain('>bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c</text>')
+    expect(html).toContain('>Notice it fast</text>')
   })
 
   it('draws the road in two strokes from one start mark: travelled up to "you", dashed ahead', () => {

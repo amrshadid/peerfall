@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
+
+import type { MapView } from '@features/map/types'
 import { EMPTY_DETAIL, mapDetailOf } from '@features/map/utils/detail'
-import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
+import {
+  FIRST_MISSION,
+  JOURNEY_SKILLS,
+  journeyFixture,
+  longerJourneyFixture,
+  SECOND_MISSION,
+} from '@features/map/utils/fixtures'
 import { journeyChapters, journeyMarks, journeySummary } from '@features/map/utils/journey'
 import { mapNotesOf } from '@features/map/utils/note'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
@@ -42,7 +50,7 @@ interface Setup {
 }
 
 interface HarnessProps {
-  chapters: ReturnType<typeof journeyChapters>
+  source: ReturnType<typeof journeyFixture>
   next: Setup['next']
   onPlay: (key: string) => void
   onShortcuts: () => void
@@ -56,19 +64,24 @@ const CHROME = {
   onTour: null,
 }
 
-/** The presentation with the selection held as the container holds it. */
-function Harness({ chapters, next, onPlay, onShortcuts }: HarnessProps) {
+/** The presentation with the selection and the view held as the container holds them. */
+function Harness({ source, next, onPlay, onShortcuts }: HarnessProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [view, setView] = useState<MapView>('missions')
+  const chapters = journeyChapters(source, next ?? null, JOURNEY_SKILLS)
+  const shown = journeyChapters(source, next ?? null, JOURNEY_SKILLS, view)
   const stops = journeyMarks(chapters)
   const selected = stops.find((stop) => stop.key === selectedKey) ?? stops.find((stop) => stop.here) ?? stops[0]
   return (
     <JourneyMapPresentation
       chrome={CHROME}
       titleHref="#/"
+      view={view}
+      onView={setView}
       recommended={next ? { label: next.title, href: `#/mission/${next.id}` } : null}
       section={{
-        chapters,
-        notes: mapNotesOf(chapters),
+        chapters: shown,
+        notes: mapNotesOf(shown),
         selectedKey: selected?.key ?? null,
         reducedMotion: true,
         onSelect: setSelectedKey,
@@ -86,7 +99,7 @@ function setup({ source = journeyFixture(), next = FIRST_MISSION }: Setup = {}) 
   const chapters = journeyChapters(source, next)
   const onPlay = vi.fn()
   const onShortcuts = vi.fn()
-  const view = render(<Harness chapters={chapters} next={next} onPlay={onPlay} onShortcuts={onShortcuts} />)
+  const view = render(<Harness source={source} next={next} onPlay={onPlay} onShortcuts={onShortcuts} />)
   const stop = (name: RegExp) => screen.getByRole('button', { name })
   const detail = () => within(screen.getByRole('complementary'))
   /** The selected mission's status, as the panel's head prints it beside its mark. */
@@ -175,7 +188,50 @@ describe('JourneyMapPresentation', () => {
     expect(status()).toBe('Locked')
     expect(detail().queryByRole('link')).toBeNull()
     expect(detail().getByText('Locked: complete The Link That Never Went Down first.')).toBeTruthy()
-    expect(detail().getByText('not completed yet')).toBeTruthy()
+    expect(detail().getByText('bfd-fast-detection')).toBeTruthy()
+    expect(detail().getByText('not yet')).toBeTruthy()
+  })
+
+  it("shows the mission's skills, how long it takes and its Codex cards, in Kernelfall's rows", () => {
+    const { detail } = setup()
+    const terms = detail()
+      .getAllByRole('term')
+      .map((term) => term.textContent)
+    expect(terms).toEqual([
+      'Objective',
+      'Skill',
+      'Needs',
+      'Time',
+      'Attempts',
+      'Hints used',
+      'Target',
+      'FRR parts',
+      'Codex',
+    ])
+    expect(detail().getByText('outage-measure')).toBeTruthy()
+    expect(detail().getByText(/^Measure an outage and tell what noticed it/)).toBeTruthy()
+    expect(detail().getByText('About 25 min')).toBeTruthy()
+    expect(detail().getByRole('link', { name: 'BFD' }).getAttribute('href')).toBe('#/codex/bfd')
+  })
+
+  it("prints each region's heading in its stage", () => {
+    setup()
+    const stage = within(screen.getByRole('group', { name: 'Stage 4: Recover from failure' }))
+    expect(stage.getByText('Notice it fast')).toBeTruthy()
+    expect(stage.getByText('in progress · 0 of 1')).toBeTruthy()
+    expect(stage.getByText('bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c')).toBeTruthy()
+  })
+
+  it('names the stops by their first skill in the Skills view, and keeps the panel on the mission', () => {
+    const { stop, detail } = setup()
+    const bar = within(screen.getByRole('navigation', { name: 'Peer Map' }))
+    expect(bar.getByRole('button', { name: 'Missions' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(bar.getByRole('button', { name: 'Skills' }))
+    expect(bar.getByRole('button', { name: 'Skills' }).getAttribute('aria-pressed')).toBe('true')
+    expect(stop(/^4\.1 Measure an outage and tell what noticed it, /)).toBeTruthy()
+    expect(detail().getByRole('heading', { level: 2, name: 'The Link That Never Went Down' })).toBeTruthy()
+    fireEvent.click(bar.getByRole('button', { name: 'Missions' }))
+    expect(stop(/^4\.1 The Link That Never Went Down, /)).toBeTruthy()
   })
 
   it('offers Continue for a mission under way and Replay for a completed one', () => {

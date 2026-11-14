@@ -9,11 +9,19 @@ const chapters = journeyChapters(journeyFixture(), FIRST_MISSION)
 const notes = mapNotesOf(chapters)
 
 describe('mapNotesOf', () => {
-  it('explains a mission by its objective, its state and its target', () => {
+  it('explains a mission by its objective, its state, its time, its target and its guide', () => {
     expect(notes.stops.get(FIRST_MISSION.id)).toEqual({
       title: '4.1 · The Link That Never Went Down',
       text: FIRST_MISSION.objective,
-      facts: ['Next up', 'Traffic back within 2 s', 'FRR parts: bfdd, graceful restart, fast reroute, vrrpd'],
+      facts: ['Next up', 'About 25 min', 'Traffic back within 2 s', 'Guide: bfdd, zebra'],
+    })
+  })
+
+  it('explains a region by the part of FRR it stands for, its guide and its progress', () => {
+    expect(notes.regions.get('recover-from-failure/notice-it-fast')).toEqual({
+      title: 'Notice it fast',
+      text: "The part of FRR it stands for: measure an outage, the OSPF dead timer, BFD. In FRR's source: bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c.",
+      facts: ['Guide: bfdd, zebra', '0 of 1 passed'],
     })
   })
 
@@ -52,7 +60,9 @@ describe('stopStateOf', () => {
     expect(done && stopStateOf({ ...done, state: 'clean' })).toBe(NOTE_STATES.clean)
     expect(done && stopStateOf({ ...done, state: 'done' })).toBe(NOTE_STATES.done)
     expect(
-      stopStateOf(plannedStopOf({ id: 'first-router', stage: 1, title: 'First router', summary: '', outcomes: [] }))
+      stopStateOf(
+        plannedStopOf({ id: 'first-router', stage: 1, title: 'First router', summary: '', outcomes: [], regions: [] })
+      )
     ).toBe(NOTE_STATES.planned)
     expect(open && stopStateOf(open)).toBe(NOTE_STATES.available)
     expect(open && stopStateOf({ ...open, here: true })).toBe(NOTE_STATES.next)
@@ -68,6 +78,9 @@ describe('noteOf', () => {
     )
     expect(noteOf(null, notes, 'first-router')?.title).toBe('What this stage covers · First router')
     expect(noteOf({ kind: 'stop', key: SECOND_MISSION.id }, notes, null)).toBeUndefined()
+    expect(noteOf({ kind: 'region', key: 'recover-from-failure/notice-it-fast' }, notes, null)?.title).toBe(
+      'Notice it fast'
+    )
   })
 })
 
@@ -78,14 +91,21 @@ describe('sameTarget', () => {
     expect(sameTarget({ kind: 'stop', key: 'a' }, { kind: 'stop', key: 'a' })).toBe(true)
     expect(sameTarget({ kind: 'stop', key: 'a' }, { kind: 'chapter', id: 'a' })).toBe(false)
     expect(sameTarget({ kind: 'chapter', id: 'a' }, { kind: 'chapter', id: 'b' })).toBe(false)
+    expect(sameTarget({ kind: 'region', key: 'a' }, { kind: 'stop', key: 'a' })).toBe(false)
+    expect(sameTarget({ kind: 'region', key: 'a' }, { kind: 'region', key: 'a' })).toBe(true)
   })
 })
 
 describe('targetAt', () => {
-  it('finds the stage at a drawing height, and nothing under the last one', () => {
+  it('finds the region band, else the stage, at a drawing height, and nothing under the last one', () => {
     const scene = layoutMap(chapters, 774)
     const fourth = scene.chapters[3]
+    const region = fourth?.regions[0]
     expect(targetAt(scene.chapters, (fourth?.top ?? 0) + 4)).toEqual({ kind: 'chapter', id: 'recover-from-failure' })
+    expect(targetAt(scene.chapters, (region?.top ?? 0) + 4)).toEqual({
+      kind: 'region',
+      key: 'recover-from-failure/notice-it-fast',
+    })
     expect(targetAt(scene.chapters, scene.height)).toBeNull()
   })
 })

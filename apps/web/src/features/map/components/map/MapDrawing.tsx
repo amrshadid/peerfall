@@ -176,9 +176,12 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
 
       {scene.chapters.map((chapter) =>
         map ? (
-          // biome-ignore lint/a11y: an SVG <g> is neither interactive nor a fieldset; its printed words (stage, name, progress, what it covers) are the stage's summary
+          // biome-ignore lint/a11y: an SVG <g> is neither interactive nor a fieldset; its printed words (stage, name, progress, what it covers, its regions) are the stage's summary
           <g key={chapter.id} role="group" aria-label={chapter.name}>
             <MapTexts texts={chapter.texts} />
+            {chapter.regions.map((region) => (
+              <MapTexts key={region.key} texts={region.texts} />
+            ))}
             {stops.map((stop, index) =>
               stop.chapterId !== chapter.id ? null : (
                 // biome-ignore lint/a11y/useSemanticElements: an SVG stop can't be a <button>; it is one by role, focus and keys
@@ -221,6 +224,9 @@ export const MapDrawing = memo(function MapDrawing(props: MapDrawingProps) {
         ) : (
           <g key={chapter.id}>
             <MapTexts texts={chapter.texts} />
+            {chapter.regions.map((region) => (
+              <MapTexts key={region.key} texts={region.texts} />
+            ))}
             {stops.map((stop) =>
               stop.chapterId !== chapter.id ? null : <StopMark key={stop.key} stop={stop} pulse={pulse} />
             )}
