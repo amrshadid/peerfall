@@ -9,7 +9,6 @@ const KNOWN_CONCEPT_GAPS: Readonly<Record<ConceptViolationKind, Readonly<Record<
   'used-before-taught': {},
   'taught-twice': {},
   'never-used-again': {
-    peer: 'named in 1.1 for the Peerfall; stage 3, which teaches peers, is not written yet',
     pathspace: 'a fact about the Machine, explained by a card of 1.2 only: no mission uses it as a skill',
     mgmtd: "named in 1.3; it is taught with FRR's northbound API in stage 11, not written yet",
     'frr-log': 'stage 3 reads the log to debug adjacencies; it is not written yet',

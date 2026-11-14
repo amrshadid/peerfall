@@ -10,7 +10,8 @@ objective: When the link between a and c stops passing packets, traffic from a t
 # cards are new. Stage 3 is not written yet, so the story explains OSPF's terms where they appear.
 # It follows stage 3's last mission; until stage 3 is written, it follows stage 2's capstone.
 prerequisites: [bring-the-line-up]
-teaches: [bfd, ospf-dead-interval]
+# peer: named in 1.1's Scene, explained here beside show ip ospf neighbor until stage 3 teaches it.
+teaches: [bfd, ospf-dead-interval, peer]
 names: [ospf-adjacency]
 uses: [route, next-hop, administrative-distance, vtysh, cli-modes]
 
