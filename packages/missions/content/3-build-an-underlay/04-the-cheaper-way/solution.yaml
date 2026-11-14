@@ -1,0 +1,48 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Only a's end: a's traffic moves to c, and d still comes back through b.
+  - id: one-end
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf cost 50]
+  # Only b's end: costs count where a packet leaves, so a's own path does not change.
+  - id: wrong-end
+    passes: false
+    changes:
+      - router: b
+        lines: [configure terminal, interface b-a, ip ospf cost 50]
+  # 30 on both ends of a–b: 40 against 40, a tie. Both next hops are used, not only c.
+  - id: tie
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf cost 30]
+      - router: b
+        lines: [configure terminal, interface b-a, ip ospf cost 30]
+  - id: raise-a-b
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf cost 50]
+      - router: b
+        lines: [configure terminal, interface b-a, ip ospf cost 50]
+  # Cheaper c–d instead: 10 + 5 = 15 against 20, both ways.
+  - id: lower-c-d
+    passes: true
+    changes:
+      - router: c
+        lines: [configure terminal, interface c-d, ip ospf cost 5]
+      - router: d
+        lines: [configure terminal, interface d-c, ip ospf cost 5]
+  # Shutting a–b also sends both ways through c. The mission judges where the traffic goes,
+  # not how, so it passes; the story steers towards costs.
+  - id: shut-a-b
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, shutdown]

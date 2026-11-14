@@ -14,6 +14,7 @@ export {
 } from '#test/example-mission'
 export { FakeClock } from '#test/fake-clock'
 export { installTestGame, type TestGame, type TestGameOptions, uninstallTestGame } from '#test/install'
+export { LINK_STATE } from '#test/link-state'
 export { createFailingStorage, createMemoryStorage, type MemoryStorage } from '#test/memory-storage'
 export {
   BASELINE_OUTAGE_MS,

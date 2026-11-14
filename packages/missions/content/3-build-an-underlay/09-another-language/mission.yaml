@@ -1,0 +1,99 @@
+id: another-language
+version: 1
+title: Another Language
+summary: Give a router the NET that names it in IS-IS, and watch it become an IS-IS peer and learn a route at distance 115.
+minutes: 15
+chapter: build-an-underlay
+objective: Routers a and b are IS-IS peers over their link, and a learns b's loopback from IS-IS.
+skills: [isis-peers]
+prerequisites: [ospfv3-peers]
+teaches: [isis, isis-net]
+names: [isis-level]
+uses: [peer, lsdb, rib, administrative-distance, frr-log, cli-modes]
+
+# Two routers, one link. isisd runs on both, on the link and the loopbacks, as level-2 routers.
+# b has its NET; a has none, so it belongs to no area and turns down b's hellos with Area Mismatch.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [isisd]
+      config: |
+        interface a-b
+         ip router isis core
+         isis network point-to-point
+        !
+        interface lo
+         ip router isis core
+         isis passive
+        !
+        router isis core
+         is-type level-2-only
+         log-adjacency-changes
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [isisd]
+      config: |
+        interface b-a
+         ip router isis core
+         isis network point-to-point
+        !
+        interface lo
+         ip router isis core
+         isis passive
+        !
+        router isis core
+         is-type level-2-only
+         net 49.0001.0000.0000.0002.00
+         log-adjacency-changes
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+
+objectives:
+  - id: b-is-a-peer
+    text: Make b a's IS-IS peer on a-b, Up.
+    check: { kind: peer, router: a, protocol: isis, peer: b, interface: a-b }
+  - id: learned-b
+    text: a learns b's loopback, 10.255.0.2/32, from IS-IS.
+    check: { kind: rib, router: a, prefix: 10.255.0.2/32, protocol: isis }
+
+hints:
+  - text: Compare show isis summary on a and on b. Which lines does b have that a lacks?
+  - text: An IS-IS router is named by its NET, the area it belongs to and a system id of its own. Without one, isisd turns every hello down.
+  - text: On a, in router isis core mode, give a NET in b's area with a system id no other router has.
+    command: net 49.0001.0000.0000.0001.00
+
+chips:
+  - { command: show isis neighbor, explain: "IS-IS's peers on this router and their state" }
+  - { command: show isis summary, explain: "isisd's own state: its system id, its NET and its packet counters" }
+  - { command: router isis core, explain: "in configure mode: isisd's own settings for the instance named core" }
+  - { command: net, explain: "in router isis mode: the NET that names this router in IS-IS" }
+  - { command: show isis database, explain: "IS-IS's map on this router, one LSP per router" }
+  - { command: show ip route, explain: "zebra's table; IS-IS's routes are marked I" }
+
+codex:
+  - id: isis
+    term: IS-IS, Intermediate System to Intermediate System
+    simple: A link-state routing protocol, like OSPF. Its packets go straight onto the link, not inside IP packets.
+    deep: "In FRR, isisd runs it. Each router floods an LSP, its own list of links and networks, as OSPF floods LSAs, and every router works out its routes from the same map, show isis database. Its routes show as I in show ip route, distance 115. Since its packets carry no IP address, isisd sends and hears them on a raw Linux socket, and it names a router by its system id, not by an address."
+    deepens: lsdb
+    sources: [isisd/isis_pdu.c, isisd/isis_lsp.c, isisd/isis_spf.c]
+    docs: https://docs.frrouting.org/en/latest/isisd.html
+    tryIt: vtysh -c "show isis database"
+  - id: isis-net
+    term: NET, Network Entity Title
+    simple: The name of an IS-IS router. 49.0001.0000.0000.0002.00 is area 49.0001, system id 0000.0000.0002, and 00 at the end.
+    deep: "Typed in router isis mode: net 49.0001.0000.0000.0002.00. The system id must be unique among the routers: one that hears its own system id in a hello throws the hello away, and the log says Received IIH with own sysid. Without a NET, isisd belongs to no area and turns every hello down with Area Mismatch. The last byte is always 00 on a router."
+    sources: [isisd/isis_nb_config.c, isisd/isis_pdu.c]
+    docs: https://docs.frrouting.org/en/latest/isisd.html
+    tryIt: vtysh -c "show isis summary"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

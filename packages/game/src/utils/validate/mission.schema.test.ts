@@ -73,7 +73,7 @@ describe('validateMission', () => {
           },
         })
       ).toEqual([
-        'network.routers[0].daemons[1]: expected one of staticd, ospfd, ospf6d, isisd, bgpd, bfdd, got "ripd"',
+        'network.routers[0].daemons[1]: expected one of staticd, ospfd, ospf6d, isisd, bgpd, bfdd, vrrpd, got "ripd"',
         'network.routers[1].config: expected text, got a number',
         "network.links[1].ends: expected the link's two ends, got 1",
         'network.links[2].ends: expected a list, got text',
@@ -287,7 +287,7 @@ describe('validateMission', () => {
         ],
       })
       expect(errors).toEqual([
-        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, rib, reaches, config, got "typed"',
+        'objectives[0].check.kind: expected one of reachable, path, recovery, outage, detected-by, daemons, route, rib, reaches, config, peer, lsa, got "typed"',
         'objectives[1].check: expected "before", "after" or both: the interface traffic must leave through',
         'objectives[2].check.within: unknown field (expected one of: kind, via, withinMs)',
         'objectives[2].check.withinMs: expected a number from 1 to 9007199254740991, got 0',
@@ -381,14 +381,14 @@ describe('validateMission', () => {
           { kind: 'config', router: 'a', source: 'startup', block: 'interface lo', line: '' }
         )
       ).toEqual([
-        'objectives[0].check.daemons[1]: expected one of watchfrr, zebra, mgmtd, staticd, ospfd, ospf6d, isisd, bgpd, bfdd, got "ripd"',
+        'objectives[0].check.daemons[1]: expected one of watchfrr, zebra, mgmtd, staticd, ospfd, ospf6d, isisd, bgpd, bfdd, vrrpd, got "ripd"',
         'objectives[1].check.daemons: expected at least one daemon',
         'objectives[2].check: expected "prefix" (that exact route) or "to" (the route an address would use), not both',
         'objectives[3].check: expected "prefix" (that exact route) or "to" (the route an address would use), not both',
         'objectives[4].check.to: expected an address like 10.0.1.2, got "10.0.2.0/30"',
         'objectives[4].check.protocol: expected a protocol as ip route names it, like static, got "Static"',
         'objectives[4].check.via: expected an address like 10.0.1.2, got "b"',
-        'objectives[5].check.to: expected an address like 10.0.1.2, got "c"',
+        'objectives[5].check.to: expected an address like 10.0.1.2 or fd00::2, got "c"',
         'objectives[5].check.minReplies: expected a number from 1 to 3, got 4',
         'objectives[6].check.source: expected one of running, saved, started, got "startup"',
         'objectives[6].check.block: expected a list, got text',
@@ -417,10 +417,67 @@ describe('validateMission', () => {
       })
       expect(checkOf({ ...backup, prefix: '10.255.0.3', via: 'b', selected: 'no', distance: 10 })).toEqual([
         'objectives[0].check.distance: unknown field (expected one of: kind, router, prefix, protocol, via, selected)',
-        'objectives[0].check.via: expected an address like 10.0.1.2, got "b"',
+        'objectives[0].check.via: expected an address like 10.0.1.2 or fd00::2, got "b"',
         'objectives[0].check.selected: expected true or false, got text',
-        'objectives[0].check.prefix: expected a prefix like 10.0.1.0/30, got "10.255.0.3"',
+        'objectives[0].check.prefix: expected a prefix like 10.0.1.0/30 or fd00::2/128, got "10.255.0.3"',
       ])
+    })
+
+    it('reads the checks and fields stage 3 needs: peer, lsa, vias, size and IPv6', () => {
+      const checkOf = (check: Readonly<Record<string, unknown>>) => {
+        const result = validateMission({ ...STATE, objectives: [{ ...FRR_RUNS, check }] })
+        return result.ok ? result.value.objectives[0]?.check : result.errors
+      }
+      const peer = { kind: 'peer', router: 'a', protocol: 'isis', peer: 'b', interface: 'a-b', level: 1 }
+      expect(checkOf(peer)).toEqual(peer)
+      expect(checkOf({ ...peer, protocol: 'ospf' })).toEqual([
+        'objectives[0].check.level: only an IS-IS peer has a level',
+        'objectives[0].check.peer: expected a dotted id like 10.255.0.2 or 0.0.0.1, got "b"',
+      ])
+      const summary = {
+        kind: 'lsa',
+        router: 'a',
+        type: 'summary',
+        area: '0.0.0.1',
+        id: '10.255.0.3',
+        advRouter: '10.255.0.2',
+      }
+      expect(checkOf(summary)).toEqual(summary)
+      expect(checkOf({ kind: 'lsa', router: 'a', type: 'external', id: '192.0.2.0', absent: true })).toEqual({
+        kind: 'lsa',
+        router: 'a',
+        type: 'external',
+        id: '192.0.2.0',
+        absent: true,
+      })
+      expect(checkOf({ kind: 'lsa', router: 'a', type: 'router', id: '10.255.0.3' })).toEqual([
+        'objectives[0].check: expected "area": a router LSA sits in one area\'s database',
+      ])
+      expect(checkOf({ kind: 'lsa', router: 'a', type: 'external', area: '0.0.0.0', id: '192.0.2.0' })).toEqual([
+        'objectives[0].check.area: an external LSA belongs to no area: leave "area" out',
+      ])
+      const ecmp = { kind: 'route', router: 'a', to: '10.255.0.4', protocol: 'ospf', vias: ['10.0.1.2', '10.0.2.2'] }
+      expect(checkOf(ecmp)).toEqual(ecmp)
+      expect(checkOf({ ...ecmp, via: '10.0.1.2', vias: ['10.0.1.2'] })).toEqual([
+        'objectives[0].check: expected "via" (one next hop) or "vias" (every next hop), not both',
+        'objectives[0].check.vias: expected two or more different next hops; for one, use "via"',
+      ])
+      expect(checkOf({ kind: 'reaches', from: 'a', to: 'fd00::3', size: 2000 })).toEqual({
+        kind: 'reaches',
+        from: 'a',
+        to: 'fd00::3',
+        minReplies: 2,
+        size: 2000,
+      })
+      expect(checkOf({ kind: 'reaches', from: 'a', to: '10.0.1.2', size: 20000 })).toEqual([
+        'objectives[0].check.size: expected a number from 0 to 9000, got 20000',
+      ])
+      expect(checkOf({ kind: 'rib', router: 'a', prefix: 'fd00::3/128', protocol: 'ospf6' })).toEqual({
+        kind: 'rib',
+        router: 'a',
+        prefix: 'fd00::3/128',
+        protocol: 'ospf6',
+      })
     })
 
     it('reads a config check’s absent flag, kept only when true', () => {

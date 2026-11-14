@@ -1,0 +1,133 @@
+id: the-shared-map
+version: 1
+title: The Shared Map
+summary: Read OSPF's link-state database, find the router whose loopback is missing from it, and add it.
+minutes: 15
+chapter: build-an-underlay
+objective: c's loopback is in OSPF's database, a has learned it from OSPF, and a reaches it.
+skills: [ospf-lsdb]
+prerequisites: [ospf-peers]
+teaches: [lsdb, router-lsa, ospf-passive]
+names: []
+uses: [ospf, peer, ospf-interface-area, rib]
+
+# A triangle, every link in area 0, every router a peer of the other two. a and b have their
+# loopbacks in OSPF; c's lo has no area, so c's router-LSA lists its links and not 10.255.0.3.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [ospfd]
+      config: |
+        interface a-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface a-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface b-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd]
+      config: |
+        interface c-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface c-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: a, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: b, address: 10.0.3.1/30 }
+        - { router: c, address: 10.0.3.2/30 }
+
+objectives:
+  - id: learned-c
+    text: a learns c's loopback, 10.255.0.3/32, from OSPF.
+    check: { kind: rib, router: a, prefix: 10.255.0.3/32, protocol: ospf }
+  - id: reaches-c
+    text: Reach c's loopback, 10.255.0.3, from a.
+    check: { kind: reaches, from: a, to: 10.255.0.3 }
+
+hints:
+  - text: On a, read show ip ospf database router 10.255.0.3. What does c tell the others it is connected to?
+  - text: A router lists in its router-LSA only the interfaces OSPF runs on. An interface joins OSPF with an area.
+  - text: On c, in interface mode for lo, give it area 0. Make it passive too, since no router listens there.
+    command: ip ospf area 0
+
+chips:
+  - { command: show ip ospf database, explain: "OSPF's database: one line per LSA, the same on every router" }
+  - { command: show ip ospf database router, explain: "each router-LSA in full; add a router id for one router's" }
+  - { command: show ip ospf interface, explain: "the interfaces OSPF runs on, and whether each is passive" }
+  - { command: ip ospf area 0, explain: "in interface mode: run OSPF on this interface, in area 0" }
+  - { command: ip ospf passive, explain: "in interface mode: advertise this interface, send no hellos on it" }
+  - { command: show ip route, explain: "zebra's table; OSPF's routes are marked O" }
+
+codex:
+  - id: lsdb
+    term: The link-state database
+    simple: Everything OSPF has heard, kept by every router. Routers in one area hold the same copy, and each works out its routes from it.
+    deep: "show ip ospf database lists one line per LSA, link-state advertisement: who sent it, its age in seconds, and its sequence number. A router that changes sends its LSA again with the number one higher, and every peer floods it on, so within seconds every copy matches again. Only the router that wrote an LSA changes it."
+    sources: [ospfd/ospf_lsdb.c, ospfd/ospf_flood.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf database"
+  - id: router-lsa
+    term: A router-LSA
+    simple: One router's entry in the database. It lists the router's OSPF links and networks, each with its cost.
+    deep: "Each router writes its own router-LSA, with its router id as Link State ID. A point-to-point link to a peer is listed as another router, the link's network as a stub network, and a passive loopback as a stub network with mask 255.255.255.255. An interface without an OSPF area is in no list at all, so no router learns its network."
+    sources: [ospfd/ospf_lsa.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf database router self-originate"
+  - id: ospf-passive
+    term: ip ospf passive
+    simple: An interface OSPF advertises but sends no hellos on. Used where no OSPF router listens, such as lo.
+    deep: "A passive interface's network still goes into the router's router-LSA, so every router learns it. No hello leaves it and none heard there is answered, so no peer ever forms on it. show ip ospf interface lo says No Hellos (Passive interface). On a link to another router, passive means no peer."
+    sources: [ospfd/ospf_interface.c, ospfd/ospf_vty.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf interface lo"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

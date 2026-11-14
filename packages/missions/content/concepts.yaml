@@ -51,9 +51,65 @@ concepts:
   # Named in stages 1 and 2, taught later
   - { id: mgmtd, term: "mgmtd, FRR's management daemon", part: frr }
   - { id: pathspace, term: "one Machine, many routers: FRR's -N <name>", part: frr, codex: pathspace }
-  - { id: peer, term: a peer, part: foundations }
-  - { id: ipv6, term: IPv6 addresses and routes, part: linux }
-  # Stage 4, Recover from failure (stage 3 will teach the OSPF neighbor)
-  - { id: ospf-adjacency, term: OSPF neighbor, part: ospf }
+  - { id: ipv6, term: IPv6 addresses and routes, part: linux, codex: ipv6 }
+  # Stage 3, Build an underlay
+  - { id: ospf, term: "OSPF: routers tell each other what they are connected to", part: ospf, codex: ospf }
+  - { id: peer, term: a peer, part: foundations, codex: peer }
+  - {
+      id: ospf-interface-area,
+      term: "ip ospf area: OSPF on an interface, in an area",
+      part: ospf,
+      codex: ospf-interface-area,
+    }
+  - { id: lsdb, term: "the link-state database: the same map on every router", part: ospf, codex: lsdb }
+  - { id: router-lsa, term: "a router-LSA: one router's links and their costs", part: ospf, codex: router-lsa }
+  - { id: ospf-passive, term: "a passive interface: advertised, no hellos", part: ospf, codex: ospf-passive }
+  - { id: mtu, term: "MTU, the largest packet an interface sends", part: linux, codex: mtu }
+  - {
+      id: ospf-adjacency,
+      term: "an adjacency: ExStart, Exchange, Loading, then Full",
+      part: ospf,
+      codex: ospf-adjacency,
+    }
+  - { id: ospf-cost, term: "an interface's OSPF cost, and a path's cost as their sum", part: ospf, codex: ospf-cost }
+  - { id: spf, term: "SPF: each router's shortest paths from the shared map", part: ospf, codex: spf }
+  - {
+      id: ospf-maximum-paths,
+      term: "maximum-paths: how many equal paths ospfd hands zebra",
+      part: ospf,
+      codex: ospf-maximum-paths,
+    }
+  - {
+      id: redistribution,
+      term: bringing routes from another source into a protocol,
+      part: routing,
+      codex: redistribution,
+    }
+  - { id: external-lsa, term: "an external LSA, E2, and the ASBR that sends it", part: ospf, codex: external-lsa }
+  - { id: ospf-area, term: "an OSPF area, and area 0 the backbone", part: ospf, codex: ospf-area }
+  - { id: ospf-abr, term: an area border router, part: ospf, codex: ospf-abr }
+  - {
+      id: summary-lsa,
+      term: "a summary-LSA: another area's network, as the ABR hands it on",
+      part: ospf,
+      codex: summary-lsa,
+    }
+  - { id: ospfv3, term: "OSPFv3, OSPF for IPv6, run by ospf6d", part: ospf, codex: ospfv3 }
+  - { id: link-local, term: "a link-local address, fe80::, valid on one link only", part: linux, codex: link-local }
+  - { id: isis, term: "IS-IS: a link-state protocol that talks straight onto the link", part: isis, codex: isis }
+  - { id: isis-net, term: "a NET: the area and the system id that name an IS-IS router", part: isis, codex: isis-net }
+  - {
+      id: isis-level,
+      term: "IS-IS levels 1 and 2, and the level-1-2 router between them",
+      part: isis,
+      codex: isis-level,
+    }
+  - {
+      id: attached-bit,
+      term: "the attached bit: a level-1-2 router's offer of a way out",
+      part: isis,
+      codex: attached-bit,
+    }
+  # Stage 4, Recover from failure
   - { id: ospf-dead-interval, term: OSPF hellos and the dead timer, part: ospf, codex: ospf-dead-interval }
   - { id: bfd, term: BFD, part: bfd, codex: bfd }

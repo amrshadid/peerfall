@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ISIS_ADJACENCY_LINE, OSPF_MTU_LINE, OSPF6_ADJACENCY_LINE } from '#test/index'
 import { parseEventLine } from '#utils/events/event-parser.util'
 
 // Every line here is copied from a run on the Machine (FRR 10.6.1), not typed.
@@ -178,8 +179,41 @@ describe('the Machine’s event lines', () => {
     })
   })
 
+  it('reads an OSPFv3 adjacency change', () => {
+    expect(parseEventLine(OSPF6_ADJACENCY_LINE)).toEqual({
+      timeMs: at('2026-11-14T11:23:16.233Z'),
+      event: {
+        type: 'ospf6_adjacency_change',
+        router: 'a',
+        neighbor: '10.255.0.2',
+        interface: 'a-b',
+        from: 'Loading',
+        to: 'Full',
+        reason: 'LoadingDone',
+      },
+    })
+  })
+
+  it('reads an IS-IS adjacency change, the peer named by its system id', () => {
+    expect(parseEventLine(ISIS_ADJACENCY_LINE)).toEqual({
+      timeMs: at('2026-11-14T11:23:06.753Z'),
+      event: {
+        type: 'isis_adjacency_change',
+        router: 'a',
+        neighbor: '0000.0000.0002',
+        interface: 'a-b',
+        level: 2,
+        from: 'Initializing',
+        to: 'Up',
+        reason: 'unspecified',
+      },
+    })
+  })
+
   it('passes over everything else in a log', () => {
     for (const line of [
+      // Repeated every 5 s while the MTUs differ: an event for it would keep the network from ever settling.
+      OSPF_MTU_LINE,
       'frr a 2026/11/12 17:33:53.090 OSPF: [PBVCE-PQKR1] NSM[a-c:10.0.2.1:10.255.0.3:default]: Full (InactivityTimer)',
       'frr a 2026/11/12 17:33:43.956 BFD: [PSB4R-8T1TJ] session-new: mhop:no peer:10.0.2.2 local:10.0.2.1 vrf:default ifname:a-c',
       'frr a 2026/11/12 17:33:45.271 BFD: [W4WS3-T557J]   calculated xmt_TO=300000 (using slowest rate)',

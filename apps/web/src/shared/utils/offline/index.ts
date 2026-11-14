@@ -6,12 +6,17 @@ export {
   RUNTIME_CACHE,
   SW_FILE,
   SW_MANIFEST_TOKEN,
+  SW_WARM_MESSAGE,
   VM_DIR,
   VM_FILE_CACHE,
+  VM_FILE_LIST,
   VM_MANIFEST,
+  VM_WARM_CONCURRENCY,
 } from './offline-cache.constants'
 export {
   appCacheName,
+  imageFilesOf,
+  imageListUrl,
   injectSwManifest,
   isStaleAppCache,
   type OfflineRequest,

@@ -13,6 +13,18 @@
   gap: 1rem;
 }
 
+/* The host's 404 page prints the address that was asked for, as the Machine's `ls` would. */
+.not-found__path {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  max-width: 100%;
+  overflow-x: auto;
+  border: var(--rule-thin);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
 .not-found__sheet h1 {
   font-size: 2.25rem;
   font-variation-settings: "wdth" 125;

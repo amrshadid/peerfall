@@ -1,0 +1,133 @@
+id: bring-it-in
+version: 1
+title: Bring It In
+summary: Bring a static route into OSPF with redistribute static, and read the external route it becomes on the other routers.
+minutes: 20
+chapter: build-an-underlay
+objective: Router a learns the customer's address, 192.0.2.1, from OSPF, and reaches it.
+skills: [ospf-redistribute]
+prerequisites: [ospf-ecmp]
+teaches: [redistribution, external-lsa]
+names: []
+uses: [ospf, peer, lsdb, router-lsa, static-route, rib, return-path, ttl, cli-modes]
+
+# A line: a, b and c run OSPF; d is a customer's router that runs no OSPF. c reaches the
+# customer's address 192.0.2.1 by a static route, and d sends everything back to c by a default
+# route. Only c knows 192.0.2.1: its router ospf has no redistribute static.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      # staticd too, so that a static route typed on a is kept: a wrong way to the customer.
+      daemons: [ospfd, staticd]
+      config: |
+        interface a-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface b-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd, staticd]
+      config: |
+        ip route 192.0.2.1/32 10.0.3.2
+        !
+        interface c-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+    - name: d
+      loopback: 192.0.2.1/32
+      daemons: [staticd]
+      config: |
+        ip route 0.0.0.0/0 10.0.3.1
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: c, address: 10.0.3.1/30 }
+        - { router: d, address: 10.0.3.2/30 }
+
+objectives:
+  - id: a-learns-it
+    text: Make a learn the customer's address, 192.0.2.1/32, from OSPF.
+    check: { kind: rib, router: a, prefix: 192.0.2.1/32, protocol: ospf }
+  - id: a-reaches-it
+    text: Reach the customer's address, 192.0.2.1, from a.
+    check: { kind: reaches, from: a, to: 192.0.2.1 }
+
+hints:
+  - text: Which router knows 192.0.2.1, and from where? Read show ip route 192.0.2.1 on c, then show ip ospf database on a.
+  - text: OSPF puts on its map only the interfaces it runs on. A route from another source, such as staticd, reaches the other routers only once the router that holds it brings it into OSPF.
+  - text: On c, in router ospf mode, bring in the routes staticd holds.
+    command: redistribute static
+
+chips:
+  - { command: show ip route, explain: "zebra's table; S is static, O is OSPF" }
+  - { command: show ip ospf database, explain: "OSPF's map on this router, one line per LSA" }
+  - { command: router ospf, explain: "in configure mode: enter ospfd's own settings" }
+  - { command: redistribute, explain: "in router ospf mode: bring routes of another source into OSPF" }
+  - { command: show ip ospf route, explain: "ospfd's own table, its external routes included" }
+  - { command: ping -c 3, explain: "send three packets and count the replies" }
+  - { command: traceroute -n, explain: "the routers a packet passes through, one line each" }
+
+codex:
+  - id: redistribution
+    term: Redistribution
+    simple: Bringing routes from another source, such as staticd or the connected routes, into a routing protocol, which then tells its peers.
+    deep: "In router ospf mode, redistribute static takes every static route zebra has selected and sends each as an external LSA. Only the router that types it brings routes in, and only the ones it holds: redistribute static on a router with no static route sends nothing. redistribute connected brings in the networks of its interfaces that OSPF does not run on. Without a route-map, everything of that source goes."
+    sources: [ospfd/ospf_zebra.c, ospfd/ospf_asbr.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show running-config"
+  - id: external-lsa
+    term: External LSA, E2
+    simple: An LSA for a route from outside OSPF, sent by the router that brought it in, its ASBR. Every router of the network gets it.
+    deep: "show ip ospf database lists it under AS External Link States. It carries a metric, 20 by default, and its type: E2 keeps that metric however far the route travels, so every router's zebra shows metric 20. ospfd still finds the shortest way to the ASBR: show ip ospf route prints both, [20/20] on a. ASBR is short for autonomous system boundary router; the autonomous system is every router this OSPF reaches."
+    deepens: lsdb
+    sources: [ospfd/ospf_lsa.c, ospfd/ospf_ase.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf database external"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

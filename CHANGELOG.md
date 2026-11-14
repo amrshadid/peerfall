@@ -9,6 +9,18 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ### Added
 
+- **Stage 3, Build an underlay, in eleven missions:** Say Hello, The Shared Map, Never
+  Reached Full, The Cheaper Way, Two Ways at Once, Bring It In, Draw the Borders, The Same Map
+  in IPv6, Another Language, Two Levels, and the capstone Build the Underlay. OSPF peers and
+  their states, the link-state database, an MTU mismatch, costs and path prediction, equal-cost
+  paths, redistribution, areas, OSPFv3, IS-IS and its levels. Guided by ospfd, ospf6d and
+  isisd, each with a portrait. Every mission was fact-checked by a reviewer who did not write
+  it and played end to end in the app. The Link That Never Went Down now opens after it.
+- **New checks for the underlay:** an OSPF, OSPFv3 or IS-IS neighbor and its state, an LSA in
+  the OSPF database, equal-cost next hops, IPv6 routes and pings, pings of a given size, and
+  an MTU on a link end.
+- **A loading sheet** in the manual's frame while the game starts, in the theme you chose.
+
 - **A shared link shows a card, and search engines get the site's address.** A link to the
   public site now carries the title screen as its picture, with the game's name and what
   it teaches. The page names its canonical address, says it is a free game and who made
@@ -31,6 +43,22 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   order as before. A Missions / Skills switch names each stop by its mission or its first
   skill, and the side panel adds Skill, Needs (each skill met or not), Time and the
   mission's Codex cards.
+- **A fault run the tab was hidden for is not judged.** Switching away while the link is
+  broken leaves no verdict, baseline or attempt; the Guide and the status line say why, and
+  Break the link runs it again. A tab hidden while no run is going on changes nothing.
+- **Missions not played yet start offline too.** Once a network is up, the rest of the Linux
+  machine (about 7 MB) is cached in the background; before, only the files a mission had
+  already opened were kept, and a network whose daemons had never run could not be built
+  offline.
+- **The README says what the first visit downloads:** about 0.3 MB until the title screen is
+  usable, about 15 MB until the first mission's terminal is ready.
+- **Objectives explain the new checks:** an OSPF or IS-IS neighbor missing or not yet Full
+  ("still in ExStart"), an LSA missing from the OSPF database or still in it, and pings of a
+  given size ("2000-byte pings: 0 of 3 answered"), each with its term in plain words.
+- **A wrong address on the site shows the game's own "No such page".** An address that is
+  no file of the site, like `/nope`, got the host's bare text page. It now gets a page in
+  the manual's style, in the theme you chose, with the address as the Machine's `ls` would
+  report it and a way back to the title, as in Kernelfall.
 
 ### Fixed
 

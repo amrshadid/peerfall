@@ -63,8 +63,19 @@ export const VOCABULARY: readonly VocabularyRule[] = [
     means: 'a router a routing protocol talks to, from stage 3; before it, a neighbour',
     pattern: /\bpeers?\b/i,
     // The story's frame: the opening, where every router has lost its peers, and stage 2's
-    // hand-off to stage 3, where they come back.
-    only: ['the-dark-cable', 'bring-the-line-up', 'the-link-that-never-went-down'],
+    // hand-off to stage 3, where they come back. From stage 3 on it is the word's own meaning.
+    only: ['the-dark-cable', 'bring-the-line-up'],
+    chapters: [
+      'build-an-underlay',
+      'recover-from-failure',
+      'other-interior-protocols',
+      'exchange-routes',
+      'control-what-is-advertised',
+      'isolate-and-connect-tenants',
+      'label-and-steer',
+      'deliver-multicast',
+      'operate-a-network',
+    ],
   },
   {
     // "Message" is left out: a log line is a message, in FRR's words and in the stories.
@@ -99,6 +110,9 @@ export const VOCABULARY: readonly VocabularyRule[] = [
     word: 'stage',
     means: 'one part of the journey; never a level, an act or a chapter',
     pattern: /\b(levels?|acts?|chapters?)\b/i,
+    // IS-IS's levels are FRR's own word (is-type level-1, Level-1 link-state database): the two
+    // IS-IS missions use it for that, and 3.9's Debrief names the next one, Two Levels.
+    only: ['another-language', 'two-levels'],
   },
   {
     word: 'mission',
@@ -123,5 +137,16 @@ export const ENFORCED_MISSIONS: readonly MissionId[] = [
   'written-but-not-used',
   'the-backup-path',
   'bring-the-line-up',
+  'say-hello',
+  'the-shared-map',
+  'never-reached-full',
+  'the-cheaper-way',
+  'two-ways-at-once',
+  'bring-it-in',
+  'draw-the-borders',
+  'the-same-map-in-ipv6',
+  'another-language',
+  'two-levels',
+  'build-the-underlay',
   'the-link-that-never-went-down',
 ]

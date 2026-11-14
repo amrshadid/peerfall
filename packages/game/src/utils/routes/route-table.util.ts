@@ -1,4 +1,4 @@
-import { IPV4, type StampedMachineEvent } from '@peerfall/machine/types'
+import { IPV4, IPV6, type StampedMachineEvent } from '@peerfall/machine/types'
 import type { RouteHop } from '#types/definitions/checks'
 import { inTimeOrder } from '#utils/events/index'
 
@@ -32,8 +32,53 @@ function parsePrefix(prefix: string): Prefix | null {
   return { network, length: bits }
 }
 
-/** Whether two prefixes are the same network, however they are written: `10.255.0.3` is `10.255.0.3/32`. */
+/** An IPv6 address as its eight 16-bit groups, `::` filled in; `null` if it isn't one. */
+function ipv6Groups(address: string): number[] | null {
+  if (!IPV6.test(address)) {
+    return null
+  }
+  const halves = address.split('::')
+  const groupsOf = (part: string | undefined) =>
+    part ? part.split(':').map((group) => Number.parseInt(group, 16)) : []
+  const head = groupsOf(halves[0])
+  const tail = groupsOf(halves[1])
+  const missing = 8 - head.length - tail.length
+  if (halves.length === 1 ? missing !== 0 : missing < 1) {
+    return null
+  }
+  const groups = [...head, ...Array<number>(halves.length === 1 ? 0 : missing).fill(0), ...tail]
+  return groups.some(Number.isNaN) ? null : groups
+}
+
+/** An IPv6 prefix as its network's groups, the bits past its length cleared, and the length. */
+function parsePrefix6(prefix: string): { readonly groups: readonly number[]; readonly length: number } | null {
+  const [address = '', length = '128', ...rest] = prefix.split('/')
+  const groups = ipv6Groups(address)
+  const bits = Number(length)
+  if (groups === null || rest.length > 0 || !Number.isInteger(bits) || bits < 0 || bits > 128) {
+    return null
+  }
+  const masked = groups.map((group, at) => {
+    const kept = Math.min(16, Math.max(0, bits - at * 16))
+    return kept === 0 ? 0 : group - (group % 2 ** (16 - kept))
+  })
+  return { groups: masked, length: bits }
+}
+
+/**
+ * Whether two prefixes are the same network, however they are written: `10.255.0.3` is
+ * `10.255.0.3/32`, and `fd00:0::3/128` is `fd00::3/128`.
+ */
 export function samePrefix(first: string, second: string): boolean {
+  if (first.includes(':') || second.includes(':')) {
+    const [one, other] = [parsePrefix6(first), parsePrefix6(second)]
+    return (
+      one !== null &&
+      other !== null &&
+      one.length === other.length &&
+      one.groups.every((group, at) => group === other.groups[at])
+    )
+  }
   const [one, other] = [parsePrefix(first), parsePrefix(second)]
   return one !== null && other !== null && one.network === other.network && one.length === other.length
 }

@@ -1,4 +1,4 @@
-import type { DetectionEvent } from '@peerfall/game/types'
+import type { DetectionEvent, PeerProtocol } from '@peerfall/game/types'
 
 /** What noticed a dead neighbor, as a player reads it. */
 export const DETECTOR_NAMES: Readonly<Record<DetectionEvent, string>> = {
@@ -24,7 +24,17 @@ export const TERMS = {
     'A daemon is one of the programs FRR is made of: each routing protocol has its own, and `zebra` hands their routes to the kernel.',
   configuration:
     'The running configuration is what a router uses right now; the saved one, `frr.conf`, is what it starts with after a restart.',
+  peer: 'A neighbor is a router the routing protocol talks to over a link. OSPF neighbors pass through states, Init, 2-Way, ExStart, Exchange, Loading, until Full: their databases are swapped. IS-IS neighbors end Up.',
+  lsa: "OSPF's database holds LSAs, link-state advertisements: each router describes its links in one, and every router in an area keeps a copy of each.",
+  size: 'The size is the bytes of data in each packet. A link carries packets only up to a size of its own, its MTU.',
 } as const
+
+/** Each routing protocol a `peer` check reads, and its daemon, as a player reads them. */
+export const PEER_PROTOCOL_NAMES = {
+  ospf: { name: 'OSPF', daemon: 'ospfd' },
+  ospf6: { name: 'OSPFv3', daemon: 'ospf6d' },
+  isis: { name: 'IS-IS', daemon: 'isisd' },
+} as const satisfies Readonly<Record<PeerProtocol, { name: string; daemon: string }>>
 
 /** Reads after "Last run:". */
 export const NOT_TESTED = 'the link was not broken, and this is judged only when it breaks. Use **Break the link**.'

@@ -13,6 +13,14 @@ const game = vi.hoisted(() => ({
   baseline: null as unknown,
 }))
 
+const tab = vi.hoisted(() => ({ duringRun: () => {} }))
+
+/** jsdom's tab is always visible; this one can be switched away from. */
+function setVisibility(state: DocumentVisibilityState) {
+  Object.defineProperty(document, 'visibilityState', { value: state, configurable: true })
+  document.dispatchEvent(new Event('visibilitychange'))
+}
+
 vi.mock('@peerfall/game/hooks', () => ({
   createMissionActions: () => ({
     judge: () => ({ success: true, data: game.verdict }),
@@ -41,7 +49,11 @@ vi.mock('#utils/run/mission-run.util', () => ({
   probeRun: vi.fn(),
   waitUntilSettled: async () => true,
   routingChangeCount: () => 0,
-  faultRun: async () => ({ ok: true, events: [] }),
+  faultRun: async () => {
+    // What happens in the browser while the link is broken.
+    tab.duringRun()
+    return { ok: true, events: [] }
+  },
   liveRead: async () => ({ ok: true, events: [], state: { routers: {}, pings: [] } }),
 }))
 
@@ -112,5 +124,86 @@ describe('the attempts a mission records', () => {
 
     await act(() => result.current.runFault())
     expect(game.submitRun).toHaveBeenCalledOnce()
+  })
+})
+
+describe('a fault run the tab was hidden for', () => {
+  afterEach(() => {
+    cleanup()
+    game.submitRun.mockClear()
+    game.saveBaseline.mockClear()
+    game.baseline = null
+    game.verdict = null
+    tab.duringRun = () => {}
+    setVisibility('visible')
+  })
+
+  it('is not judged: no verdict, no baseline, no attempt, and it says why', async () => {
+    game.verdict = null
+    const { result } = await readyRun()
+
+    game.verdict = PASSED
+    tab.duringRun = () => {
+      setVisibility('hidden')
+      setVisibility('visible')
+    }
+    await act(() => result.current.runFault())
+
+    expect(result.current.voided?.reason).toBe('hidden')
+    expect(result.current.verdict).toBeNull()
+    expect(game.saveBaseline).not.toHaveBeenCalled()
+    expect(game.submitRun).not.toHaveBeenCalled()
+  })
+
+  it('is not judged when it ends with the tab still hidden', async () => {
+    game.verdict = FELL_SHORT
+    const { result } = await readyRun()
+
+    tab.duringRun = () => setVisibility('hidden')
+    await act(() => result.current.runFault())
+
+    expect(result.current.voided?.reason).toBe('hidden')
+    expect(game.saveBaseline).not.toHaveBeenCalled()
+  })
+
+  it('leaves the next run, made with the tab in front, to be judged as usual', async () => {
+    game.verdict = FELL_SHORT
+    const { result } = await readyRun()
+    tab.duringRun = () => {
+      setVisibility('hidden')
+      setVisibility('visible')
+    }
+    await act(() => result.current.runFault())
+    expect(result.current.voided).not.toBeNull()
+
+    tab.duringRun = () => {}
+    await act(() => result.current.runFault())
+    expect(result.current.voided).toBeNull()
+    expect(game.saveBaseline).toHaveBeenCalledOnce()
+  })
+
+  it('voids nothing when the tab was hidden while no run was going on', async () => {
+    game.verdict = FELL_SHORT
+    const { result } = await readyRun()
+    setVisibility('hidden')
+    setVisibility('visible')
+
+    await act(() => result.current.runFault())
+    expect(result.current.voided).toBeNull()
+    expect(game.saveBaseline).toHaveBeenCalledOnce()
+  })
+
+  it('is forgotten on Start over', async () => {
+    game.verdict = FELL_SHORT
+    const { result } = await readyRun()
+    tab.duringRun = () => {
+      setVisibility('hidden')
+      setVisibility('visible')
+    }
+    await act(() => result.current.runFault())
+    expect(result.current.voided).not.toBeNull()
+
+    await act(() => result.current.startOver())
+    expect(result.current.voided).toBeNull()
   })
 })

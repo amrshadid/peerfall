@@ -1,0 +1,147 @@
+id: two-ways-at-once
+version: 1
+title: Two Ways at Once
+summary: Find why OSPF hands zebra only one of two equal paths, and let it use both with maximum-paths.
+minutes: 15
+chapter: build-an-underlay
+objective: Router a sends to d's loopback over both equal paths at once, through b and through c.
+skills: [ospf-ecmp]
+prerequisites: [ospf-cost]
+teaches: [ospf-maximum-paths]
+names: []
+uses: [ospf, ospf-cost, spf, ecmp, rib, fib, running-config, cli-help, cli-modes]
+
+# The Cheaper Way's square, every interface at its default cost, 10: a reaches d through b
+# for 20 and through c for 20. a's router ospf says maximum-paths 1, so OSPF hands zebra one
+# next hop only.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      # staticd too, so that static routes typed on a are kept: a wrong way to two next hops.
+      daemons: [ospfd, staticd]
+      config: |
+        interface a-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface a-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+         maximum-paths 1
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface b-d
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd]
+      config: |
+        interface c-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface c-d
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+    - name: d
+      loopback: 10.255.0.4/32
+      daemons: [ospfd]
+      config: |
+        interface d-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface d-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.4
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: a, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: b, address: 10.0.3.1/30 }
+        - { router: d, address: 10.0.3.2/30 }
+    - ends:
+        - { router: c, address: 10.0.4.1/30 }
+        - { router: d, address: 10.0.4.2/30 }
+
+objectives:
+  - id: both-paths
+    text: Make a send to d's loopback, 10.255.0.4, through b and through c at once, on OSPF's route.
+    check: { kind: route, router: a, to: 10.255.0.4, protocol: ospf, vias: [10.0.1.2, 10.0.2.2] }
+
+hints:
+  - text: On a, compare ospfd's table, show ip ospf route, with zebra's, show ip route 10.255.0.4. How many ways to d does each list?
+  - text: ospfd finds every equal path, then hands zebra no more of them than a limit under router ospf allows. That limit is in a's running configuration.
+  - text: In a's router ospf mode, remove the limit, or raise it to 2 or more.
+    command: no maximum-paths 1
+
+chips:
+  - { command: show ip ospf route, explain: "ospfd's own table: each network's cost and every equal path it found" }
+  - { command: show ip route, explain: "zebra's table; OSPF's routes are marked O" }
+  - { command: show running-config, explain: "what the daemons run now, router ospf included" }
+  - { command: router ospf, explain: "in configure mode: enter ospfd's own settings" }
+  - { command: maximum-paths, explain: "in router ospf mode: the most equal paths ospfd hands zebra for one network" }
+  - { command: ip route show, explain: "in the shell: the kernel's route, one nexthop via line per path" }
+  - { command: traceroute -n, explain: "the routers a packet passes through, one line each" }
+
+codex:
+  - id: ospf-maximum-paths
+    term: maximum-paths
+    simple: The most equal-cost paths ospfd hands zebra for one network. FRR's default here is 256; maximum-paths 1 keeps a single one.
+    deep: "Set in router ospf mode. ospfd's shortest path first still finds every equal path, and show ip ospf route lists them all: the limit applies only when ospfd hands its routes to zebra, which puts them in the kernel as one route with a nexthop via line per path. no maximum-paths puts back the default, and show ip ospf prints it as Maximum multiple paths(ECMP) supported."
+    deepens: ecmp
+    sources: [ospfd/ospf_zebra.c, ospfd/ospf_vty.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf route"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

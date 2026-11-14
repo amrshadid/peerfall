@@ -1,1 +1,1 @@
-export { hasStateChecks, runStatusOf, waitReasonOf } from './run-text.util'
+export { hasStateChecks, runStatusOf, voidedRunStatusOf, waitReasonOf } from './run-text.util'

@@ -1,7 +1,14 @@
 import type { Notice } from '@features/notices/types'
 import { describe, expect, it } from 'vitest'
 import { MAX_NOTICES } from './notices.constants'
-import { codexFiledNotice, missionPassedNotice, pushNotice, saveFailedNotice, shownNotice } from './notices.util'
+import {
+  codexFiledNotice,
+  missionPassedNotice,
+  pushNotice,
+  runVoidedNotice,
+  saveFailedNotice,
+  shownNotice,
+} from './notices.util'
 
 const info = (id: string): Notice => ({ id, kind: 'info', kicker: 'Note', text: id, sticky: false })
 
@@ -16,6 +23,13 @@ describe('notices', () => {
   it('names the cards a pass filed, and says nothing when it filed none', () => {
     expect(codexFiledNotice('m', ['the RIB'], 1)).toMatchObject({ kicker: 'Card filed in the Codex', text: 'the RIB' })
     expect(codexFiledNotice('m', [], 1)).toBeNull()
+  })
+
+  it('says a run was not judged, and tells two such runs apart', () => {
+    const first = runVoidedNotice(1)
+    expect(first).toMatchObject({ kind: 'info', kicker: 'Run not judged', sticky: false })
+    expect(first.text).toContain('hidden')
+    expect(runVoidedNotice(2).id).not.toBe(first.id)
   })
 
   it('keeps a failed save on show until it is dismissed', () => {

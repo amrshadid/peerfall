@@ -46,6 +46,18 @@ export interface RunTimings {
   /** A network counts as settled when it met the conditions and nothing changed for this long. */
   readonly settleMs: number
   readonly settleTimeoutMs: number
+  /**
+   * How long settling waits for every link's adjacencies to come up. After that a link whose peers
+   * never formed (OSPF missing on one end, an MTU mismatch) is the network as it is, not one still
+   * converging: OSPF's dead interval, 40 s, is four hellos, and a peer that can form has formed.
+   */
+  readonly adjacencyWaitMs: number
+  /**
+   * How long a network with an IS-IS link must stay unchanged to count as settled. isisd holds back
+   * regenerating its own LSP after a change: on the Machine a peer was Up 2.3 s after a's NET was
+   * given, and the routes it brought reached b's kernel at 15.0 s and a's at 31.3 s.
+   */
+  readonly isisSettleMs: number
 }
 
 export const DEFAULT_RUN_TIMINGS: RunTimings = {
@@ -56,37 +68,54 @@ export const DEFAULT_RUN_TIMINGS: RunTimings = {
   pollMs: 250,
   settleMs: 3000,
   settleTimeoutMs: 180_000,
+  adjacencyWaitMs: 40_000,
+  isisSettleMs: 35_000,
 }
 
-const runsOspf = (network: NetworkDefinition, router: string): boolean =>
-  network.routers.some(({ name, daemons }) => name === router && daemons.includes('ospfd'))
+/**
+ * The link-state daemons whose peers a link waits for, the event that reports them and the state
+ * they end in. ospf6d and isisd log a change only with `log-adjacency-changes` in their router
+ * block: without it their links are waited for until `adjacencyWaitMs`.
+ */
+const ADJACENCIES = [
+  { daemon: 'ospfd', event: 'ospf_adjacency_change', final: 'Full' },
+  { daemon: 'ospf6d', event: 'ospf6_adjacency_change', final: 'Full' },
+  { daemon: 'isisd', event: 'isis_adjacency_change', final: 'Up' },
+] as const
+
+const runs = (network: NetworkDefinition, router: string, daemon: string): boolean =>
+  network.routers.some(({ name, daemons }) => name === router && (daemons as readonly string[]).includes(daemon))
 
 /**
- * Whether the network has converged, as far as its events tell: every link between two OSPF
- * routers has a Full adjacency on both ends, and the probe's router has a route to the probe's
- * destination when that is a router's loopback. A network with no OSPF and no probe has nothing
- * to converge: it only has to stay unchanged.
+ * Whether the network has converged, as far as its events tell: every link between two routers
+ * running the same link-state daemon (ospfd, ospf6d, isisd) has that daemon's adjacency in its
+ * final state on both ends, and the probe's router has a route to the probe's destination when
+ * that is a router's loopback. A network with neither has nothing to converge: it only has to stay
+ * unchanged. With `waitForAdjacencies` false, only the probe's route is waited for.
  */
 export function networkConverged(
   network: NetworkDefinition,
   probe: ProbeDefinition | undefined,
-  events: readonly StampedMachineEvent[]
+  events: readonly StampedMachineEvent[],
+  waitForAdjacencies = true
 ): boolean {
-  for (const { ends } of network.links) {
+  for (const { ends } of waitForAdjacencies ? network.links : []) {
     const [first, second] = ends
-    if (!runsOspf(network, first.router) || !runsOspf(network, second.router)) {
-      continue
-    }
-    for (const [router, peer] of [
-      [first.router, second.router],
-      [second.router, first.router],
-    ] as const) {
-      const name = interfaceName(router, peer)
-      const last = events.findLast(
-        (event) => event.type === 'ospf_adjacency_change' && event.router === router && event.interface === name
-      )
-      if (last?.type !== 'ospf_adjacency_change' || last.to !== 'Full') {
-        return false
+    for (const { daemon, event: type, final } of ADJACENCIES) {
+      if (!runs(network, first.router, daemon) || !runs(network, second.router, daemon)) {
+        continue
+      }
+      for (const [router, peer] of [
+        [first.router, second.router],
+        [second.router, first.router],
+      ] as const) {
+        const name = interfaceName(router, peer)
+        const last = events.findLast(
+          (event) => event.type === type && event.router === router && event.interface === name
+        )
+        if (!last || !('to' in last) || last.to !== final) {
+          return false
+        }
       }
     }
   }
@@ -103,9 +132,31 @@ export function networkConverged(
   return route?.type === 'fib_install'
 }
 
-/** Routing changes only: a probe's replies arrive all the time and say nothing about convergence. */
-const routingChanges = (events: readonly StampedMachineEvent[]): number =>
-  events.filter((event) => event.type !== 'probe_received' && event.type !== 'probe_lost').length
+const FINAL_STATES: ReadonlyMap<string, string> = new Map(ADJACENCIES.map(({ event, final }) => [event, final]))
+
+/**
+ * Whether an event changes routing. A probe's replies arrive all the time and say nothing about
+ * convergence. Nor does a peer's step that neither reaches its final state nor leaves it: a peer
+ * that cannot form says so on every hello (isisd logs `Initializing to Down, Area Mismatch` every
+ * 3 s on a router with no NET), and counting that would keep the network from ever going quiet.
+ */
+function changesRouting(event: StampedMachineEvent): boolean {
+  if (event.type === 'probe_received' || event.type === 'probe_lost') {
+    return false
+  }
+  const final = FINAL_STATES.get(event.type)
+  return final === undefined || !('to' in event) || event.to === final || event.from === final
+}
+
+const routingChanges = (events: readonly StampedMachineEvent[]): number => events.filter(changesRouting).length
+
+/** How long the network must stay unchanged to count as settled: longer when IS-IS runs on a link. */
+export function quietMsOf(network: NetworkDefinition, timings: RunTimings): number {
+  const isis = network.links.some(({ ends: [first, second] }) =>
+    [first.router, second.router].every((router) => runs(network, router, 'isisd'))
+  )
+  return isis ? timings.isisSettleMs : timings.settleMs
+}
 
 /** Waits until the network has converged and then stayed unchanged; false when it never did. */
 export async function waitUntilSettled(
@@ -116,12 +167,14 @@ export async function waitUntilSettled(
   let waited = 0
   let quietFor = 0
   let seen = -1
+  const quietMs = quietMsOf(mission.network, timings)
   while (waited < timings.settleTimeoutMs) {
     const events = machine.events()
     const changes = routingChanges(events)
-    if (networkConverged(mission.network, mission.probe, events) && changes === seen) {
+    const converged = networkConverged(mission.network, mission.probe, events, waited < timings.adjacencyWaitMs)
+    if (converged && changes === seen) {
       quietFor += timings.pollMs
-      if (quietFor >= timings.settleMs) {
+      if (quietFor >= quietMs) {
         return true
       }
     } else {

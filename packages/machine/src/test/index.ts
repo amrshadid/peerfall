@@ -1,2 +1,17 @@
 export { fakeIndexedDb } from '#test/fake-indexed-db'
+export {
+  ECMP_ROUTES,
+  ISIS_ADJACENCY_LINE,
+  ISIS_NEIGHBORS_UP,
+  OSPF_DATABASE,
+  OSPF_MTU_LINE,
+  OSPF_NEIGHBORS_EXSTART,
+  OSPF_NEIGHBORS_FULL,
+  OSPF6_ADJACENCY_LINE,
+  OSPF6_NEIGHBORS_FULL,
+  OSPFD_NOT_RUNNING,
+  PING_IPV6,
+  PING_TOO_LARGE,
+  RIB6_OSPF6,
+} from '#test/link-state-output'
 export { TRIANGLE, TRIANGLE_DIRECT_LINK } from '#test/triangle'

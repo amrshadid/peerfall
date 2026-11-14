@@ -1,0 +1,132 @@
+id: draw-the-borders
+version: 1
+title: Draw the Borders
+summary: Put a router in an area of its own behind a border router, and read the summary the border router hands it.
+minutes: 20
+chapter: build-an-underlay
+objective: Router a sits in area 1 behind b, is b's peer, and knows c's loopback only as b's summary.
+skills: [ospf-areas]
+prerequisites: [ospf-redistribute]
+teaches: [ospf-area, ospf-abr, summary-lsa]
+names: []
+uses: [ospf, peer, ospf-adjacency, ospf-interface-area, lsdb, router-lsa, ospf-cost, frr-log, cli-modes]
+
+# A line, a–b–c. a is meant to be in area 1, behind b. a has both its interfaces in area 1,
+# c everything in area 0. b has b-c and lo in area 0, and b-a in area 0 too: the mistake. The
+# two ends of a–b disagree on the area, so a and b never become peers.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [ospfd]
+      config: |
+        interface a-b
+         ip ospf area 1
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 1
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface b-c
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd]
+      config: |
+        interface c-b
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: b, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+
+objectives:
+  - id: b-is-a-peer
+    text: Make b a's OSPF peer on a-b, Full.
+    check: { kind: peer, router: a, protocol: ospf, peer: 10.255.0.2, interface: a-b }
+  - id: c-as-summary
+    text: a's database for area 1 holds c's loopback as a summary sent by b.
+    check: { kind: lsa, router: a, area: 0.0.0.1, type: summary, id: 10.255.0.3, advRouter: 10.255.0.2 }
+  - id: a-learns-c
+    text: a learns c's loopback, 10.255.0.3/32, from OSPF.
+    check: { kind: rib, router: a, prefix: 10.255.0.3/32, protocol: ospf }
+
+hints:
+  - text: Read the end of a's log, then compare the area of each end of the a–b link in show ip ospf interface on a and on b.
+  - text: Two ends of a link become peers only when both are in the same area. a is meant to stay in area 1, so the end to change is b's.
+  - text: On b, in interface mode for b-a, take the interface out of area 0 first, then put it in area 1.
+    command: no ip ospf area 0
+
+chips:
+  - { command: show ip ospf neighbor, explain: "OSPF's peers on this router and their state" }
+  - { command: show ip ospf interface, explain: "OSPF on each interface, with the area it is in" }
+  - { command: tail -n 4, explain: "in the shell: the last lines of a file, such as the log" }
+  - { command: ip ospf area, explain: "in interface mode: run OSPF on the interface, in that area" }
+  - { command: show ip ospf database, explain: "OSPF's map on this router, one part per area" }
+  - { command: show ip ospf route, explain: "ospfd's table; IA marks a network from another area" }
+
+codex:
+  - id: ospf-area
+    term: OSPF area
+    simple: A part of an OSPF network whose routers share one map. Area 0, the backbone, joins every other area.
+    deep: "An area is set per interface with ip ospf area, and written as a number or as an address: area 1 is 0.0.0.1. Every OSPF packet carries its area, and a hello from another area is dropped with ospf_read invalid Area ID in the log, so the two ends of a link must agree. A router-LSA stays inside its own area: routers of other areas never see it."
+    deepens: lsdb
+    sources: [ospfd/ospf_packet.c, ospfd/ospf_interface.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf interface"
+  - id: ospf-abr
+    term: Area border router, ABR
+    simple: A router with interfaces in area 0 and in another area. It keeps a map of each and hands each area the other's networks.
+    deep: "ospfd becomes one by itself once its interfaces are in two areas, one of them area 0: show ip ospf then says This router is an ABR. It works out the routes of each area from that area's map, and sends each network of one area into the others as a summary-LSA. Routers of an area other than 0 reach the rest of the network only through an ABR."
+    sources: [ospfd/ospf_abr.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf"
+  - id: summary-lsa
+    term: Summary-LSA
+    simple: One network of another area, with its cost, as an ABR hands it on. Unlike a router-LSA, it lists no links.
+    deep: "show ip ospf database lists them as Summary Link States, each sent by the ABR, and show ip ospf route marks the routes made from them IA, inter-area. A router behind the ABR adds its own cost to the ABR to the summary's cost. It never sees how the other area is built, only each network and its cost: the router-LSAs of that area stay inside it. zebra's table shows them as plain O routes."
+    deepens: router-lsa
+    sources: [ospfd/ospf_abr.c, ospfd/ospf_ia.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf database summary"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

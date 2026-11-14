@@ -77,12 +77,70 @@ skills:
     region: zebras-choice
     # Earned in 2.6, Bring the Line Up.
     prerequisites: [administrative-distance]
+  # Stage 3, Meet your peers
+  - id: ospf-peers
+    title: Make two routers OSPF peers
+    region: meet-your-peers
+    # Earned in 3.1, Say Hello.
+    prerequisites: [static-line-of-routers]
+  - id: ospf-lsdb
+    title: Read OSPF's database and add to it
+    region: meet-your-peers
+    # Earned in 3.2, The Shared Map.
+    prerequisites: [ospf-peers]
+  - id: ospf-mtu
+    title: Find why OSPF peers never reach Full
+    region: meet-your-peers
+    # Earned in 3.3, Never Reached Full.
+    prerequisites: [ospf-lsdb]
+  # Stage 3, Choose the way
+  - id: ospf-cost
+    title: Predict and steer the path with OSPF costs
+    region: choose-the-way
+    # Earned in 3.4, The Cheaper Way.
+    prerequisites: [ospf-mtu]
+  - id: ospf-ecmp
+    title: Use two equal OSPF paths at once
+    region: choose-the-way
+    # Earned in 3.5, Two Ways at Once.
+    prerequisites: [ospf-cost]
+  - id: ospf-redistribute
+    title: Bring outside routes into OSPF
+    region: choose-the-way
+    # Earned in 3.6, Bring It In.
+    prerequisites: [ospf-ecmp]
+  - id: ospf-areas
+    title: Split a network into OSPF areas
+    region: choose-the-way
+    # Earned in 3.7, Draw the Borders.
+    prerequisites: [ospf-redistribute]
+  # Stage 3, The same map, other languages
+  - id: ospfv3-peers
+    title: Route IPv6 with OSPFv3
+    region: other-languages
+    # Earned in 3.8, The Same Map in IPv6.
+    prerequisites: [ospf-areas]
+  - id: isis-peers
+    title: Make two routers IS-IS peers
+    region: other-languages
+    # Earned in 3.9, Another Language.
+    prerequisites: [ospfv3-peers]
+  - id: isis-levels
+    title: Use IS-IS levels
+    region: other-languages
+    # Earned in 3.10, Two Levels.
+    prerequisites: [isis-peers]
+  - id: ospf-underlay
+    title: Build an OSPF underlay from nothing
+    region: other-languages
+    # Earned in 3.11, Build the Underlay.
+    prerequisites: [isis-levels]
   # Stage 4, Notice it fast
   - id: outage-measure
     title: Measure an outage and tell what noticed it
     region: notice-it-fast
     # Earned in 4.1, The Link That Never Went Down.
-    prerequisites: [static-line-of-routers]
+    prerequisites: [ospf-underlay]
   - id: bfd-fast-detection
     title: Make OSPF notice a dead link in under a second with BFD
     region: notice-it-fast

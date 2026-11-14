@@ -2,7 +2,7 @@ import type { MissionDefinition } from '@peerfall/game/types'
 import type { MissionRunPhase } from '@peerfall/missions/hooks'
 import { describe, expect, it } from 'vitest'
 import { TRIANGLE } from '@/test/fixtures/network.fixture'
-import { hasStateChecks, runStatusOf, waitReasonOf } from './run-text.util'
+import { hasStateChecks, runStatusOf, voidedRunStatusOf, waitReasonOf } from './run-text.util'
 
 const NAMES = { from: 'a', destination: '10.255.0.3', target: 'c' }
 const MISSION = {
@@ -42,6 +42,14 @@ describe('runStatusOf', () => {
       failed: true,
       details: ['The fault could not be injected'],
     })
+  })
+
+  it('says why a run the tab was hidden for was not judged, and how to run it again', () => {
+    const status = voidedRunStatusOf({ reason: 'hidden', at: 1 })
+    expect(status).toMatchObject({ busy: false, failed: false, details: [] })
+    expect(status.text).toContain('not judged')
+    expect(status.text).toContain('the tab was hidden while the link was broken')
+    expect(status.text).toContain('Break the link again')
   })
 
   it('gives the Machine’s own words when the network could not be built', () => {

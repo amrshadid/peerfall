@@ -1,0 +1,24 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # b's NET copied whole: a and b share a system id, and each throws away the other's hellos
+  # with "Received IIH with own sysid".
+  - id: same-system-id
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, net 49.0001.0000.0000.0002.00]
+  # A NET in another area: level-2 routers become peers whatever their areas, so this passes too.
+  - id: other-area
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, net 49.0002.0000.0000.0001.00]
+  - id: net
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router isis core, net 49.0001.0000.0000.0001.00]

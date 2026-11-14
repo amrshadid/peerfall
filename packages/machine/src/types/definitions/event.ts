@@ -41,6 +41,35 @@ export type MachineEvent =
       /** The neighbor state machine's event, as FRR names it: `InactivityTimer`, `LoadingDone`… */
       readonly reason: string
     }
+  /**
+   * ospf6d: `AdjChg: Nbr 10.255.0.2(default) on 10.255.0.2%a-b: Loading -> Full (LoadingDone)`.
+   * Logged with `log-adjacency-changes` under `router ospf6`.
+   */
+  | {
+      readonly type: 'ospf6_adjacency_change'
+      readonly router: string
+      /** The neighbor's router id. */
+      readonly neighbor: string
+      readonly interface: string
+      readonly from: string
+      readonly to: string
+      readonly reason: string
+    }
+  /**
+   * isisd: `%ADJCHANGE: Adjacency to 0000.0000.0002 (a-b) for level-2 changed from Initializing to
+   * Up, unspecified`. Logged with `log-adjacency-changes` under `router isis`.
+   */
+  | {
+      readonly type: 'isis_adjacency_change'
+      readonly router: string
+      /** The neighbor's system id: the log names it so even where `show isis neighbor` prints its hostname. */
+      readonly neighbor: string
+      readonly interface: string
+      readonly level: number
+      readonly from: string
+      readonly to: string
+      readonly reason: string
+    }
   /** The kernel's routing table gained or replaced a route: what forwarding really uses. */
   | {
       readonly type: 'fib_install'

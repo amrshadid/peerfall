@@ -2,6 +2,7 @@ import { type Issues, ObjectReader } from '@peerfall/core/utils'
 import {
   FRR_DAEMONS,
   FRR_STARTUPS,
+  LINK_MTU,
   type LinkDefinition,
   type LinkEnd,
   type NetworkDefinition,
@@ -9,16 +10,18 @@ import {
 } from '@peerfall/machine/types'
 import { networkProblems } from '@peerfall/machine/utils'
 
-const ROUTER_KEYS = ['name', 'loopback', 'daemons', 'config', 'startup']
-const END_KEYS = ['router', 'address', 'unaddressed']
+const ROUTER_KEYS = ['name', 'loopback', 'loopback6', 'daemons', 'config', 'startup']
+const END_KEYS = ['router', 'address', 'unaddressed', 'mtu']
 
 function readRouter(router: ObjectReader): RouterDefinition {
   router.rejectUnknownKeys(ROUTER_KEYS)
   const loopback = router.optional('loopback', (key) => router.string(key))
+  const loopback6 = router.optional('loopback6', (key) => router.string(key))
   const startup = router.optional('startup', (key) => router.oneOf(key, FRR_STARTUPS))
   return {
     name: router.string('name'),
     ...(loopback !== undefined && { loopback }),
+    ...(loopback6 !== undefined && { loopback6 }),
     daemons: router.oneOfList('daemons', FRR_DAEMONS),
     // A router may start with nothing configured: the Machine writes the hostname and log lines itself.
     config: router.text('config'),
@@ -28,10 +31,12 @@ function readRouter(router: ObjectReader): RouterDefinition {
 
 function readEnd(end: ObjectReader): LinkEnd {
   end.rejectUnknownKeys(END_KEYS)
+  const mtu = end.optional('mtu', (key) => end.integer(key, LINK_MTU.min, LINK_MTU.max))
   return {
     router: end.string('router'),
     address: end.string('address'),
     ...(end.flag('unaddressed') && { unaddressed: true }),
+    ...(mtu !== undefined && { mtu }),
   }
 }
 

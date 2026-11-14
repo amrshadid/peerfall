@@ -1,7 +1,11 @@
 export {
   parseDaemons,
   parseInterfaces,
+  parseIsisNeighbors,
   parseKernelRoutes,
+  parseOspf6Neighbors,
+  parseOspfDatabase,
+  parseOspfNeighbors,
   parsePing,
   parseRibRoutes,
   parseRouterState,

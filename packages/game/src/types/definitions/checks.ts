@@ -1,4 +1,4 @@
-import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
+import type { KernelRoute, OspfLsa, OspfLsaType, PeerState, RibRoute } from '@peerfall/machine/types'
 import type { ObjectiveId } from '#types/definitions/mission'
 
 /** The two things FRR can notice a dead neighbor by, under the names of the Machine's events. */
@@ -10,7 +10,7 @@ export type DetectionEvent = (typeof DETECTION_EVENTS)[number]
 export const RUN_CHECK_KINDS = ['reachable', 'path', 'recovery', 'outage', 'detected-by'] as const
 
 /** Checks that read the Machine as it is when the player's work is checked: no fault is needed. */
-export const STATE_CHECK_KINDS = ['daemons', 'route', 'rib', 'reaches', 'config'] as const
+export const STATE_CHECK_KINDS = ['daemons', 'route', 'rib', 'reaches', 'config', 'peer', 'lsa'] as const
 
 export const CHECK_KINDS = [...RUN_CHECK_KINDS, ...STATE_CHECK_KINDS] as const
 
@@ -28,6 +28,17 @@ export type ConfigSource = (typeof CONFIG_SOURCES)[number]
 
 /** How many packets a `reaches` check sends. */
 export const REACH_PACKETS = 3
+
+/** The routing protocols a `peer` check reads, under the names zebra gives their routes. */
+export const PEER_PROTOCOLS = ['ospf', 'ospf6', 'isis'] as const
+
+export type PeerProtocol = (typeof PEER_PROTOCOLS)[number]
+
+/** The state each protocol's peers end in once they have swapped their databases, as FRR writes it. */
+export const PEER_FINAL_STATES = { ospf: 'Full', ospf6: 'Full', isis: 'Up' } as const satisfies Record<
+  PeerProtocol,
+  string
+>
 
 /**
  * A mission's declared `check:` block. Every kind reads outcomes: the Machine's events, or the
@@ -49,6 +60,8 @@ export type CheckDefinition =
       readonly to?: string
       readonly protocol?: string
       readonly via?: string
+      /** Every next hop, in any order, and no other: equal-cost paths used together. Never with `via`. */
+      readonly vias?: readonly string[]
       readonly interface?: string
     }
   /**
@@ -65,8 +78,45 @@ export type CheckDefinition =
       readonly via?: string
       readonly selected?: boolean
     }
-  /** At least `minReplies` of the few packets sent from the router to the address are answered. */
-  | { readonly kind: 'reaches'; readonly from: string; readonly to: string; readonly minReplies: number }
+  /**
+   * At least `minReplies` of the few packets sent from the router to the address (IPv4 or IPv6)
+   * are answered. `size` sets the bytes of data in each, for a packet larger than a link may carry.
+   */
+  | {
+      readonly kind: 'reaches'
+      readonly from: string
+      readonly to: string
+      readonly minReplies: number
+      readonly size?: number
+    }
+  /**
+   * The router's `protocol` daemon has `peer` (an OSPF router id, or an IS-IS name as `show isis
+   * neighbor` prints it) in its final state: Full for OSPF and OSPFv3, Up for IS-IS. `interface`
+   * and `level` (IS-IS only) narrow it when given.
+   */
+  | {
+      readonly kind: 'peer'
+      readonly router: string
+      readonly protocol: PeerProtocol
+      readonly peer: string
+      readonly interface?: string
+      readonly level?: number
+    }
+  /**
+   * The router's OSPF database holds an LSA of `type` with Link State ID `id`, in `area` (every
+   * type but `external`, which no area owns), sent by `advRouter` when given. With `absent`, the
+   * other way round: the database can be read and holds no such LSA.
+   */
+  | {
+      readonly kind: 'lsa'
+      readonly router: string
+      readonly type: OspfLsaType
+      readonly id: string
+      readonly area?: string
+      readonly advRouter?: string
+      /** Only present, and true, when the LSA must be missing. */
+      readonly absent?: boolean
+    }
   /**
    * The router's configuration has a line inside the blocks of `block` (outermost first; none for
    * a top-level line). `line` is the whole line or its first words: `description` matches any
@@ -145,6 +195,16 @@ export const CHECK_FAILURES = {
   stillConfigured: 'still_configured',
   /** An `absent` check: there is no such configuration to read (FRR is down, no frr.conf, or never restarted). */
   noConfig: 'no_config',
+  /** A `peer` check: the daemon lists no such peer (or the daemon is not running). */
+  noPeer: 'no_peer',
+  /** A `peer` check: the peer is listed, but stuck before the final state (an OSPF peer in ExStart). */
+  peerNotFull: 'peer_not_full',
+  /** An `lsa` check: the database holds no such LSA. */
+  noLsa: 'no_lsa',
+  /** An `lsa` check with `absent`: the database still holds the LSA. */
+  lsaPresent: 'lsa_present',
+  /** An `lsa` check with `absent`: ospfd did not answer, so there is no database to read. */
+  noDatabase: 'no_database',
 } as const
 
 export type CheckFailure = (typeof CHECK_FAILURES)[keyof typeof CHECK_FAILURES]
@@ -260,8 +320,29 @@ export type CheckResult =
       readonly failure: CheckFailure | null
       readonly from: string
       readonly to: string
+      /** The bytes of data in each packet, when the check set them. */
+      readonly size?: number
       readonly sent: number
       readonly received: number
+    }
+  | {
+      readonly kind: 'peer'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      readonly protocol: PeerProtocol
+      /** Every peer that protocol lists on the router; empty when none, or the daemon did not answer. */
+      readonly peers: readonly PeerState[]
+      /** The peer the check names, in its final state if it is in one; `null` when it is not listed. */
+      readonly found: PeerState | null
+    }
+  | {
+      readonly kind: 'lsa'
+      readonly passed: boolean
+      readonly failure: CheckFailure | null
+      readonly router: string
+      /** The LSA the check names, as the database holds it; `null` when it holds none. */
+      readonly found: OspfLsa | null
     }
   | {
       readonly kind: 'config'

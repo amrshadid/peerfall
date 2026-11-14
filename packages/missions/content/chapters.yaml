@@ -58,7 +58,34 @@ chapters:
         missions: [written-but-not-used, the-backup-path, bring-the-line-up]
   - id: build-an-underlay
     title: Build an underlay
-    summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.
+    summary: OSPF and IS-IS peers, the link-state database, costs, equal paths, redistribution, areas and levels.
+    story: Routes written by hand stop scaling at three routers. Here the routers find each other and draw the same map. OSPF peers and their shared database, a peer stuck before Full, the costs that choose a path, two paths used at once, routes brought in from outside, and areas. Then the same map in IPv6 with OSPFv3, and in IS-IS with its levels. The last mission builds a four-router underlay from bare FRR.
+    guide: ospfd
+    standsFor: ospfd, ospf6d, isisd and the routes they hand to zebra
+    outcomes:
+      - make two routers OSPF peers and tell why a peer stops before Full
+      - read the link-state database and predict the path from the costs
+      - use two equal paths at once, bring outside routes into OSPF, and split a network into areas
+      - form OSPFv3 and IS-IS peers and use IS-IS levels
+    regions:
+      - id: meet-your-peers
+        name: Meet your peers
+        caption: OSPF hellos and peers, the link-state database, a peer stuck before Full
+        guide: ospfd, zebra
+        source: ospfd/ospf_packet.c, ospfd/ospf_nsm.c, ospfd/ospf_lsa.c, ospfd/ospf_lsdb.c
+        missions: [say-hello, the-shared-map, never-reached-full]
+      - id: choose-the-way
+        name: Choose the way
+        caption: costs and the shortest path, equal-cost paths, redistribution, areas
+        guide: ospfd, zebra
+        source: ospfd/ospf_spf.c, ospfd/ospf_route.c, ospfd/ospf_asbr.c, ospfd/ospf_abr.c, zebra/zebra_nhg.c
+        missions: [the-cheaper-way, two-ways-at-once, bring-it-in, draw-the-borders]
+      - id: other-languages
+        name: The same map, other languages
+        caption: OSPFv3 and IPv6, IS-IS peers and levels, an underlay from nothing
+        guide: ospf6d, isisd, ospfd
+        source: ospf6d/ospf6_neighbor.c, isisd/isis_adjacency.c, isisd/isis_pdu.c, isisd/isis_spf.c
+        missions: [the-same-map-in-ipv6, another-language, two-levels, build-the-underlay]
   - id: recover-from-failure
     title: Recover from failure
     summary: Measure an outage, see what detects it, and make the network notice a dead link sooner.

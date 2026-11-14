@@ -1,9 +1,12 @@
 import {
   APP_CACHE_PREFIX,
+  APP_SHELL,
   CRAWLER_FILES,
+  IMAGE_FILES_NEVER_OPENED,
   SW_FILE,
   SW_MANIFEST_TOKEN,
   VM_DIR,
+  VM_FILE_LIST,
   VM_MANIFEST,
 } from './offline-cache.constants'
 
@@ -68,10 +71,12 @@ export function offlineRouteOf(request: OfflineRequest, scope: string): OfflineR
   if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) {
     return 'pass'
   }
-  if (request.mode === 'navigate') {
-    return 'shell'
-  }
   const path = url.pathname.slice(base.pathname.length)
+  if (request.mode === 'navigate') {
+    // Routes live in the hash, so only the root is the game: any other address goes to the host,
+    // which answers with its 404 page (or the file, for robots.txt and the like).
+    return path === '' || path === APP_SHELL ? 'shell' : 'pass'
+  }
   if (path === VM_MANIFEST) {
     return 'manifest'
   }
@@ -79,4 +84,43 @@ export function offlineRouteOf(request: OfflineRequest, scope: string): OfflineR
     return request.range ? 'pass' : 'vm-file'
   }
   return path === SW_FILE ? 'pass' : 'asset'
+}
+
+/** Where an image version keeps its file list; its files sit in `flat/` beside it. */
+export function imageListUrl(scope: string, version: string): string {
+  return new URL(`${VM_DIR}${version}/${VM_FILE_LIST}`, scope).href
+}
+
+const S_IFMT = 0o170000
+const S_IFREG = 0o100000
+
+/**
+ * The `flat/` files of the image (named in its `fs.json`, v86's
+ * `[name, size, mtime, mode, uid, gid, children or file]` entries) that the game may open, so they
+ * can be cached before the player goes offline. Left out: what the Machine never opens after boot.
+ */
+export function imageFilesOf(fsJson: unknown): string[] {
+  const root = (fsJson as { fsroot?: unknown } | null)?.fsroot
+  const files = new Set<string>()
+  const walk = (entries: unknown, parent: string) => {
+    if (!Array.isArray(entries)) {
+      return
+    }
+    for (const entry of entries) {
+      if (!Array.isArray(entry)) {
+        continue
+      }
+      const [name, , , mode, , , target] = entry as [unknown, unknown, unknown, unknown, unknown, unknown, unknown]
+      const path = `${parent}/${String(name)}`
+      if (Array.isArray(target)) {
+        if (!IMAGE_FILES_NEVER_OPENED.some((skipped) => `${path}/`.startsWith(skipped))) {
+          walk(target, path)
+        }
+      } else if (typeof mode === 'number' && (mode & S_IFMT) === S_IFREG && typeof target === 'string') {
+        files.add(target)
+      }
+    }
+  }
+  walk(root, '')
+  return [...files].sort()
 }

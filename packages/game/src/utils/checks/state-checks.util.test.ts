@@ -1,6 +1,6 @@
 import type { MachineState } from '@peerfall/machine/types'
 import { describe, expect, it } from 'vitest'
-import { bfdBothEndsRun, EXAMPLE_MISSION, stateMission } from '#test/index'
+import { bfdBothEndsRun, EXAMPLE_MISSION, LINK_STATE, stateMission } from '#test/index'
 import { CHECK_FAILURES, type CheckDefinition } from '#types/definitions/checks'
 import { evaluateCheck, hasRunChecks, hasStateChecks, judgeMission, stateRequestOf } from '#utils/checks/index'
 
@@ -394,5 +394,189 @@ describe('judgeMission with state', () => {
   it('judges a fault mission exactly as before, with or without a state', () => {
     const events = bfdBothEndsRun()
     expect(judgeMission(EXAMPLE_MISSION, events, passing)).toEqual(judgeMission(EXAMPLE_MISSION, events))
+  })
+})
+
+const linkState = (check: CheckDefinition) => judge(check, LINK_STATE)
+
+describe('peer', () => {
+  it('passes for an OSPF peer that is Full, on the interface asked for', () => {
+    expect(
+      linkState({ kind: 'peer', router: 'square', protocol: 'ospf', peer: '10.255.0.2', interface: 'a-b' })
+    ).toEqual({
+      kind: 'peer',
+      passed: true,
+      failure: null,
+      router: 'square',
+      protocol: 'ospf',
+      peers: [
+        { peer: '10.255.0.2', interface: 'a-b', state: 'Full' },
+        { peer: '10.255.0.3', interface: 'a-c', state: 'Full' },
+      ],
+      found: { peer: '10.255.0.2', interface: 'a-b', state: 'Full' },
+    })
+  })
+
+  it('fails for a peer stuck in ExStart, and says where it stopped', () => {
+    expect(linkState({ kind: 'peer', router: 'mtu', protocol: 'ospf', peer: '10.255.0.2' })).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.peerNotFull,
+      found: { peer: '10.255.0.2', interface: 'a-b', state: 'ExStart' },
+    })
+  })
+
+  it('fails with no peer on another interface, for another router id, or with the daemon down', () => {
+    const checks: CheckDefinition[] = [
+      { kind: 'peer', router: 'square', protocol: 'ospf', peer: '10.255.0.2', interface: 'a-c' },
+      { kind: 'peer', router: 'square', protocol: 'ospf', peer: '10.255.0.4' },
+      { kind: 'peer', router: 'ipv6', protocol: 'ospf', peer: '10.255.0.2' },
+    ]
+    for (const check of checks) {
+      expect(linkState(check)).toMatchObject({ passed: false, failure: CHECK_FAILURES.noPeer, found: null })
+    }
+  })
+
+  it('reads OSPFv3 peers, Full, from ospf6d’s own table', () => {
+    const check: CheckDefinition = { kind: 'peer', router: 'ipv6', protocol: 'ospf6', peer: '10.255.0.2' }
+    expect(linkState({ ...check, interface: 'a-b' }).passed).toBe(true)
+  })
+
+  it('reads IS-IS adjacencies, Up, by hostname and level', () => {
+    const check: CheckDefinition = { kind: 'peer', router: 'isis', protocol: 'isis', peer: 'b', interface: 'a-b' }
+    expect(linkState({ ...check, level: 2 }).passed).toBe(true)
+    expect(linkState({ ...check, level: 1 }).failure).toBe(CHECK_FAILURES.noPeer)
+  })
+
+  it('asks for the neighbor table of its protocol', () => {
+    const objectives = [
+      { id: 'o', text: '', check: { kind: 'peer', router: 'a', protocol: 'ospf6', peer: '10.255.0.2' } },
+      { id: 'i', text: '', check: { kind: 'peer', router: 'a', protocol: 'isis', peer: 'b' } },
+    ] as const
+    expect(stateRequestOf({ objectives })).toEqual({ routers: { a: ['ospf6Neighbors', 'isisNeighbors'] }, pings: [] })
+  })
+})
+
+describe('lsa', () => {
+  it('finds a router-LSA and a summary in their area, and an external in none', () => {
+    expect(
+      linkState({
+        kind: 'lsa',
+        router: 'square',
+        type: 'summary',
+        area: '0.0.0.0',
+        id: '10.255.0.4',
+        advRouter: '10.255.0.4',
+      })
+    ).toEqual({
+      kind: 'lsa',
+      passed: true,
+      failure: null,
+      router: 'square',
+      found: { area: '0.0.0.0', type: 'summary', id: '10.255.0.4', advRouter: '10.255.0.4' },
+    })
+    expect(linkState({ kind: 'lsa', router: 'square', type: 'router', area: '0.0.0.0', id: '10.255.0.3' }).passed).toBe(
+      true
+    )
+    expect(linkState({ kind: 'lsa', router: 'square', type: 'external', id: '192.0.2.0' }).passed).toBe(true)
+  })
+
+  it('fails for another area, type or sender', () => {
+    const checks: CheckDefinition[] = [
+      { kind: 'lsa', router: 'square', type: 'summary', area: '0.0.0.1', id: '10.255.0.4' },
+      { kind: 'lsa', router: 'square', type: 'router', area: '0.0.0.0', id: '192.0.2.0' },
+      { kind: 'lsa', router: 'square', type: 'summary', area: '0.0.0.0', id: '10.255.0.4', advRouter: '10.255.0.2' },
+    ]
+    for (const check of checks) {
+      expect(linkState(check)).toMatchObject({ passed: false, failure: CHECK_FAILURES.noLsa, found: null })
+    }
+  })
+
+  it('with absent, passes only when the database can be read and lacks the LSA', () => {
+    const missing: CheckDefinition = {
+      kind: 'lsa',
+      router: 'square',
+      type: 'router',
+      area: '0.0.0.0',
+      id: '10.255.0.9',
+    }
+    expect(linkState({ ...missing, absent: true }).passed).toBe(true)
+    expect(linkState({ kind: 'lsa', router: 'square', type: 'external', id: '192.0.2.0', absent: true })).toMatchObject(
+      {
+        failure: CHECK_FAILURES.lsaPresent,
+        found: { type: 'external', id: '192.0.2.0' },
+      }
+    )
+    expect(linkState({ kind: 'lsa', router: 'isis', type: 'external', id: '192.0.2.0', absent: true }).failure).toBe(
+      CHECK_FAILURES.noDatabase
+    )
+    expect(linkState({ kind: 'lsa', router: 'isis', type: 'external', id: '192.0.2.0' }).failure).toBe(
+      CHECK_FAILURES.noLsa
+    )
+  })
+})
+
+describe('route vias', () => {
+  it('passes when the kernel uses exactly those next hops together, in any order', () => {
+    const check: CheckDefinition = { kind: 'route', router: 'square', to: '10.255.0.4', protocol: 'ospf' }
+    expect(linkState({ ...check, vias: ['10.0.2.2', '10.0.1.2'] }).passed).toBe(true)
+  })
+
+  it('fails for a route with one of them only, or with fewer than asked', () => {
+    expect(
+      linkState({ kind: 'route', router: 'square', to: '10.255.0.2', vias: ['10.0.1.2', '10.0.2.2'] }).failure
+    ).toBe(CHECK_FAILURES.wrongRoute)
+    expect(
+      linkState({ kind: 'route', router: 'square', to: '10.255.0.4', vias: ['10.0.1.2', '10.0.2.2', '10.0.3.2'] })
+        .failure
+    ).toBe(CHECK_FAILURES.wrongRoute)
+  })
+})
+
+describe('reaches with a size, and over IPv6', () => {
+  it('judges a large ping by its own result, apart from a small one to the same address', () => {
+    expect(linkState({ kind: 'reaches', from: 'mtu', to: '10.0.1.2', minReplies: 2, size: 2000 })).toMatchObject({
+      passed: false,
+      failure: CHECK_FAILURES.unreachable,
+      size: 2000,
+      received: 0,
+    })
+    expect(linkState({ kind: 'reaches', from: 'mtu', to: '10.0.1.2', minReplies: 2 }).passed).toBe(true)
+  })
+
+  it('asks for each size as a ping of its own', () => {
+    const objectives = [
+      { id: 'big', text: '', check: { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2, size: 2000 } },
+      { id: 'small', text: '', check: { kind: 'reaches', from: 'a', to: '10.0.1.2', minReplies: 2 } },
+      { id: 'v6', text: '', check: { kind: 'reaches', from: 'a', to: 'fd00::2', minReplies: 2 } },
+    ] as const
+    expect(stateRequestOf({ objectives })).toEqual({
+      routers: { a: ['rib', 'rib6'] },
+      pings: [
+        { from: 'a', to: '10.0.1.2', count: 3, size: 2000 },
+        { from: 'a', to: '10.0.1.2', count: 3 },
+        { from: 'a', to: 'fd00::2', count: 3 },
+      ],
+    })
+  })
+
+  it('reaches an IPv6 address, and tells the router’s own from zebra’s IPv6 table', () => {
+    expect(linkState({ kind: 'reaches', from: 'ipv6', to: 'fd00::2', minReplies: 2 }).passed).toBe(true)
+    expect(linkState({ kind: 'reaches', from: 'ipv6', to: 'fd00::1', minReplies: 2 }).failure).toBe(
+      CHECK_FAILURES.ownAddress
+    )
+  })
+})
+
+describe('rib over IPv6', () => {
+  it('reads zebra’s IPv6 table for an IPv6 prefix, however it is written', () => {
+    expect(
+      linkState({ kind: 'rib', router: 'ipv6', prefix: 'fd00:0::2/128', protocol: 'ospf6', selected: true })
+    ).toMatchObject({
+      passed: true,
+      found: { prefix: 'fd00::2/128', nextHops: [{ via: 'fe80::8402:2aff:fea8:c6f9', interface: 'a-b' }] },
+    })
+    expect(linkState({ kind: 'rib', router: 'ipv6', prefix: 'fd00::3/128' }).failure).toBe(CHECK_FAILURES.noRibRoute)
+    const objectives = [{ id: 'r', text: '', check: { kind: 'rib', router: 'a', prefix: 'fd00::3/128' } }] as const
+    expect(stateRequestOf({ objectives })).toEqual({ routers: { a: ['rib6'] }, pings: [] })
   })
 })

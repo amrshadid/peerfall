@@ -1,6 +1,6 @@
 import type { NonEmptyList } from '@peerfall/core/types'
 import { describeType, type Issues, ObjectReader } from '@peerfall/core/utils'
-import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
+import { type KernelRoute, OSPF_LSA_TYPES, type OspfLsa, type PeerState, type RibRoute } from '@peerfall/machine/types'
 import {
   CHECK_FAILURES,
   CHECK_KINDS,
@@ -11,6 +11,7 @@ import {
   type Detection,
   type MissionVerdict,
   type Outage,
+  PEER_PROTOCOLS,
   type Recovery,
   type RouteHop,
 } from '#types/definitions/checks'
@@ -234,15 +235,18 @@ function readResult(result: ObjectReader): CheckResult {
         routes: readList(result, 'routes', readRibRoute),
         found: readNullable(result, 'found', readRibRoute),
       }
-    case 'reaches':
+    case 'reaches': {
+      const size = result.optional('size', (key) => result.integer(key, 0))
       return {
         kind,
         ...common,
         from: result.string('from'),
         to: result.string('to'),
+        ...(size !== undefined && { size }),
         sent: result.integer('sent', 0),
         received: result.integer('received', 0),
       }
+    }
     case 'config':
       return {
         kind,
@@ -251,6 +255,36 @@ function readResult(result: ObjectReader): CheckResult {
         source: result.oneOf('source', CONFIG_SOURCES),
         found: result.nullable('found', (key) => result.text(key)),
       }
+    case 'peer':
+      return {
+        kind,
+        ...common,
+        router: result.string('router'),
+        protocol: result.oneOf('protocol', PEER_PROTOCOLS),
+        peers: readList(result, 'peers', readPeer),
+        found: readNullable(result, 'found', readPeer),
+      }
+    case 'lsa':
+      return { kind, ...common, router: result.string('router'), found: readNullable(result, 'found', readLsa) }
+  }
+}
+
+function readPeer(peer: ObjectReader): PeerState {
+  const level = peer.optional('level', (key) => peer.integer(key, 1))
+  return {
+    peer: peer.string('peer'),
+    interface: peer.text('interface'),
+    state: peer.text('state'),
+    ...(level !== undefined && { level }),
+  }
+}
+
+function readLsa(lsa: ObjectReader): OspfLsa {
+  return {
+    area: lsa.nullable('area', (key) => lsa.string(key)),
+    type: lsa.oneOf('type', OSPF_LSA_TYPES),
+    id: lsa.string('id'),
+    advRouter: lsa.string('advRouter'),
   }
 }
 

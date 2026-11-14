@@ -7,7 +7,10 @@
 [![FRR 10.6](https://img.shields.io/badge/FRR-10.6-black)](docs/ARCHITECTURE.md#the-machine)
 
 **Play it in your browser: [peerfall.shadid.dev](https://peerfall.shadid.dev)** (a
-desktop browser; the first visit downloads the Linux machine).
+desktop browser). The first visit downloads about 0.3 MB before the title screen is usable
+and about 15 MB until the first mission's terminal is ready, most of it the Linux kernel;
+once a network is up, the rest of the machine (about 7 MB) is cached in the background, and
+the game then plays offline.
 
 > We reject: kings, presidents and voting. We believe in: rough consensus and running code.
 >
@@ -34,8 +37,8 @@ tick by themselves as the network changes, hints come in three steps, and every 
 meet is filed in the Codex, with the FRR source behind it and a way to try it on a real
 router.
 
-Peerfall is in development. Fifteen missions are playable: eight in stage 1, six in stage 2
-and one in stage 4 ([roadmap](docs/ROADMAP.md)).
+Peerfall is in development. Twenty-six missions are written: eight in stage 1, six in
+stage 2, eleven in stage 3 and one in stage 4 ([roadmap](docs/ROADMAP.md)).
 
 ## What you'll learn
 
@@ -56,7 +59,8 @@ daemons you work with.
 | 10  | Deliver multicast            | Follow a multicast stream from its source to its receivers: group membership, the distribution tree, the rendezvous point, and sources in another domain.                                                   | `pimd`, `pim6d`, IGMP, MLD, MSDP                              |
 | 11  | Operate a network            | Diagnose a fault across protocol state and forwarding, read debugs without drowning in them, monitor and automate with JSON output, verify recovery and isolation, and roll back.                           | debugs, JSON output, BMP, SNMP, the northbound API            |
 
-Stages 1, 2 and 4 have missions today; the rest are planned.
+Stages 1 to 4 have missions today, with the rest of stage 4 still planned; stages 5 to 11 are
+planned.
 
 ## Run it
 

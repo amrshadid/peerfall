@@ -82,6 +82,7 @@ function runAt(phase: UseMissionRunResult['phase']): UseMissionRunResult {
   return {
     phase,
     errors: [],
+    voided: null,
     verdict: null,
     checkWork: vi.fn(),
     sendProbe: vi.fn(),

@@ -1,1 +1,6 @@
-export { type MissionRunPhase, type UseMissionRunResult, useMissionRun } from '#hooks/run/useMissionRun.hook'
+export {
+  type MissionRunPhase,
+  type UseMissionRunResult,
+  useMissionRun,
+  type VoidedRun,
+} from '#hooks/run/useMissionRun.hook'

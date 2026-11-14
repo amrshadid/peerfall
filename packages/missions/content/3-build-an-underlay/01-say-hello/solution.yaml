@@ -1,0 +1,30 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Another area on a's end: each side refuses the other's hellos, and no peer forms.
+  - id: wrong-area
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf area 1]
+  # A passive interface is advertised, but sends no hellos: still no peer.
+  - id: passive-link
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf area 0, ip ospf passive]
+  # The older network line: ospfd refuses it while an interface already has ip ospf area.
+  - id: network-statement
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, router ospf, network 10.0.1.0/30 area 0]
+        refused: true
+  - id: area-0
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf area 0]
