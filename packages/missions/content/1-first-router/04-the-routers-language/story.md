@@ -12,7 +12,7 @@
 
 ---
 
-> **zebra:** The prompt is `a#`: vtysh waits for you. Type a single `?`, with no Enter, then Continue.
+> **zebra:** The prompt is `a#`: vtysh waits for you. Type `?` alone, with no Enter, then Continue.
 
 ---
 

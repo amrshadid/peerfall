@@ -151,7 +151,7 @@ PING 10.0.1.2 (10.0.1.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.446/0.800/1.073/0.262 ms
 ```
 
-> **zebra:** Three answers. On the way, a learned b's _MAC address_, the one b's interface uses on the cable itself: `ip neigh` shows it.
+> **zebra:** Three answers. On the way, a learned b's _MAC address_, the one b's interface uses on the cable itself. To see it, type `ip neigh`.
 
 ---
 

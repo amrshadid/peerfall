@@ -98,7 +98,7 @@ line 7: % Unknown command[21]:  descripton link to router c
 Configuration file[/etc/frr/a/frr.conf] processing failure: 2
 ```
 
-> **zebra:** Line 7, refused with `Unknown command`, as when you mistype in vtysh. `[21]` is FRR's number for interface mode, where the line was read. Every command also ends with a number, its _exit status_: `0` means no error. `echo $?` prints the last one.
+> **zebra:** Line 7, refused with `Unknown command`, as when you mistype in vtysh. `[21]` is FRR's number for interface mode, where the line was read. Every command also ends with a number, its _exit status_: `0` means no error. Print the last one: `echo $?`.
 
 ---
 

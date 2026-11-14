@@ -63,7 +63,7 @@ a:~#
 
 > **watchfrr:** That's me talking. `initial connection attempt failed`: I knocked on each daemon and nobody was there. `restart all`: so I started them. `Configuration Read in`: `frr.conf` was read into them. `connect succeeded`: all three answered. The order of my lines can change from one start to the next.
 >
-> **zebra:** Check from vtysh. `vtysh -c "show daemons"` runs one command and comes back to the shell.
+> **zebra:** Check from vtysh, with one command that comes back to the shell: type `vtysh -c "show daemons"`.
 
 ---
 
@@ -95,7 +95,7 @@ watchfrr global phase: Idle
 
 ## Watch it
 
-> **watchfrr:** Go on: `pkill staticd` stops staticd. What happens next?
+> **watchfrr:** Go on, stop staticd: type `pkill staticd`. What happens next?
 >
 > - staticd stays gone until you start it
 > - [x] watchfrr starts it again by itself
