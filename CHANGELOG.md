@@ -39,6 +39,10 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   description and share image, `robots.txt` and a sitemap, and the page shows what Peerfall
   is, who it's for, the eleven stages and the download sizes before the game loads, and
   without JavaScript.
+- **A wrong address on the site shows the game's own "No such page".** An address that is
+  no file of the site, like `/nope`, got the host's bare text page. It now gets a page in
+  the manual's style, in the theme you chose, with the address as the Machine's `ls` would
+  report it and a way back to the title, as in Kernelfall.
 
 ## [0.1.0-alpha.3] - 2026-11-14
 

@@ -81,6 +81,12 @@ export default defineConfig({
   // The one place the version is written is package.json; Settings and the status lines print it.
   define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   plugins: [react(), tailwindcss(), serviceWorker()],
+  build: {
+    rolldownOptions: {
+      // A static host serves 404.html for an address that is no file of the site.
+      input: { main: src('../index.html'), notFound: src('../404.html') },
+    },
+  },
   resolve: {
     alias: {
       '@': src(''),
