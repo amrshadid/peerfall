@@ -10,8 +10,10 @@ import type {
   Progress,
 } from '#types/definitions/progress'
 import { MAX_SAVED_ATTEMPTS, type RunComparison, type SavedRun } from '#types/definitions/runs'
+import type { SkillId } from '#types/definitions/skills'
 import { hintsUsed, nextHint } from '#utils/hints/index'
 import { compareRuns } from '#utils/runs/index'
+import { isMissionOpen, unlockedSkills } from '#utils/skills/index'
 
 export function emptyProgress(): Progress {
   return { missions: [], completionOrder: [], lastActive: null }
@@ -25,11 +27,21 @@ export function isCompleted(progress: Progress, missionId: MissionId): boolean {
   return progress.completionOrder.includes(missionId)
 }
 
-export function missionStatus(progress: Progress, mission: MissionDefinition): MissionStatus {
+/** The skills the player has earned: those of every completed mission. */
+export function progressSkills(progress: Progress, content: Pick<GameContent, 'missions'>): ReadonlySet<SkillId> {
+  return unlockedSkills(content.missions, progress.completionOrder)
+}
+
+/** A mission is locked until the missions completed so far have earned every skill it needs. */
+export function missionStatus(
+  progress: Progress,
+  mission: MissionDefinition,
+  content: Pick<GameContent, 'missions'>
+): MissionStatus {
   if (isCompleted(progress, mission.id)) {
     return 'completed'
   }
-  if (!mission.prerequisites.every((id) => isCompleted(progress, id))) {
+  if (!isMissionOpen(mission, progressSkills(progress, content))) {
     return 'locked'
   }
   return findMissionProgress(progress, mission.id) ? 'in_progress' : 'available'
@@ -38,11 +50,11 @@ export function missionStatus(progress: Progress, mission: MissionDefinition): M
 /** Where "Continue" goes: the mission last played if it isn't done, else the first one open to play. */
 export function continueMission(progress: Progress, content: GameContent): MissionDefinition | null {
   const last = progress.lastActive === null ? undefined : content.mission(progress.lastActive)
-  if (last && missionStatus(progress, last) === 'in_progress') {
+  if (last && missionStatus(progress, last, content) === 'in_progress') {
     return last
   }
   const open = content.missions.filter((mission) => {
-    const status = missionStatus(progress, mission)
+    const status = missionStatus(progress, mission, content)
     return status === 'in_progress' || status === 'available'
   })
   return open[0] ?? null
@@ -56,7 +68,7 @@ export function missionList(progress: Progress, content: GameContent): readonly 
       const record = findMissionProgress(progress, mission.id)
       return {
         mission,
-        status: missionStatus(progress, mission),
+        status: missionStatus(progress, mission, content),
         attempts: record?.attempts ?? 0,
         hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? 0),
       }

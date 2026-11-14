@@ -86,7 +86,7 @@ export function createMissionActions(): UseMissionActionsResult {
     if (!content) return noContentError()
     const mission = content.mission(missionId)
     if (!mission) return unknownMissionError(missionId)
-    if (missionStatus(store().progress, mission) === 'locked') return lockedMissionError(missionId)
+    if (missionStatus(store().progress, mission, content) === 'locked') return lockedMissionError(missionId)
     const at = getGameNow()
     const resumed = findMissionProgress(store().progress, missionId) !== undefined
     // A debrief left open comes back with the verdict it was shown with, never the fresh network's.

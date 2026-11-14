@@ -1,5 +1,6 @@
 import type { GameContent } from '#types/definitions/content'
 import type { ChapterDefinition, MissionDefinition } from '#types/definitions/mission'
+import type { SkillDefinition } from '#types/definitions/skills'
 import { createGameContent } from '#utils/content/index'
 import { validateChapters, validateMission } from '#utils/validate/index'
 
@@ -34,6 +35,7 @@ export const EXAMPLE_MISSION_YAML = {
   title: 'The Link That Never Went Down',
   chapter: 'recover-from-failure',
   objective: 'When the link between a and c stops passing packets, traffic is back through b within two seconds.',
+  skills: ['bfd-fast-detection'],
   prerequisites: [],
   summary: 'Make the network notice a dead link in under a second.',
   minutes: 20,
@@ -99,7 +101,8 @@ export const EXAMPLE_MISSION: MissionDefinition = exampleMission()
 export const FOLLOW_UP_MISSION: MissionDefinition = exampleMission({
   id: 'faster-than-default',
   title: 'Faster Than Default',
-  prerequisites: [EXAMPLE_MISSION.id],
+  skills: ['bfd-timers'],
+  prerequisites: ['bfd-fast-detection'],
   teaches: ['bfd-timers'],
   names: [],
   uses: ['bfd-session'],
@@ -130,6 +133,7 @@ export const STATE_MISSION_YAML = {
   title: 'Two Static Routes',
   chapter: 'recover-from-failure',
   objective: 'Router a reaches c, and still does after a restart.',
+  skills: ['static-routes-both-ways'],
   prerequisites: [],
   teaches: [],
   uses: [],
@@ -222,6 +226,26 @@ export function contentOf(missions: readonly MissionDefinition[]): GameContent {
   }
   return content.value
 }
+
+/** The example missions' skills, in a region of their own. */
+export const EXAMPLE_REGION = {
+  id: 'notice-it-fast',
+  name: 'Notice it fast',
+  caption: 'measure an outage, then let BFD notice a dead link',
+  guide: 'bfdd',
+  source: 'bfdd/, ospfd/ospf_bfd.c',
+  missions: ['the-link-that-never-went-down', 'faster-than-default'],
+} as const
+
+export const EXAMPLE_SKILLS: readonly SkillDefinition[] = [
+  {
+    id: 'bfd-fast-detection',
+    title: 'Notice a dead link in under a second',
+    region: EXAMPLE_REGION.id,
+    prerequisites: [],
+  },
+  { id: 'bfd-timers', title: "Tune BFD's timers", region: EXAMPLE_REGION.id, prerequisites: ['bfd-fast-detection'] },
+]
 
 /** The example mission, then the one it unlocks. */
 export const exampleContent = (): GameContent => contentOf([EXAMPLE_MISSION, FOLLOW_UP_MISSION])

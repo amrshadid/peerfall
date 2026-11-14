@@ -10,6 +10,7 @@ export {
   missionStatus,
   openDebrief,
   openDebriefOf,
+  progressSkills,
   recordRun,
   repairedRun,
   replayMission,

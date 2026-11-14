@@ -12,6 +12,7 @@ import {
   bfdBothEndsRun,
   bfdOneEndRun,
   EXAMPLE_MISSION,
+  exampleContent,
   FOLLOW_UP_MISSION,
   healthyRun,
   installTestGame,
@@ -111,14 +112,14 @@ describe('mission actions', () => {
     expect(state().active?.verdict?.passed).toBe(false)
     expect(await mission.showDebrief()).toMatchObject({ success: false, error: { code: 'FORBIDDEN' } })
     expect(state().progress.debrief).toBeUndefined()
-    expect(missionStatus(state().progress, FOLLOW_UP_MISSION)).toBe('locked')
+    expect(missionStatus(state().progress, FOLLOW_UP_MISSION, exampleContent())).toBe('locked')
 
     clock.advance(60_000)
     const completedAt = clock.now()
     const passed = await mission.submitRun(bfdBothEndsRun())
     expect(passed).toMatchObject({ success: true, data: { passed: true } })
     expect(findMissionProgress(state().progress, ID)).toMatchObject({ attempts: 2, completedAt })
-    expect(missionStatus(state().progress, FOLLOW_UP_MISSION)).toBe('available')
+    expect(missionStatus(state().progress, FOLLOW_UP_MISSION, exampleContent())).toBe('available')
     expect(savedComparison(state().progress, EXAMPLE_MISSION)?.outageSavedMs).toBe(34_970 - 834)
 
     expect(await mission.showDebrief()).toMatchObject({ success: true, data: { phase: 'debrief' } })

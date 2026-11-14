@@ -32,6 +32,7 @@ const MISSION_KEYS = [
   'minutes',
   'chapter',
   'objective',
+  'skills',
   'prerequisites',
   'teaches',
   'names',
@@ -355,6 +356,7 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     ...(minutes !== undefined && { minutes }),
     chapter: reader.string('chapter', KEBAB_ID),
     objective: reader.string('objective'),
+    skills: reader.stringList('skills', KEBAB_ID),
     prerequisites: reader.stringList('prerequisites', KEBAB_ID),
     teaches: reader.stringList('teaches', KEBAB_ID),
     names: reader.has('names') ? reader.stringList('names', KEBAB_ID) : [],
@@ -394,6 +396,7 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     'codex',
     issues
   )
+  reportDuplicates(mission.skills, 'skills', issues)
   reportDuplicates(mission.prerequisites, 'prerequisites', issues)
   reportDuplicates(mission.restartOnCheck ?? [], 'restartOnCheck', issues)
   reportDuplicates(
@@ -406,8 +409,11 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     if (mission.objectives.length === 0) {
       issues.add('objectives', 'expected at least one objective')
     }
-    if (mission.prerequisites.includes(mission.id)) {
-      issues.add('prerequisites', 'a mission cannot require itself')
+    if (mission.skills.length === 0) {
+      issues.add('skills', 'expected at least one skill the mission earns')
+    }
+    for (const skill of mission.prerequisites.filter((id) => mission.skills.includes(id))) {
+      issues.add('prerequisites', `"${skill}" is also a skill this mission earns`)
     }
     reportMismatches(mission, issues)
   }

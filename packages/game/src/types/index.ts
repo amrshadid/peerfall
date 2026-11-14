@@ -65,6 +65,7 @@ export {
   type MissionId,
   type ObjectiveDefinition,
   type ObjectiveId,
+  type RegionDefinition,
   type RunContext,
   type StoryRefs,
 } from '#types/definitions/mission'
@@ -106,6 +107,7 @@ export {
   type SaveSchema,
   type SaveSlot,
 } from '#types/definitions/saves'
+export type { SkillDefinition, SkillId } from '#types/definitions/skills'
 export {
   type ActiveMission,
   GAME_STATUS,

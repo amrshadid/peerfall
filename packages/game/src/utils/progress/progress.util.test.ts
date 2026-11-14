@@ -19,6 +19,7 @@ import {
   missionStatus,
   openDebrief,
   openDebriefOf,
+  progressSkills,
   recordRun,
   repairedRun,
   replayMission,
@@ -59,13 +60,17 @@ describe('starting a mission', () => {
 
 describe('mission status', () => {
   it('goes from available to in progress to completed, and unlocks what needed it', () => {
-    expect(missionStatus(emptyProgress(), MISSION)).toBe('available')
-    expect(missionStatus(emptyProgress(), FOLLOW_UP_MISSION)).toBe('locked')
-    expect(missionStatus(started(), MISSION)).toBe('in_progress')
+    const content = exampleContent()
+    expect(missionStatus(emptyProgress(), MISSION, content)).toBe('available')
+    expect(missionStatus(emptyProgress(), FOLLOW_UP_MISSION, content)).toBe('locked')
+    expect(missionStatus(started(), MISSION, content)).toBe('in_progress')
+    expect(progressSkills(emptyProgress(), content)).toEqual(new Set())
 
     const completed = after(run('attempt', true, 500))
-    expect(missionStatus(completed, MISSION)).toBe('completed')
-    expect(missionStatus(completed, FOLLOW_UP_MISSION)).toBe('available')
+    expect(missionStatus(completed, MISSION, content)).toBe('completed')
+    // The follow-up needs the skill the first mission earns.
+    expect(progressSkills(completed, content)).toEqual(new Set(MISSION.skills))
+    expect(missionStatus(completed, FOLLOW_UP_MISSION, content)).toBe('available')
   })
 
   it('lists every chapter, with attempts and hints used per mission', () => {
@@ -148,7 +153,7 @@ describe('recording runs', () => {
 
   it('never takes a completion back when a later attempt fails', () => {
     const progress = after(run('attempt', true, 400), run('attempt', false, 500))
-    expect(missionStatus(progress, MISSION)).toBe('completed')
+    expect(missionStatus(progress, MISSION, exampleContent())).toBe('completed')
     expect(latestAttempt(progress, MISSION)?.passed).toBe(false)
     expect(repairedRun(progress, MISSION)?.savedAt).toBe(400)
   })

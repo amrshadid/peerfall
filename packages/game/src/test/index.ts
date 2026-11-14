@@ -3,6 +3,8 @@ export {
   EXAMPLE_CHAPTERS_YAML,
   EXAMPLE_MISSION,
   EXAMPLE_MISSION_YAML,
+  EXAMPLE_REGION,
+  EXAMPLE_SKILLS,
   exampleChapters,
   exampleContent,
   exampleMission,
