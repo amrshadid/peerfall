@@ -30,6 +30,17 @@ export function saveFailedNotice(at: number): Notice {
   }
 }
 
+/** A fault run measured while the tab was hidden; `at` tells two such runs apart. */
+export function runVoidedNotice(at: number): Notice {
+  return {
+    id: `run-voided-${at}`,
+    kind: 'info',
+    kicker: 'Run not judged',
+    text: 'The tab was hidden while the link was broken. Break it again to rerun.',
+    sticky: false,
+  }
+}
+
 /** Oldest first; a save failure waits until nothing else is queued. */
 export function shownNotice(notices: readonly Notice[]): Notice | undefined {
   return notices.find((notice) => !notice.sticky) ?? notices[0]

@@ -42,8 +42,21 @@ export type MissionRunPhase =
   | 'checking'
   | 'failed'
 
+/** A fault run that was measured but not judged, and why. */
+export interface VoidedRun {
+  /** The tab was hidden while the link was broken: the browser may have slowed the Machine. */
+  readonly reason: 'hidden'
+  /** When the run ended, so two voided runs in a row are told apart. */
+  readonly at: number
+}
+
 export interface UseMissionRunResult {
   readonly phase: MissionRunPhase
+  /**
+   * The last fault run, when it was not judged: no verdict, no baseline, no attempt. Cleared by the
+   * next fault run and by Start over. A tab hidden while no fault run is going on voids nothing.
+   */
+  readonly voided: VoidedRun | null
   /** Why the network could not be built or the run could not start. */
   readonly errors: readonly string[]
   /**
@@ -113,6 +126,7 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
   const [settled, setSettledState] = useState(false)
   const [errors, setErrors] = useState<readonly string[]>([])
   const [verdict, setVerdictState] = useState<MissionVerdict | null>(null)
+  const [voided, setVoided] = useState<VoidedRun | null>(null)
   const actions = useMemo(() => createMissionActions(), [])
   // Live judging runs outside React's renders, so it reads these instead of the state above.
   const busyNow = useRef<Busy | null>(null)
@@ -142,6 +156,19 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
   // The Machine as it was last read: a probe or a fault run judges the objectives that read the
   // state as that read left them, instead of un-ticking them.
   const checked = useRef<MachineState | null>(null)
+  // A hidden tab's timers and worker may be slowed by the browser, and a fault run is timed in
+  // hundreds of milliseconds (BFD's 300 ms × 3): a run the tab was hidden for is not judged.
+  const hiddenInRun = useRef(false)
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && busyNow.current === 'faulted') {
+        hiddenInRun.current = true
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
 
   /**
    * Judges what the Machine showed, objectives already met staying met, and records the attempt
@@ -201,6 +228,7 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
     submitted.current = false
     checked.current = null
     setVerdict(null)
+    setVoided(null)
     setErrors([])
     live.cancel()
     if (network.phase !== 'ready' || !mission) {
@@ -280,6 +308,8 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
       return
     }
     setBusy('faulted')
+    setVoided(null)
+    hiddenInRun.current = document.visibilityState === 'hidden'
     try {
       const outcome = await faultRun(machine, mission)
       if (current.current !== mission) {
@@ -287,6 +317,11 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
       }
       if (!outcome.ok) {
         setErrors(outcome.errors)
+        return
+      }
+      // The network is already back as the player had it; the run is just not judged.
+      if (hiddenInRun.current || document.visibilityState === 'hidden') {
+        setVoided({ reason: 'hidden', at: Date.now() })
         return
       }
       const previous = verdictNow.current
@@ -322,6 +357,7 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
     live.cancel()
     submitted.current = false
     setVerdict(null)
+    setVoided(null)
     setErrors([])
     checked.current = null
     await machine.restoreHealthy(START_SLOT)
@@ -338,6 +374,7 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
   return {
     phase,
     errors: network.phase === 'failed' ? network.errors : errors,
+    voided,
     verdict,
     checkWork,
     sendProbe,

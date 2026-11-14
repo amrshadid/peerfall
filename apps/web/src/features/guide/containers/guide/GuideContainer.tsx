@@ -2,7 +2,7 @@ import { useContent } from '@features/content/hooks/content'
 import { GuidePresentation } from '@features/guide/components/guide'
 import type { GuideAction, GuidePace, GuideStepId } from '@features/guide/types'
 import { guideObjectivesOf, probeNamesOf } from '@features/guide/utils/objectives'
-import { runStatusOf, waitReasonOf } from '@features/guide/utils/run'
+import { runStatusOf, voidedRunStatusOf, waitReasonOf } from '@features/guide/utils/run'
 import {
   BUILD_NOTE,
   beatsOf,
@@ -23,7 +23,7 @@ import { useMemo } from 'react'
 
 export interface GuideContainerProps {
   /** The mission's run on the Machine: where it is, what it showed, and how to send a probe or break the link. */
-  run: Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>
+  run: Pick<UseMissionRunResult, 'phase' | 'errors' | 'voided' | 'verdict' | 'sendProbe' | 'runFault'>
   step: GuideStepId
   reviewing: GuideStepId | null
   /** Ends a look back at a done step. */
@@ -171,7 +171,10 @@ export function GuideContainer({
       }))}
       codexOpen={reviewing !== null || shown === 'watch' || shown === 'debrief'}
       note={step === 'build' && reviewing === null ? BUILD_NOTE : null}
-      status={runStatusOf(run.phase, run.errors, mission, probeNamesOf(mission))}
+      status={
+        runStatusOf(run.phase, run.errors, mission, probeNamesOf(mission)) ??
+        (run.voided ? voidedRunStatusOf(run.voided) : null)
+      }
       actions={actions}
     />
   )

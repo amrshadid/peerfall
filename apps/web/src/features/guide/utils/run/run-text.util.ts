@@ -1,7 +1,7 @@
 import type { GuideStatus } from '@features/guide/types'
 import type { ProbeNames } from '@features/guide/utils/objectives'
 import { type MissionDefinition, STATE_CHECK_KINDS } from '@peerfall/game/types'
-import type { MissionRunPhase } from '@peerfall/missions/hooks'
+import type { MissionRunPhase, VoidedRun } from '@peerfall/missions/hooks'
 
 /** `a–c`, or plain words in a mission that breaks nothing. */
 const linkText = (mission: Pick<MissionDefinition, 'fault'>): string => mission.fault?.link.join('–') ?? 'under test'
@@ -76,6 +76,22 @@ export function runStatusOf(
       return errors.length > 0
         ? { text: 'The last run could not be finished.', busy: false, failed: true, details: errors }
         : null
+  }
+}
+
+/**
+ * The line over the actions after a fault run the tab was hidden for. Recovery is timed in
+ * hundreds of milliseconds, and a browser may slow a hidden tab, so the run is not judged.
+ */
+export function voidedRunStatusOf(voided: VoidedRun): GuideStatus {
+  switch (voided.reason) {
+    case 'hidden':
+      return {
+        text: 'That run was not judged: the tab was hidden while the link was broken, and a browser may slow a hidden tab, which would skew the timing. Nothing was recorded. Break the link again, and keep this tab in front until it ends.',
+        busy: false,
+        failed: false,
+        details: [],
+      }
   }
 }
 

@@ -1,4 +1,5 @@
-import { useCheatSheet, usePanelSizes, useShowAllPanels } from '@app/store'
+import { warmOfflineImage } from '@app/offline'
+import { useCheatSheet, useNotices, usePanelSizes, useShowAllPanels } from '@app/store'
 import { useSaveStatus } from '@features/chrome/hooks/save'
 import { useScreenChrome } from '@features/chrome/hooks/screen'
 import { useContent } from '@features/content/hooks/content'
@@ -16,6 +17,7 @@ import {
   panelsFor,
 } from '@features/mission/utils/layout'
 import { panelsOfStep, previousStepOf } from '@features/mission/utils/steps'
+import { runVoidedNotice } from '@features/notices/utils/notices'
 import { useShortcut } from '@features/shortcuts/hooks/keys'
 import { terminalLabelOf } from '@features/terminal/utils/label'
 import { formatSeconds } from '@features/timeline/utils/runs'
@@ -93,6 +95,20 @@ export function MissionContainer({
 
   const mission = active.mission?.id === missionId ? active.mission : null
   const run = useMissionRun(mission)
+  const { showNotice } = useNotices()
+  // The Guide keeps saying it; the status line catches the eye of a player just back to the tab.
+  useEffect(() => {
+    if (run.voided) {
+      showNotice(runVoidedNotice(run.voided.at))
+    }
+  }, [run.voided, showNotice])
+  // Once a network is up the bandwidth is free: the rest of the image is cached for offline play.
+  const networkUp = run.phase === 'ready'
+  useEffect(() => {
+    if (networkUp) {
+      warmOfflineImage()
+    }
+  }, [networkUp])
   const hints = useHints()
   const machine = useMachineStatus()
   const lock = useMachineLock(machine)

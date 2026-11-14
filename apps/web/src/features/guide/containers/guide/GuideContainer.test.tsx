@@ -53,6 +53,7 @@ function mount(
     onNext?: () => void
     startedOver?: boolean
     runVerdict?: UseMissionRunResult['verdict']
+    voided?: UseMissionRunResult['voided']
     skippedSeeIt?: boolean
   } = {}
 ) {
@@ -60,10 +61,11 @@ function mount(
     run: {
       phase: 'ready',
       errors: [],
+      voided: overrides.voided ?? null,
       verdict: overrides.runVerdict ?? null,
       sendProbe: vi.fn(),
       runFault: vi.fn(),
-    } as Pick<UseMissionRunResult, 'phase' | 'errors' | 'verdict' | 'sendProbe' | 'runFault'>,
+    } as Pick<UseMissionRunResult, 'phase' | 'errors' | 'voided' | 'verdict' | 'sendProbe' | 'runFault'>,
     step,
     reviewing: overrides.reviewing ?? null,
     onEndReview: vi.fn(),
@@ -145,6 +147,12 @@ describe('GuideContainer', () => {
     expect(props.run.runFault).toHaveBeenCalledOnce()
     expect(props.onStartOver).toHaveBeenCalledOnce()
     expect(screen.getByText(/Objectives tick on their own/)).toBeTruthy()
+  })
+
+  it('says a fault run the tab was hidden for was not judged, and offers the link to break again', () => {
+    mount('watch', { voided: { reason: 'hidden', at: 1 } })
+    expect(screen.getByText(/That run was not judged: the tab was hidden/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Break the link' })).toBeTruthy()
   })
 
   it('reveals the mission hints one at a time, named nudge, concept, spot', () => {
