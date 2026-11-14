@@ -116,6 +116,7 @@ export function MissionContainer({
   const { saveState, lastSavedAt } = useSaveStatus()
   const now = useNow()
   const [restartOpen, setRestartOpen] = useState(false)
+  const [replayOpen, setReplayOpen] = useState(false)
 
   const phase = active.phase ?? 'incident'
   // Every reset of the network starts the story's played steps over.
@@ -210,6 +211,12 @@ export function MissionContainer({
       }
     })
   }
+  // As Kernelfall's Replay level: the mission again from its scene, on the network as it found
+  // it, with every hint to ask for again.
+  const replayFromScene = () => {
+    startOver()
+    void replay()
+  }
   const view: MissionView = {
     run,
     step,
@@ -227,16 +234,14 @@ export function MissionContainer({
     skippedSeeIt: story.skippedSeeIt,
     pace,
     onStartOver: () => setRestartOpen(true),
-    // As Kernelfall's Replay level: the mission again from its scene, on the network as it found
-    // it, with every hint to ask for again. While the network is busy, the Start over dialog says
-    // why it has to wait.
+    // The debrief's Replay mission, unasked as Kernelfall's card replays. While the network is
+    // busy, the Replay dialog says why it has to wait.
     onPlayAgain: () => {
       if (restartWait !== null) {
-        setRestartOpen(true)
+        setReplayOpen(true)
         return
       }
-      startOver()
-      void replay()
+      replayFromScene()
     },
   }
   const lastRunFellShort = verdict !== null && !verdict.passed
@@ -269,7 +274,7 @@ export function MissionContainer({
           hintEnabled,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
-          onRestart: () => setRestartOpen(true),
+          onReplay: () => setReplayOpen(true),
         },
         panels,
         slots: { guide: guide(view), terminal: terminal(view), editor: editor(view), topology, timeline },
@@ -303,6 +308,15 @@ export function MissionContainer({
             startOver()
           },
           onCancel: () => setRestartOpen(false),
+        },
+        replay: {
+          open: replayOpen,
+          unavailable: restartWait,
+          onConfirm: () => {
+            setReplayOpen(false)
+            replayFromScene()
+          },
+          onCancel: () => setReplayOpen(false),
         },
         status: {
           save: saveState,

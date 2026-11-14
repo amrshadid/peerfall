@@ -160,7 +160,7 @@ export function DevWorkspaceContainer() {
           hintEnabled: !debriefOpen,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
-          onRestart: () => setRestartOpen(true),
+          onReplay: () => setRestartOpen(true),
         },
         panels,
         slots: {
@@ -271,7 +271,9 @@ export function DevWorkspaceContainer() {
             onMap={() => setDebriefOpen(false)}
           />
         ) : null,
-        restart: { open: restartOpen, onConfirm: restart, onCancel: () => setRestartOpen(false) },
+        // The workbench's restart is a replay already: back to the scene, hints dropped.
+        restart: { open: false, onConfirm: restart, onCancel: () => setRestartOpen(false) },
+        replay: { open: restartOpen, onConfirm: restart, onCancel: () => setRestartOpen(false) },
         status: { save: 'saved', savedAgoMs: null, machine: MACHINE_STATUS[phase], onShortcuts: openCheatSheet },
       }}
     />

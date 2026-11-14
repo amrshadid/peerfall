@@ -22,8 +22,8 @@ export interface MissionTopBarData {
   /** The Hint shortcut as `aria-keyshortcuts` wants it, e.g. `Alt+H`. */
   readonly hintKeyShortcut: string
   onHint(): void
-  /** Asks to start the mission again from the network as the mission found it. */
-  onRestart(): void
+  /** Asks to replay the mission from its scene, as Kernelfall's top bar asks to replay a level. */
+  onReplay(): void
 }
 
 /** What goes in each panel. A slot whose panel is locked is not rendered. */
@@ -84,7 +84,10 @@ export interface MissionLayoutModel {
   readonly titleBlock: readonly TitleBlockEntry[]
   /** Laid over the workspace and the network once the mission is judged; null before. */
   readonly debrief: ReactNode | null
+  /** The Guide's Start over: the network as the mission found it, the play-through kept. */
   readonly restart: ConfirmDialog
+  /** The top bar's Replay: the mission from its scene, its steps and hints dropped. */
+  readonly replay: ConfirmDialog
   readonly status: MissionStatusBar
 }
 

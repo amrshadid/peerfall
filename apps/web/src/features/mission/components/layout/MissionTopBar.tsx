@@ -14,14 +14,9 @@ export function MissionTopBar({ bar, onMenu }: MissionTopBarProps) {
         <Icon name="back" />
         Map
       </ButtonLink>
-      <Button
-        variant="quiet"
-        aria-label="Start this mission again"
-        title="Start this mission again"
-        onClick={bar.onRestart}
-      >
+      <Button variant="quiet" aria-label="Replay this mission" title="Replay this mission" onClick={bar.onReplay}>
         <Icon name="replay" />
-        <span className="mission-topbar__label">Restart</span>
+        <span className="mission-topbar__label">Replay</span>
       </Button>
       <div className="mission-topbar__name">
         {/* Long titles wrap and clamp on narrow screens; the tooltip keeps the whole name. */}
