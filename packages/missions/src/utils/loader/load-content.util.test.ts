@@ -1,3 +1,4 @@
+import { isMissionOpen, unlockedSkills } from '@peerfall/game/utils'
 import { describe, expect, it } from 'vitest'
 import type { ContentFiles } from '#types/definitions/content'
 import { appContent } from '#utils/loader/app-content.util'
@@ -34,20 +35,29 @@ describe('the repository’s content', () => {
     ])
   })
 
-  it('starts with the first router, each mission unlocked by the one before it', () => {
+  it('starts with the first router, each mission opened by the skills the one before it earns', () => {
     const loaded = appContent()
     if (!loaded.ok) {
       throw new Error(loaded.errors.join('\n'))
     }
     const { game } = loaded.value
     expect(game.missions[0]).toMatchObject({ id: 'the-dark-cable', chapter: 'first-router', prerequisites: [] })
-    const firstTwoStages = [...game.missionsIn('first-router'), ...game.missionsIn('follow-a-packet')]
-    expect(firstTwoStages).toHaveLength(14)
-    firstTwoStages.slice(1).forEach((mission, at) => {
-      expect([mission.id, mission.prerequisites]).toEqual([mission.id, [firstTwoStages[at]?.id]])
-    })
-    // Stage 3 is not written yet: the mission after it follows stage 2's capstone, so the journey stays in order.
-    expect(game.mission('the-link-that-never-went-down')?.prerequisites).toEqual(['bring-the-line-up'])
+    // Completing the missions one by one, in play order, opens exactly the next one each time and
+    // nothing further: the order the mission-by-mission prerequisites gave before skills.
+    const completed: string[] = []
+    for (const mission of game.missions) {
+      const unlocked = unlockedSkills(game.missions, completed)
+      const open = game.missions.filter((each) => !completed.includes(each.id) && isMissionOpen(each, unlocked))
+      expect([completed.length, open.map((each) => each.id)]).toEqual([completed.length, [mission.id]])
+      completed.push(mission.id)
+    }
+    // Stage 3 is not written yet: the mission after it needs what stage 2's capstone earns, so the journey stays in order.
+    expect(game.earnedIn(game.mission('the-link-that-never-went-down')?.prerequisites[0] ?? '')?.id).toBe(
+      'bring-the-line-up'
+    )
+    // Every skill is earned by one mission, and a mission named by its first skill in the map's Skills view.
+    expect(game.skills.map((skill) => game.earnedIn(skill.id)?.id)).not.toContain(undefined)
+    expect(game.missions.every((mission) => game.skill(mission.skills[0] ?? '') !== undefined)).toBe(true)
     // A mission that breaks nothing has no fault to run and no recovery target.
     expect(game.missions[0]).not.toHaveProperty('fault')
     expect(game.missions[0]).not.toHaveProperty('recoveryTargetMs')
@@ -123,6 +133,22 @@ describe('broken content', () => {
       'missions.the-dark-cable.teaches[0]: "router" is not a concept of concepts.yaml'
     )
     expect(errorsOf(withFiles({ fieldGuide: '' }))[0]).toMatch(/^field-guide\.yaml: /)
+  })
+
+  it('wants skills.yaml, every skill a mission names in it, and every skill earned', () => {
+    expect(errorsOf(withFiles({ skills: '' }))[0]).toMatch(/^skills\.yaml: /)
+    expect(errorsOf(withFiles({ skills: 'skills: []' }))).toContain(
+      'missions.the-dark-cable.skills[0]: "linux-interfaces-and-routes" is not a skill of skills.yaml'
+    )
+    const unearned = `${CONTENT_FILES.skills}  - { id: ghost-skill, title: Nothing, region: notice-it-fast }\n`
+    expect(errorsOf(withFiles({ skills: unearned }))).toEqual(['skills[16]: no mission earns "ghost-skill"'])
+  })
+
+  it('wants every stage with missions grouped in regions', () => {
+    const chapters = CONTENT_FILES.chapters.replace(/ {4}regions:\n(?: {6}.*\n)+/, '')
+    expect(errorsOf(withFiles({ chapters }))).toEqual([
+      'chapters.yaml: chapters[0].regions: a chapter with missions groups them in regions',
+    ])
   })
 
   it('wants the folder to be named after the chapter and the mission', () => {

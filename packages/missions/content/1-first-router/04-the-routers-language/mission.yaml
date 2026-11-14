@@ -5,7 +5,8 @@ summary: Ask vtysh for its own words with ?, Tab and short words, and switch an 
 minutes: 20
 chapter: first-router
 objective: Router a's interface to c is switched on again, a's routing table has a route through it, and a reaches c.
-prerequisites: [the-silent-router]
+skills: [cli-help-and-modes]
+prerequisites: [frr-init-script]
 teaches: [cli-help, cli-modes, interface-shutdown]
 names: [running-config]
 uses: [vtysh, interface, route]

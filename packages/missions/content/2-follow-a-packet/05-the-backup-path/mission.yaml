@@ -5,7 +5,8 @@ summary: Choose between two static routes with administrative distance, and keep
 minutes: 20
 chapter: follow-a-packet
 objective: Router a sends to c's loopback over the direct cable, and keeps the route through b waiting as a backup.
-prerequisites: [written-but-not-used]
+skills: [administrative-distance]
+prerequisites: [rib-and-fib]
 teaches: [administrative-distance, floating-static, ecmp]
 names: []
 uses: [static-route, next-hop, rib, fib, interface-shutdown, cli-modes]

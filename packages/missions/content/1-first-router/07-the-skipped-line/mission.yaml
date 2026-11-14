@@ -5,7 +5,8 @@ summary: Find the line FRR skipped in its saved file, check the file with vtysh,
 minutes: 15
 chapter: first-router
 objective: Router a's saved frr.conf describes its interface to c in words FRR reads, and FRR has restarted from it with the description.
-prerequisites: [gone-after-the-restart]
+skills: [config-find-refused-line]
+prerequisites: [config-write-memory]
 teaches: [frr-log, config-check]
 names: []
 uses: [saved-config, write-memory, running-config, watchfrr, frr-init-script, interface-description, vtysh, cli-modes]

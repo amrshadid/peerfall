@@ -8,8 +8,9 @@ objective: When the link between a and c stops passing packets, traffic from a t
 # Kept as it was: the network, the probe, the fault, the recovery target, the objectives and
 # their checks, so the four recorded golden runs stay valid. Only the story, hints, chips and
 # cards are new. Stage 3 is not written yet, so the story explains OSPF's terms where they appear.
-# It follows stage 3's last mission; until stage 3 is written, it follows stage 2's capstone.
-prerequisites: [bring-the-line-up]
+skills: [outage-measure, bfd-fast-detection]
+# It follows stage 3's last mission; until stage 3 is written, it needs what stage 2's capstone earns.
+prerequisites: [static-line-of-routers]
 # peer: named in 1.1's Scene, explained here beside show ip ospf neighbor until stage 3 teaches it.
 teaches: [bfd, ospf-dead-interval, peer]
 names: [ospf-adjacency]

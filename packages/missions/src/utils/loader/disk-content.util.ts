@@ -6,6 +6,7 @@ import {
   type ContentFiles,
   FIELD_GUIDE_FILE,
   MISSION_FILE,
+  SKILLS_FILE,
   STORY_FILE,
 } from '#types/definitions/content'
 
@@ -31,6 +32,7 @@ export function readContentDir(dir: string): ContentFiles {
     chapters: read(CHAPTERS_FILE),
     concepts: read(CONCEPTS_FILE),
     fieldGuide: read(FIELD_GUIDE_FILE),
+    skills: read(SKILLS_FILE),
     missions,
     stories,
   }

@@ -5,7 +5,8 @@ summary: "Stage 2's capstone: from bare cables, give a line of three routers the
 minutes: 20
 chapter: follow-a-packet
 objective: Router a reaches c through b, and every address and route it needs comes back when FRR restarts on each router.
-prerequisites: [the-backup-path]
+skills: [static-line-of-routers]
+prerequisites: [administrative-distance]
 teaches: []
 names: []
 uses:

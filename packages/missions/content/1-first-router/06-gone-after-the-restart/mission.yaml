@@ -5,7 +5,8 @@ summary: Restart FRR and see what it keeps, then save a change with write memory
 minutes: 15
 chapter: first-router
 objective: Router a's loopback interface has a description in its frr.conf, and FRR came back with it after you restarted it.
-prerequisites: [what-it-does-now]
+skills: [config-write-memory]
+prerequisites: [cli-running-config]
 teaches: [saved-config, write-memory]
 uses: [running-config, interface-description, frr-init-script, watchfrr, cli-modes]
 

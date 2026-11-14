@@ -28,18 +28,60 @@ before writing one.
 
 ```
 packages/missions/content/
-  chapters.yaml       stages in play order, with each stage's Codex title page
+  chapters.yaml       stages in play order, with each stage's Codex title page and its regions
+  skills.yaml         the skill tree: what the player can do after each mission
   concepts.yaml       every concept a mission may teach, name or use
   field-guide.yaml    the Codex's page of commands
   1-first-router/01-the-silent-router/
     mission.yaml      objectives and their checks, the network, three hints, chips, Codex
-                      cards, the concepts it teaches; a probe and a fault when it has them
+                      cards, the concepts it teaches, the skills it earns and needs, its
+                      minutes; a probe and a fault when it has them
     story.md          Scene, See it, Build it, Watch it, Debrief, Real world
     solution.yaml     the golden runs: what a player might do, and whether it must pass
 ```
 
 Folders are numbered in play order. Ids inside the YAML never change when folders are
 renumbered. Mission files carry a `version:` field.
+
+**Regions.** A stage's missions are grouped in regions, as Kernelfall's acts are: each has
+its own heading on the Peer Map, its own progress and its own line of stops. They are a
+`regions:` list in `chapters.yaml`, not folders, so mission folders and ids stay as they
+are. A region has an `id` (unique across the game), a `name`, a `caption` (what its missions
+cover), a `guide` (the daemons who speak in them), a `source` (where that lives in FRR's
+source tree) and its `missions` by id, in play order. Every mission of a stage is in one of
+its regions; a stage with no missions yet has none.
+
+```yaml
+regions:
+  - id: meet-the-router
+    name: Meet the router
+    caption: a router as Linux shows it, FRR's daemons and vtysh, the init script and watchfrr
+    guide: zebra, watchfrr
+    source: zebra/, lib/libfrr.c, vtysh/, watchfrr/, tools/frrinit.sh.in
+    missions: [the-dark-cable, nobody-answers, the-silent-router]
+```
+
+**Skills.** As in Kernelfall, missions open by skill, not by mission. `skills.yaml` lists each
+skill once: an `id`, a `title` in plain words for a beginner, the `region` whose mission
+earns it, and the skills it builds on (`prerequisites`). A mission lists the skills it
+earns (`skills:`, one, occasionally two) and the skills it needs (`prerequisites:`); it opens
+once the missions completed so far have earned every one. The loader reports a skill id
+that is not in `skills.yaml`, a prerequisite cycle, a skill no mission earns or two missions
+earn, and a skill a mission needs that only a later mission earns. The Peer Map's Skills
+view names each stop by the first skill its mission earns.
+
+```yaml
+# skills.yaml
+skills:
+  - id: frr-start-zebra
+    title: Start zebra and talk to it in vtysh
+    region: meet-the-router
+    prerequisites: [linux-interfaces-and-routes]
+# mission.yaml
+skills: [frr-start-zebra]
+prerequisites: [linux-interfaces-and-routes]
+minutes: 15 # about how long a new player takes; the map's Time row
+```
 
 ## The story
 
@@ -182,6 +224,7 @@ version: 1
 title: The Silent Router
 chapter: first-router
 objective: FRR is running on router a, started the way FRR is started, and its daemons answer in vtysh.
+skills: [frr-init-script]
 prerequisites: []
 network:
   routers:

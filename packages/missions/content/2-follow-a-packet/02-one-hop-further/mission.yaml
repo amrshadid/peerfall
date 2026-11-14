@@ -5,7 +5,8 @@ summary: Write a static route that hands packets for a network one router away t
 minutes: 15
 chapter: follow-a-packet
 objective: Router a reaches router c's address through b, with a static route to c's network that names b as its next hop.
-prerequisites: [two-ends-of-one-cable]
+skills: [static-routes]
+prerequisites: [ip-addresses]
 teaches: [static-route, next-hop, staticd]
 names: [ttl, next-hop-resolution]
 uses: [ip-address, prefix, connected-route, cli-modes]

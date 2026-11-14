@@ -5,7 +5,8 @@ summary: Follow a written route from the configuration into zebra's table and th
 minutes: 15
 chapter: follow-a-packet
 objective: Router a uses a static route to c's network whose next hop it can reach, and reaches c's address.
-prerequisites: [the-reply-that-never-came-back]
+skills: [rib-and-fib]
+prerequisites: [return-path]
 teaches: [rib, fib, next-hop-resolution]
 uses: [static-route, next-hop, staticd, zebra, running-config]
 

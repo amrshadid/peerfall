@@ -5,7 +5,8 @@ summary: Give both ends of a new cable their addresses, and watch the connected 
 minutes: 15
 chapter: follow-a-packet
 objective: Routers a and b each have an address on their link, each has the connected route in its kernel, and a reaches b.
-prerequisites: [a-router-from-nothing]
+skills: [ip-addresses]
+prerequisites: [frr-router-from-nothing]
 teaches: [ip-address, prefix, connected-route]
 names: [rib, fib, ipv6]
 uses: [interface, route, zebra, vtysh, cli-modes]
