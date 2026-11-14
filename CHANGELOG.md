@@ -68,6 +68,14 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   says first what Peerfall is, and the page has bitmap icons beside the drawn one, for
   search results and home screens.
 
+### Security
+
+- **The site sends security headers.** A Content-Security-Policy lets the page run only the
+  site's own code, the Linux machine's WebAssembly and, once allowed, Clarity; no other site
+  can frame the game; and the page asks for no camera, microphone or other device. The
+  machine itself already had no way to the internet, and what is typed in it changes only
+  the player's own copy.
+
 ## [0.1.0-alpha.3] - 2026-11-14
 
 Stages 1 and 2 are retold for a player who starts knowing nothing, in fourteen missions, with

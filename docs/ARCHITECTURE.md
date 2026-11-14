@@ -106,6 +106,24 @@ Saves go through a `StorageAdapter` the app passes to `configureGame()`. Writes 
 atomic, records are versioned (older saves migrate, newer ones are refused, never
 overwritten), and without storage the game stays playable in memory and offers an export.
 
+## Security
+
+- **The Machine is the player's own.** It runs in their tab, inside v86, inside the
+  browser's sandbox. Whatever is typed there, as root too, changes only that copy: Start over
+  or a reload brings back the saved boot, and the image's files are only ever read from the
+  site.
+- **It has no way out.** v86 is given no network card, so nothing in the Machine reaches the
+  internet: no package downloads, no outside address. Its links are veth pairs inside it.
+- **Nothing in it is secret.** The image is built from public, pinned packages; it holds no
+  key, token or password worth reading. Keep it that way.
+- **Its output is text.** The terminal draws what the Machine prints with xterm; no output
+  of the Machine and no save file is ever inserted into the page as HTML.
+- **The host's headers** (`vercel.json`, sent with every file): a Content-Security-Policy
+  that allows only the site itself, WebAssembly (`'wasm-unsafe-eval'`, for v86) and Clarity's
+  hosts; no framing by other sites; `nosniff`; a strict referrer; no camera, microphone or
+  other device. An inline script runs only if the policy names its hash: the build fails
+  with the hash to add when one changes, and `vite preview` sends the same headers.
+
 ## Testing
 
 All on Vitest; tests sit next to the file they test. Missions have **golden runs**:
