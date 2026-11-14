@@ -143,9 +143,17 @@ function describeObjective({ result }: MissionVerdict['objectives'][number]): st
           .join('; ') || 'no route'
       }`
     case 'reaches':
-      return `${result.from} → ${result.to}: ${result.received} of ${result.sent} answered`
+      return `${result.from} → ${result.to}${result.size === undefined ? '' : ` (${result.size} bytes)`}: ${result.received} of ${result.sent} answered`
     case 'config':
       return `${result.router} ${result.source}: ${result.found ?? 'no such line'}`
+    case 'peer':
+      return `${result.router} ${result.protocol} peers: ${
+        result.peers
+          .map((peer) => `${peer.peer} on ${peer.interface} ${peer.state}${peer.level ? ` L${peer.level}` : ''}`)
+          .join('; ') || 'none'
+      }`
+    case 'lsa':
+      return `${result.router}: ${result.found ? `${result.found.type} ${result.found.id} from ${result.found.advRouter} in ${result.found.area ?? 'no area'}` : 'no such LSA'}`
     default:
       return ''
   }
