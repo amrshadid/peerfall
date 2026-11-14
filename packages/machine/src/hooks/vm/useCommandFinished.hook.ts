@@ -12,16 +12,18 @@ export function useCommandsFinished(): number {
 /**
  * Calls `onFinished` each time a command the player typed has finished: the terminal is back at a
  * bash or vtysh prompt (`a:~# `, `a# `, `a(config-if)# `) after an Enter. `count` is the total so
- * far; several commands typed ahead of a running one may arrive as one call.
+ * far; several commands typed ahead of a running one may arrive as one call. `lines` are their
+ * command lines, oldest first, each as the terminal showed it when Enter reached it, prompt
+ * included: `a(config-if)# description link to router c`.
  */
-export function useCommandFinished(onFinished: (count: number) => void): void {
+export function useCommandFinished(onFinished: (count: number, lines?: readonly string[]) => void): void {
   const latest = useRef(onFinished)
   latest.current = onFinished
   useEffect(
     () =>
       useVmStore.subscribe((state, previous) => {
         if (state.commandsFinished > previous.commandsFinished) {
-          latest.current(state.commandsFinished)
+          latest.current(state.commandsFinished, state.finishedLines)
         }
       }),
     []

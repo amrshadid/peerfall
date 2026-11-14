@@ -106,6 +106,13 @@ export interface VmShellUpdate {
    * line that ran, in the shell or in vtysh. Never goes back, not even on a restore.
    */
   readonly commandsFinished: number
+  /**
+   * The command lines of the commands this update finished, oldest first: each as the terminal
+   * showed it when Enter reached it, readline's redraws applied and the prompt included
+   * (`a(config-if)# description link to router c`); `''` for one whose line never showed. Left
+   * out when the update finished none.
+   */
+  readonly lines?: readonly string[]
 }
 
 /** One Linux VM: the terminal goes out as bytes, keys come in as text, root has a channel of its own. */

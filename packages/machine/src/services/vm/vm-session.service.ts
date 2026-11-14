@@ -319,7 +319,7 @@ export function createVmSession(wasmUrl?: string): VmSession {
             onOutput(bytes)
             if (watched.finished > 0) {
               commandsFinished += watched.finished
-              shellNews()
+              onShell({ router, commandsFinished, lines: watched.lines })
             }
           }
           flushEvents()

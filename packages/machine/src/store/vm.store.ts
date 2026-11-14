@@ -20,6 +20,8 @@ interface VmState {
    * bash or vtysh prompt after an Enter. Only ever grows, so a change means "a command finished".
    */
   commandsFinished: number
+  /** The command lines of the commands the last growth of `commandsFinished` counted, oldest first. */
+  finishedLines: readonly string[]
   log: EventLog
   /**
    * Each router's interfaces as the state was last read, by router; a router never read is
@@ -51,6 +53,7 @@ const initialState: VmState = {
   networkErrors: [],
   router: null,
   commandsFinished: 0,
+  finishedLines: [],
   log: EMPTY_EVENT_LOG,
   interfaces: {},
 }
@@ -68,9 +71,13 @@ export const useVmStore = create<VmStore>()(
             ? { network, networkErrors: errors, interfaces: NO_INTERFACES }
             : { network, networkErrors: errors }
         ),
-      applyShell: ({ router, commandsFinished }) =>
-        // The count only grows: news from a VM replaced since must not take it back.
-        set((state) => ({ router, commandsFinished: Math.max(state.commandsFinished, commandsFinished) })),
+      applyShell: ({ router, commandsFinished, lines }) =>
+        set((state) =>
+          // The count only grows: news from a VM replaced since must not take it back.
+          commandsFinished > state.commandsFinished
+            ? { router, commandsFinished, finishedLines: lines ?? [] }
+            : { router }
+        ),
       applyEvents: (update) => set((state) => ({ log: applyEventUpdate(state.log, update) })),
       recordInterfaces: ({ routers }) => {
         const read = Object.entries(routers).flatMap(([router, { links }]) =>
