@@ -88,17 +88,24 @@ describe('strayWords', () => {
   const RULES: readonly VocabularyRule[] = [
     { word: 'peer', means: 'a routing protocol neighbor', pattern: /\bpeers?\b/gi, allowed: /\bBGP peers?\b/g },
     { word: 'wire', means: 'a link', pattern: /\bwires?\b/gi, only: ['two-ends-of-one-cable'] },
+    { word: 'map', means: 'the link-state database', pattern: /\bmaps?\b/gi, chapters: ['build-an-underlay'] },
   ]
+  const silentRouter = { id: 'the-silent-router', chapter: 'first-router' }
 
   it('flags a word outside its allowed ways, and leaves inline code alone', () => {
-    expect(strayWords('the-silent-router', 'Two BGP peers. See `show bgp peer`.', RULES)).toEqual([])
-    expect(strayWords('the-silent-router', 'The peer answered.', RULES)).toEqual([
-      'peer (only a routing protocol neighbor)',
-    ])
+    expect(strayWords(silentRouter, 'Two BGP peers. See `show bgp peer`.', RULES)).toEqual([])
+    expect(strayWords(silentRouter, 'The peer answered.', RULES)).toEqual(['peer (only a routing protocol neighbor)'])
   })
 
   it('lets the missions named in `only` use a word freely', () => {
-    expect(strayWords('two-ends-of-one-cable', 'Along the wire.', RULES)).toEqual([])
-    expect(strayWords('the-silent-router', 'Along the wire.', RULES)).toEqual(['wire (only a link)'])
+    expect(strayWords({ id: 'two-ends-of-one-cable', chapter: 'follow-a-packet' }, 'Along the wire.', RULES)).toEqual(
+      []
+    )
+    expect(strayWords(silentRouter, 'Along the wire.', RULES)).toEqual(['wire (only a link)'])
+  })
+
+  it('lets every mission of the stages named in `chapters` use a word freely', () => {
+    expect(strayWords({ id: 'say-hello', chapter: 'build-an-underlay' }, 'The shared map.', RULES)).toEqual([])
+    expect(strayWords(silentRouter, 'The shared map.', RULES)).toEqual(['map (only the link-state database)'])
   })
 })

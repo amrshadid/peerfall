@@ -1,4 +1,4 @@
-import type { MissionId } from '@peerfall/game/types'
+import type { ChapterId, MissionId } from '@peerfall/game/types'
 
 /** The words of one guided step against its budget. */
 export interface StepWords {
@@ -22,6 +22,8 @@ export interface VocabularyRule {
   readonly allowed?: RegExp
   /** Mission ids that may use it freely. */
   readonly only?: readonly MissionId[]
+  /** Stages whose missions may all use it freely, so a new mission there needs no list edit. */
+  readonly chapters?: readonly ChapterId[]
 }
 
 export interface BannedUse {

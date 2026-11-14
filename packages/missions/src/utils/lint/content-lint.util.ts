@@ -29,7 +29,7 @@ const BANNED = BANNED_PHRASES.map((phrase) => ({ phrase, pattern: new RegExp(`\\
 
 /** Picture words used outside their one meaning. Inline code is the Machine's text and never flagged. */
 export function strayWords(
-  missionId: string,
+  mission: Pick<MissionDefinition, 'id' | 'chapter'>,
   prose: string,
   vocabulary: readonly VocabularyRule[] = VOCABULARY
 ): string[] {
@@ -37,7 +37,8 @@ export function strayWords(
   return vocabulary
     .filter(
       (rule) =>
-        !rule.only?.includes(missionId) &&
+        !rule.only?.includes(mission.id) &&
+        !rule.chapters?.includes(mission.chapter) &&
         new RegExp(rule.pattern).test(rule.allowed ? text.replace(rule.allowed, '') : text)
     )
     .map((rule) => `${rule.word} (only ${rule.means})`)
@@ -102,7 +103,7 @@ export function lintMission(mission: MissionDefinition, story: Story): MissionLi
     const prose = proseOf(story, section).join(' ')
     return [
       ...BANNED.filter(({ pattern }) => pattern.test(prose)).map(({ phrase }) => phrase),
-      ...strayWords(mission.id, prose),
+      ...strayWords(mission, prose),
     ].map((phrase) => ({ phrase, section }))
   })
   const lint = {
