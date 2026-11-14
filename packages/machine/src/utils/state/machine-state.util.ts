@@ -1,9 +1,14 @@
 import { isRecord } from '@peerfall/core/utils'
-import { IPV4, ROUTER_NAME } from '#types/definitions/network'
+import { IPV4, IPV6, ROUTER_NAME } from '#types/definitions/network'
 import {
   type InterfaceState,
   type KernelRoute,
+  OSPF_LSA_TYPES,
+  type OspfLsa,
+  type OspfLsaType,
+  type PeerState,
   PING_MAX_COUNT,
+  PING_MAX_SIZE,
   type PingRequest,
   type PingResult,
   type RibRoute,
@@ -38,11 +43,14 @@ export function stateRequestProblems(request: StateRequest): string[] {
     if (!ROUTER_NAME.test(ping.from)) {
       problems.push(`pings[${at}].from: expected a router's name, got "${ping.from}"`)
     }
-    if (!IPV4.test(ping.to)) {
-      problems.push(`pings[${at}].to: expected an address like 10.0.1.2, got "${ping.to}"`)
+    if (!(IPV4.test(ping.to) || IPV6.test(ping.to))) {
+      problems.push(`pings[${at}].to: expected an address like 10.0.1.2 or fd00::2, got "${ping.to}"`)
     }
     if (!(Number.isInteger(ping.count) && ping.count >= 1 && ping.count <= PING_MAX_COUNT)) {
       problems.push(`pings[${at}].count: expected 1 to ${PING_MAX_COUNT}, got ${ping.count}`)
+    }
+    if (ping.size !== undefined && !(Number.isInteger(ping.size) && ping.size >= 0 && ping.size <= PING_MAX_SIZE)) {
+      problems.push(`pings[${at}].size: expected 0 to ${PING_MAX_SIZE}, got ${ping.size}`)
     }
   })
   return problems
@@ -55,11 +63,16 @@ const PART_COMMANDS: Readonly<Record<RouterStatePart, (router: string) => string
   routes: (router) => `ip -n ${router} -o route show 2>&1`,
   // Through a pipe: straight onto the control channel's terminal, the whole table's JSON came out empty.
   rib: (router) => `vtysh -N ${router} -c 'show ip route json' 2>&1 | cat`,
+  rib6: (router) => `vtysh -N ${router} -c 'show ipv6 route json' 2>&1 | cat`,
   runningConfig: (router) => `${configReadLine(router)} 2>&1`,
   savedConfig: (router) => `cat /etc/frr/${router}/frr.conf 2>/dev/null`,
   startedConfig: (router) => `cat ${startedConfigPath(router)} 2>/dev/null`,
   // -o keeps each interface on one line, its flags beside its name.
   links: (router) => `ip -n ${router} -o link show 2>&1`,
+  ospfNeighbors: (router) => `vtysh -N ${router} -c 'show ip ospf neighbor json' 2>&1 | cat`,
+  ospf6Neighbors: (router) => `vtysh -N ${router} -c 'show ipv6 ospf6 neighbor json' 2>&1 | cat`,
+  isisNeighbors: (router) => `vtysh -N ${router} -c 'show isis neighbor json' 2>&1 | cat`,
+  ospfDatabase: (router) => `vtysh -N ${router} -c 'show ip ospf database json' 2>&1 | cat`,
 }
 
 /** Root's line that reads the asked parts of one router, each after a line that names it. */
@@ -163,20 +176,119 @@ function readRibRoute(entry: unknown): RibRoute[] {
  * reaching no daemon) is no routes.
  */
 export function parseRibRoutes(output: string): RibRoute[] {
-  const start = output.indexOf('{')
-  if (start < 0) {
-    return []
-  }
-  let table: unknown
-  try {
-    table = JSON.parse(output.slice(start))
-  } catch {
-    return []
-  }
-  if (!isRecord(table)) {
+  const table = jsonObjectIn(output)
+  if (!table) {
     return []
   }
   return Object.values(table).flatMap((routes) => (Array.isArray(routes) ? routes.flatMap(readRibRoute) : []))
+}
+
+/** The JSON object a vtysh command printed; `null` when it printed something else (`% ospfd is not running`). */
+function jsonObjectIn(output: string): Record<string, unknown> | null {
+  const start = output.indexOf('{')
+  if (start < 0) {
+    return null
+  }
+  try {
+    const value: unknown = JSON.parse(output.slice(start))
+    return isRecord(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+
+/**
+ * ospfd's peers from `show ip ospf neighbor json`: `{"neighbors":{"10.255.0.2":[{"converged":"Full",
+ * "ifaceName":"a-b:10.0.1.1",…}]}}`. A router id lists one entry per interface it is heard on.
+ */
+// reads ospfd/ospf_vty.c: show_ip_ospf_neighbor_common() and show_ip_ospf_neighbour_brief()
+export function parseOspfNeighbors(output: string): PeerState[] {
+  const neighbors = jsonObjectIn(output)?.neighbors
+  if (!isRecord(neighbors)) {
+    return []
+  }
+  return Object.entries(neighbors).flatMap(([peer, entries]) =>
+    (Array.isArray(entries) ? entries.filter(isRecord) : []).map((entry) => ({
+      peer,
+      // `a-b:10.0.1.1`: the interface, then the router's own address on it.
+      interface: text(entry.ifaceName).split(':')[0] ?? '',
+      // `converged` is the state alone; `nbrState` adds the role after a slash (`Full/-`, `Full/DR`).
+      state: text(entry.converged),
+    }))
+  )
+}
+
+/** ospf6d's peers from `show ipv6 ospf6 neighbor json`: `{"neighbors":[{"neighborId":"10.255.0.2","state":"Full","interfaceName":"a-b",…}]}`. */
+// reads ospf6d/ospf6_neighbor.c: ospf6_neighbor_show()
+export function parseOspf6Neighbors(output: string): PeerState[] {
+  const neighbors = jsonObjectIn(output)?.neighbors
+  return (Array.isArray(neighbors) ? neighbors.filter(isRecord) : []).map((entry) => ({
+    peer: text(entry.neighborId),
+    interface: text(entry.interfaceName),
+    state: text(entry.state),
+  }))
+}
+
+/**
+ * isisd's adjacencies from `show isis neighbor json`: `{"areas":[{"area":"core","circuits":[{"adj":"b",
+ * "interface":"a-b","level":2,"state":"Up",…},{"circuit":0}]}]}`. A circuit with no adjacency (the
+ * loopback's) lists only its number.
+ */
+// reads isisd/isis_adjacency.c: isis_adj_print_vty() and isisd/isisd.c: show_isis_neighbor_common()
+export function parseIsisNeighbors(output: string): PeerState[] {
+  const areas = jsonObjectIn(output)?.areas
+  return (Array.isArray(areas) ? areas.filter(isRecord) : []).flatMap((area) =>
+    (Array.isArray(area.circuits) ? area.circuits.filter(isRecord) : [])
+      .filter((circuit) => typeof circuit.adj === 'string')
+      .map((circuit) => ({
+        peer: text(circuit.adj),
+        interface: text(circuit.interface),
+        state: text(circuit.state),
+        ...(typeof circuit.level === 'number' && { level: circuit.level }),
+      }))
+  )
+}
+
+/** The lists of `show ip ospf database json`, by the LSA type each holds. */
+// reads ospfd/ospf_vty.c: show_database_desc_json[]
+const LSA_LISTS: Readonly<Record<OspfLsaType, string>> = {
+  router: 'routerLinkStates',
+  network: 'networkLinkStates',
+  summary: 'summaryLinkStates',
+  'asbr-summary': 'asbrSummaryLinkStates',
+  external: 'asExternalLinkStates',
+}
+
+function readLsas(holder: Record<string, unknown>, area: string | null): OspfLsa[] {
+  return OSPF_LSA_TYPES.flatMap((type) => {
+    const list = holder[LSA_LISTS[type]]
+    return (Array.isArray(list) ? list.filter(isRecord) : []).map((lsa) => ({
+      area,
+      type,
+      id: text(lsa.lsId),
+      advRouter: text(lsa.advertisedRouter),
+    }))
+  })
+}
+
+/**
+ * ospfd's link-state database from `show ip ospf database json`: each area's LSAs under
+ * `areas.<area id>`, and the external ones, which every area shares, beside `areas`. `null` when
+ * ospfd did not answer: a database that cannot be read is not an empty one.
+ */
+export function parseOspfDatabase(output: string): OspfLsa[] | null {
+  const database = jsonObjectIn(output)
+  if (!database) {
+    return null
+  }
+  const areas = isRecord(database.areas) ? database.areas : {}
+  return [
+    ...Object.entries(areas).flatMap(([area, lists]) => (isRecord(lists) ? readLsas(lists, area) : [])),
+    // Only externals sit at the top level; reading the others there finds nothing.
+    ...readLsas(database, null).filter((lsa) => lsa.type === 'external'),
+  ]
 }
 
 /** What one router's state line printed, split back into its parts. */
@@ -199,10 +311,20 @@ export function parseRouterState(output: string): RouterState {
   const saved = sections.get('savedConfig')
   const started = sections.get('startedConfig')
   const links = sections.get('links')
+  const rib6 = sections.get('rib6')
+  const ospfNeighbors = sections.get('ospfNeighbors')
+  const ospf6Neighbors = sections.get('ospf6Neighbors')
+  const isisNeighbors = sections.get('isisNeighbors')
+  const ospfDatabase = sections.get('ospfDatabase')
   return {
     ...(daemons !== undefined && { daemons: parseDaemons(daemons) }),
     ...(routes !== undefined && { routes: parseKernelRoutes(routes) }),
     ...(rib !== undefined && { rib: parseRibRoutes(rib) }),
+    ...(rib6 !== undefined && { rib6: parseRibRoutes(rib6) }),
+    ...(ospfNeighbors !== undefined && { ospfNeighbors: parseOspfNeighbors(ospfNeighbors) }),
+    ...(ospf6Neighbors !== undefined && { ospf6Neighbors: parseOspf6Neighbors(ospf6Neighbors) }),
+    ...(isisNeighbors !== undefined && { isisNeighbors: parseIsisNeighbors(isisNeighbors) }),
+    ...(ospfDatabase !== undefined && { ospfDatabase: parseOspfDatabase(ospfDatabase) }),
     // vtysh prints the configuration only when a daemon answered.
     ...(running !== undefined && {
       runningConfig: running.includes('Current configuration:') ? runningConfigText(running) : null,
@@ -218,8 +340,8 @@ const PING_WAIT_S = 1
 const PING_INTERVAL_S = 0.2
 
 /** Root's line that sends a few packets from a router's namespace. Check `stateRequestProblems` first. */
-export const pingLine = ({ from, to, count }: PingRequest): string =>
-  `ip netns exec ${from} ping -c ${count} -i ${PING_INTERVAL_S} -W ${PING_WAIT_S} ${to} 2>&1; true`
+export const pingLine = ({ from, to, count, size }: PingRequest): string =>
+  `ip netns exec ${from} ping -c ${count} -i ${PING_INTERVAL_S} -W ${PING_WAIT_S}${size === undefined ? '' : ` -s ${size}`} ${to} 2>&1; true`
 
 // `3 packets transmitted, 0 received, +2 errors, 100% packet loss, time 686ms`
 const PING_SUMMARY = /(\d+) packets transmitted, (\d+) received/
@@ -233,6 +355,7 @@ export function parsePing(request: PingRequest, output: string): PingResult {
   return {
     from: request.from,
     to: request.to,
+    ...(request.size !== undefined && { size: request.size }),
     sent: summary ? Number(summary[1]) : request.count,
     received: summary ? Number(summary[2]) : 0,
   }

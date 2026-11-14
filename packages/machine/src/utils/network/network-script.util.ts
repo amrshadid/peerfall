@@ -7,6 +7,8 @@ import {
   type FrrDaemon,
   IPV4,
   IPV4_WITH_PREFIX,
+  IPV6_WITH_PREFIX,
+  LINK_MTU,
   type LinkDefinition,
   type NetworkDefinition,
   PROBE_ID,
@@ -58,6 +60,9 @@ export function networkProblems(network: NetworkDefinition): string[] {
     if (router.loopback !== undefined && !IPV4_WITH_PREFIX.test(router.loopback)) {
       problems.push(`${where}.loopback: expected an address like 10.255.0.1/32, got "${router.loopback}"`)
     }
+    if (router.loopback6 !== undefined && !IPV6_WITH_PREFIX.test(router.loopback6)) {
+      problems.push(`${where}.loopback6: expected an address like fd00::1/128, got "${router.loopback6}"`)
+    }
     for (const daemon of router.daemons) {
       if (!FRR_DAEMONS.includes(daemon)) {
         problems.push(`${where}.daemons: unknown daemon "${daemon}"`)
@@ -77,6 +82,9 @@ export function networkProblems(network: NetworkDefinition): string[] {
       }
       if (!IPV4_WITH_PREFIX.test(end.address)) {
         problems.push(`${where}.ends[${side}].address: expected an address like 10.0.2.1/30, got "${end.address}"`)
+      }
+      if (end.mtu !== undefined && !(Number.isInteger(end.mtu) && end.mtu >= LINK_MTU.min && end.mtu <= LINK_MTU.max)) {
+        problems.push(`${where}.ends[${side}].mtu: expected ${LINK_MTU.min} to ${LINK_MTU.max}, got ${end.mtu}`)
       }
     })
     if (first.router === second.router) {
@@ -109,13 +117,15 @@ export function frrConfig(router: RouterDefinition): string {
   ].join('\n')
 }
 
-function namespaceLine({ name, loopback }: RouterDefinition): string {
+function namespaceLine({ name, loopback, loopback6 }: RouterDefinition, ipv6: boolean): string {
   return [
     `ip netns add ${name}`,
     `ip -n ${name} link set lo up`,
     ...(loopback === undefined ? [] : [`ip -n ${name} addr add ${loopback} dev lo`]),
-    // A namespace starts as a host: a router forwards.
-    `ip netns exec ${name} sysctl -qw net.ipv4.ip_forward=1`,
+    ...(loopback6 === undefined ? [] : [`ip -n ${name} addr add ${loopback6} dev lo`]),
+    // A namespace starts as a host: a router forwards. IPv6 only in a network that has it: each
+    // sysctl is a process, and a process costs the emulator.
+    `ip netns exec ${name} sysctl -qw net.ipv4.ip_forward=1${ipv6 ? ' net.ipv6.conf.all.forwarding=1' : ''}`,
   ].join(' && ')
 }
 
@@ -126,6 +136,8 @@ function linkLine({ ends: [first, second] }: LinkDefinition): string {
     `ip link add ${near} netns ${first.router} type veth peer name ${far} netns ${second.router}`,
     ...(first.unaddressed ? [] : [`ip -n ${first.router} addr add ${first.address} dev ${near}`]),
     ...(second.unaddressed ? [] : [`ip -n ${second.router} addr add ${second.address} dev ${far}`]),
+    ...(first.mtu === undefined ? [] : [`ip -n ${first.router} link set ${near} mtu ${first.mtu}`]),
+    ...(second.mtu === undefined ? [] : [`ip -n ${second.router} link set ${far} mtu ${second.mtu}`]),
     `ip -n ${first.router} link set ${near} up`,
     `ip -n ${second.router} link set ${far} up`,
   ].join(' && ')
@@ -194,8 +206,12 @@ export const frrRestartLine = (router: string): string => inRouter(router, `${FR
  */
 export function networkSetupLines(network: NetworkDefinition): string[] {
   const direct = network.routers.filter((router) => startupOf(router) === 'direct')
+  const ipv6 = network.routers.some((router) => router.loopback6 !== undefined)
   return [
-    ...network.routers.map(namespaceLine),
+    // vrrpd sends from a macvlan interface per virtual router, and the image's kernel builds macvlan
+    // as a module that nothing loads on demand: without it `ip link add … type macvlan` fails.
+    ...(network.routers.some((router) => router.daemons.includes('vrrpd')) ? ['modprobe -q macvlan'] : []),
+    ...network.routers.map((router) => namespaceLine(router, ipv6)),
     ...network.links.map(linkLine),
     ...network.routers.map(filesLine),
     ...direct.map(daemonsLine),

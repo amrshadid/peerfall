@@ -1,5 +1,5 @@
 /** FRR daemons a mission may ask for besides zebra and mgmtd, which every router runs. */
-export const FRR_DAEMONS = ['staticd', 'ospfd', 'ospf6d', 'isisd', 'bgpd', 'bfdd'] as const
+export const FRR_DAEMONS = ['staticd', 'ospfd', 'ospf6d', 'isisd', 'bgpd', 'bfdd', 'vrrpd'] as const
 
 export type FrrDaemon = (typeof FRR_DAEMONS)[number]
 
@@ -27,6 +27,8 @@ export interface RouterDefinition {
   readonly name: string
   /** An address for `lo`, with its prefix length: `10.255.0.1/32`. */
   readonly loopback?: string
+  /** An IPv6 address for `lo`, with its prefix length: `fd00::1/128`. Links stay IPv4: OSPFv3 and IS-IS talk over the link-local addresses the kernel gives every interface. */
+  readonly loopback6?: string
   readonly daemons: readonly FrrDaemon[]
   /** The router's `frr.conf`, after the lines the Machine writes itself (hostname, log file). */
   readonly config: string
@@ -43,7 +45,12 @@ export interface LinkEnd {
    * is then the one the mission plans for it.
    */
   readonly unaddressed?: boolean
+  /** The largest packet this end sends, in bytes; Linux's 1500 when left out. */
+  readonly mtu?: number
 }
+
+/** The MTUs Linux takes for an interface: IPv4 needs 68, and a veth stops at 65535. */
+export const LINK_MTU = { min: 68, max: 65_535 } as const
 
 /** A point-to-point cable. Each end's interface is named `<router>-<peer>`. */
 export interface LinkDefinition {
@@ -67,3 +74,11 @@ export const PROBE_INTERVAL_MS = { min: 10, max: 10_000 } as const
 export const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/
 
 export const IPV4_WITH_PREFIX = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\/(3[0-2]|[12]?\d)$/
+
+/**
+ * An IPv6 address as FRR and iproute2 write it: hex groups and colons, `::` once at most. Only
+ * those characters pass, so it is safe in a shell line; the kernel judges the rest.
+ */
+export const IPV6 = /^(?=.*:)(?!.*::.*::)[0-9a-f]{0,4}(:[0-9a-f]{0,4}){1,7}$/
+
+export const IPV6_WITH_PREFIX = /^(?=.*:)(?!.*::.*::)[0-9a-f]{0,4}(:[0-9a-f]{0,4}){1,7}\/(12[0-8]|1[01]\d|[1-9]?\d)$/

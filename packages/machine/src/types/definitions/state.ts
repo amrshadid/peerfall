@@ -41,15 +41,51 @@ export interface InterfaceState {
   readonly carrier: boolean
 }
 
+/**
+ * One peer of a link-state routing daemon (OSPF, OSPFv3, IS-IS), as its neighbor table lists it.
+ * A peer is listed from the first packet heard: `state` says how far the two have got.
+ */
+export interface PeerState {
+  /** The OSPF or OSPFv3 router id (`10.255.0.2`), or the IS-IS name: the peer's hostname, or its system id when isisd does not know it. */
+  readonly peer: string
+  /** The router's own interface the peer is heard on: `a-b`. */
+  readonly interface: string
+  /** As FRR writes it: `Full`, `ExStart`, `Init`… for OSPF and OSPFv3; `Up`, `Initializing`, `Down` for IS-IS. */
+  readonly state: string
+  /** The IS-IS level of the adjacency, 1 or 2; left out for OSPF. */
+  readonly level?: number
+}
+
+/** The kinds of OSPF LSA a mission may ask about, under the names of `show ip ospf database`'s sections. */
+export const OSPF_LSA_TYPES = ['router', 'network', 'summary', 'asbr-summary', 'external'] as const
+
+export type OspfLsaType = (typeof OSPF_LSA_TYPES)[number]
+
+/** One LSA of a router's OSPF link-state database, as `show ip ospf database json` lists it. */
+export interface OspfLsa {
+  /** The area whose database holds it, `0.0.0.1`; `null` for an external LSA, which every area shares. */
+  readonly area: string | null
+  readonly type: OspfLsaType
+  /** The Link State ID: a router-LSA's router id, a summary's or an external's network. */
+  readonly id: string
+  /** The router id of the router that sent it. */
+  readonly advRouter: string
+}
+
 /** What a mission may ask about one router. Each part is a command of its own, so only what is needed is read. */
 export const ROUTER_STATE_PARTS = [
   'daemons',
   'routes',
   'rib',
+  'rib6',
   'runningConfig',
   'savedConfig',
   'startedConfig',
   'links',
+  'ospfNeighbors',
+  'ospf6Neighbors',
+  'isisNeighbors',
+  'ospfDatabase',
 ] as const
 
 export type RouterStatePart = (typeof ROUTER_STATE_PARTS)[number]
@@ -61,6 +97,8 @@ export interface RouterState {
   readonly routes?: readonly KernelRoute[]
   /** Zebra's IPv4 routes, selected or not; empty when zebra did not answer. */
   readonly rib?: readonly RibRoute[]
+  /** Zebra's IPv6 routes (`show ipv6 route json`), in the same shape; empty when zebra did not answer. */
+  readonly rib6?: readonly RibRoute[]
   /** `show running-config` as text; `null` when no daemon answered. */
   readonly runningConfig?: string | null
   /** The router's `frr.conf` as it is on disk: what FRR starts with. `null` when there is none. */
@@ -75,18 +113,31 @@ export interface RouterState {
   readonly startedConfig?: string | null
   /** Every interface of the router's namespace, the loopback included; empty when the namespace is gone. */
   readonly links?: readonly InterfaceState[]
+  /** ospfd's peers (`show ip ospf neighbor json`); empty when ospfd did not answer. */
+  readonly ospfNeighbors?: readonly PeerState[]
+  /** ospf6d's peers (`show ipv6 ospf6 neighbor json`); empty when ospf6d did not answer. */
+  readonly ospf6Neighbors?: readonly PeerState[]
+  /** isisd's adjacencies (`show isis neighbor json`); empty when isisd did not answer. */
+  readonly isisNeighbors?: readonly PeerState[]
+  /** ospfd's link-state database, every area's (`show ip ospf database json`); `null` when ospfd did not answer. */
+  readonly ospfDatabase?: readonly OspfLsa[] | null
 }
 
 /** A few packets from one router to an address, sent when the state is read. */
 export interface PingRequest {
   readonly from: string
+  /** An IPv4 or an IPv6 address. */
   readonly to: string
   readonly count: number
+  /** Bytes of data in each packet (ping's `-s`); ping's own 56 when left out. */
+  readonly size?: number
 }
 
 export interface PingResult {
   readonly from: string
   readonly to: string
+  /** As the request gave it: a large packet and a small one to one address are two results. */
+  readonly size?: number
   readonly sent: number
   readonly received: number
 }
@@ -108,3 +159,6 @@ export interface MachineState {
 
 /** The most packets one ping may send: a check needs a few, and each lost one costs a second. */
 export const PING_MAX_COUNT = 10
+
+/** The largest packet a check may send: above a jumbo frame's 9000 bytes nothing is learned. */
+export const PING_MAX_SIZE = 9000

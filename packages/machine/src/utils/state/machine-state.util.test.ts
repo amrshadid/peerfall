@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ECMP_ROUTES,
+  ISIS_NEIGHBORS_UP,
+  OSPF_DATABASE,
+  OSPF_NEIGHBORS_EXSTART,
+  OSPF_NEIGHBORS_FULL,
+  OSPF6_NEIGHBORS_FULL,
+  OSPFD_NOT_RUNNING,
+  PING_IPV6,
+  PING_TOO_LARGE,
+  RIB6_OSPF6,
+} from '#test/index'
+import {
   parseDaemons,
   parseInterfaces,
+  parseIsisNeighbors,
   parseKernelRoutes,
+  parseOspf6Neighbors,
+  parseOspfDatabase,
+  parseOspfNeighbors,
   parsePing,
   parseRibRoutes,
   parseRouterState,
@@ -373,8 +389,124 @@ describe('a state request’s problems', () => {
       'routers: expected a router\'s name, got "a; reboot"',
       'routers.b: unknown part "secrets"',
       'pings[0].from: expected a router\'s name, got "a b"',
-      'pings[0].to: expected an address like 10.0.1.2, got "10.0.1.2; reboot"',
+      'pings[0].to: expected an address like 10.0.1.2 or fd00::2, got "10.0.1.2; reboot"',
       'pings[0].count: expected 1 to 10, got 99',
     ])
+  })
+
+  it('takes an IPv6 address and a packet size within bounds', () => {
+    expect(
+      stateRequestProblems({
+        routers: {},
+        pings: [
+          { from: 'a', to: 'fd00::2', count: 3 },
+          { from: 'a', to: '10.0.1.2', count: 3, size: 2000 },
+          { from: 'a', to: 'fd00::2 -f', count: 3, size: 65000 },
+        ],
+      })
+    ).toEqual([
+      'pings[2].to: expected an address like 10.0.1.2 or fd00::2, got "fd00::2 -f"',
+      'pings[2].size: expected 0 to 9000, got 65000',
+    ])
+  })
+})
+
+describe('a large or IPv6 ping', () => {
+  it('sets the size with -s, and keeps it in the result', () => {
+    const request = { from: 'a', to: '10.0.1.2', count: 3, size: 2000 }
+    expect(pingLine(request)).toBe('ip netns exec a ping -c 3 -i 0.2 -W 1 -s 2000 10.0.1.2 2>&1; true')
+    expect(parsePing(request, PING_TOO_LARGE)).toEqual({ from: 'a', to: '10.0.1.2', size: 2000, sent: 3, received: 0 })
+  })
+
+  it('pings an IPv6 address with the same line', () => {
+    const request = { from: 'a', to: 'fd00::2', count: 3 }
+    expect(pingLine(request)).toBe('ip netns exec a ping -c 3 -i 0.2 -W 1 fd00::2 2>&1; true')
+    expect(parsePing(request, PING_IPV6)).toEqual({ from: 'a', to: 'fd00::2', sent: 3, received: 3 })
+  })
+})
+
+describe('link-state peers', () => {
+  it('reads OSPF peers by router id, with the interface and the state alone', () => {
+    expect(parseOspfNeighbors(OSPF_NEIGHBORS_FULL)).toEqual([
+      { peer: '10.255.0.2', interface: 'a-b', state: 'Full' },
+      { peer: '10.255.0.3', interface: 'a-c', state: 'Full' },
+    ])
+    expect(parseOspfNeighbors(OSPF_NEIGHBORS_EXSTART)).toEqual([
+      { peer: '10.255.0.2', interface: 'a-b', state: 'ExStart' },
+    ])
+  })
+
+  it('reads OSPFv3 peers', () => {
+    expect(parseOspf6Neighbors(OSPF6_NEIGHBORS_FULL)).toEqual([{ peer: '10.255.0.2', interface: 'a-b', state: 'Full' }])
+  })
+
+  it('reads IS-IS adjacencies with their level, and skips a circuit with none', () => {
+    expect(parseIsisNeighbors(ISIS_NEIGHBORS_UP)).toEqual([{ peer: 'b', interface: 'a-b', state: 'Up', level: 2 }])
+  })
+
+  it('is empty when the daemon is not running', () => {
+    expect(parseOspfNeighbors(OSPFD_NOT_RUNNING)).toEqual([])
+    expect(parseOspf6Neighbors('ospf6d is not running\n')).toEqual([])
+    expect(parseIsisNeighbors('isisd is not running\n')).toEqual([])
+    expect(parseOspfNeighbors('{"neighbors":{}}\n')).toEqual([])
+  })
+
+  it('is read with the other parts of a router', () => {
+    expect(routerStateLine('a', ['ospfNeighbors'])).toBe(
+      "echo __PF_STATE__ ospfNeighbors; vtysh -N a -c 'show ip ospf neighbor json' 2>&1 | cat; true"
+    )
+    const state = parseRouterState(
+      `__PF_STATE__ ospf6Neighbors\n${OSPF6_NEIGHBORS_FULL}__PF_STATE__ isisNeighbors\n${ISIS_NEIGHBORS_UP}`
+    )
+    expect(state.ospf6Neighbors).toHaveLength(1)
+    expect(state.isisNeighbors).toHaveLength(1)
+  })
+})
+
+describe('the OSPF database', () => {
+  it('reads every area’s LSAs and the external ones, which belong to no area', () => {
+    expect(parseOspfDatabase(OSPF_DATABASE)).toEqual([
+      { area: '0.0.0.0', type: 'router', id: '10.255.0.1', advRouter: '10.255.0.1' },
+      { area: '0.0.0.0', type: 'router', id: '10.255.0.2', advRouter: '10.255.0.2' },
+      { area: '0.0.0.0', type: 'router', id: '10.255.0.3', advRouter: '10.255.0.3' },
+      { area: '0.0.0.0', type: 'router', id: '10.255.0.4', advRouter: '10.255.0.4' },
+      { area: '0.0.0.0', type: 'summary', id: '10.255.0.4', advRouter: '10.255.0.4' },
+      { area: null, type: 'external', id: '192.0.2.0', advRouter: '10.255.0.4' },
+    ])
+  })
+
+  it('is no database at all when ospfd does not answer', () => {
+    expect(parseOspfDatabase(OSPFD_NOT_RUNNING)).toBeNull()
+    expect(parseRouterState(`__PF_STATE__ ospfDatabase\n${OSPFD_NOT_RUNNING}`)).toEqual({ ospfDatabase: null })
+  })
+})
+
+describe('zebra’s IPv6 routing table', () => {
+  it('reads OSPFv3’s route through the peer’s link-local address, and the local route of the router’s own', () => {
+    expect(routerStateLine('a', ['rib6'])).toBe(
+      "echo __PF_STATE__ rib6; vtysh -N a -c 'show ipv6 route json' 2>&1 | cat; true"
+    )
+    const routes = parseRouterState(`__PF_STATE__ rib6\n${RIB6_OSPF6}`).rib6 ?? []
+    expect(routes.map((route) => `${route.protocol} ${route.prefix}${route.selected ? ' selected' : ''}`)).toEqual([
+      'ospf6 fd00::1/128',
+      'local fd00::1/128',
+      'connected fd00::1/128 selected',
+      'ospf6 fd00::2/128 selected',
+      'connected fe80::/64 selected',
+    ])
+    expect(routes[3]?.nextHops).toEqual([{ via: 'fe80::8402:2aff:fea8:c6f9', interface: 'a-b' }])
+  })
+})
+
+describe('equal-cost OSPF routes in the kernel', () => {
+  it('keeps both next hops of the route to the far corner of a square', () => {
+    expect(parseKernelRoutes(ECMP_ROUTES).find((route) => route.prefix === '10.255.0.4')).toEqual({
+      prefix: '10.255.0.4',
+      protocol: 'ospf',
+      nextHops: [
+        { via: '10.0.1.2', interface: 'a-b' },
+        { via: '10.0.2.2', interface: 'a-c' },
+      ],
+    })
   })
 })

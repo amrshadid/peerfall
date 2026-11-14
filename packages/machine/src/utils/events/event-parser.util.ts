@@ -17,6 +17,13 @@ const OSPF_BFD = /^ospf_bfd_session_change: NSM\[([^:\]]+):[^:\]]+:([^\]]+)\]: B
 const OSPF_DEAD_TIMER = /^NSM\[([^:\]]+):[^:\]]+:([^:\]]+):[^\]]*\]: Timer \(Inactivity timer expire\)$/
 // reads ospfd/ospf_nsm.c: nsm_notice_state_change()'s log line
 const OSPF_ADJACENCY = /^AdjChg: Nbr (\S+), NbrIP (\S+) \(\S+\) on ([^:\s]+):\S+: (\S+) -> (\S+) \((\w+)\)$/
+// reads ospf6d/ospf6_neighbor.c: ospf6_neighbor_state_change()'s log line; the neighbor's name is `<router id>%<interface>`
+const OSPF6_ADJACENCY = /^AdjChg: Nbr ([^(\s]+)\(\S+\) on [^%\s]+%(\S+): (\S+) -> (\S+) \(([^)]*)\)$/
+// reads isisd/isis_adjacency.c: isis_log_adj_change()
+const ISIS_ADJACENCY =
+  /^%ADJCHANGE: Adjacency to (\S+) \((\S+)\) for level-(1-2|1|2) changed from (\S+) to (\S+), (.*)$/
+// isisd's own number for an adjacency at both levels (IS_LEVEL_1_AND_2).
+const ISIS_LEVELS: Readonly<Record<string, number>> = { '1': 1, '2': 2, '1-2': 3 }
 
 // `[2026-11-12T17:33:53.110831] 10.255.0.3 nhid 18 via 10.0.1.2 dev a-b proto ospf metric 20`, from
 // `ip -o -ts monitor route`: -o keeps a route with several next hops on one line.
@@ -66,6 +73,41 @@ function parseFrr(router: string, line: string): TimedEvent | null {
       return { timeMs, event: { type: 'bfd_session_down', router, peer, interface: name, reason: reason ?? '' } }
     }
     return null
+  }
+  if (daemon === 'OSPF6') {
+    const [, neighbor, name, from, to, reason] = OSPF6_ADJACENCY.exec(message) ?? []
+    return neighbor === undefined
+      ? null
+      : {
+          timeMs,
+          event: {
+            type: 'ospf6_adjacency_change',
+            router,
+            neighbor,
+            interface: name ?? '',
+            from: from ?? '',
+            to: to ?? '',
+            reason: reason ?? '',
+          },
+        }
+  }
+  if (daemon === 'ISIS') {
+    const [, neighbor, name, level, from, to, reason] = ISIS_ADJACENCY.exec(message) ?? []
+    return neighbor === undefined
+      ? null
+      : {
+          timeMs,
+          event: {
+            type: 'isis_adjacency_change',
+            router,
+            neighbor,
+            interface: name ?? '',
+            level: ISIS_LEVELS[level ?? ''] ?? 0,
+            from: from ?? '',
+            to: to ?? '',
+            reason: reason ?? '',
+          },
+        }
   }
   if (daemon !== 'OSPF') {
     return null

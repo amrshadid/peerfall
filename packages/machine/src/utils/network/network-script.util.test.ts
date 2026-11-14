@@ -104,6 +104,40 @@ describe('a network’s setup lines', () => {
   })
 })
 
+describe('a network for stage 3 and VRRP', () => {
+  const network: NetworkDefinition = {
+    routers: [
+      { name: 'a', loopback: '10.255.0.1/32', loopback6: 'fd00::1/128', daemons: ['ospf6d'], config: '' },
+      { name: 'b', daemons: ['vrrpd'], config: '' },
+    ],
+    links: [
+      {
+        ends: [
+          { router: 'a', address: '10.0.1.1/30' },
+          { router: 'b', address: '10.0.1.2/30', mtu: 9000 },
+        ],
+      },
+    ],
+  }
+
+  it('loads macvlan for vrrpd, gives an IPv6 loopback, and lets every router forward IPv6', () => {
+    const lines = networkSetupLines(network)
+    expect(lines[0]).toBe('modprobe -q macvlan')
+    expect(lines[1]).toBe(
+      'ip netns add a && ip -n a link set lo up && ip -n a addr add 10.255.0.1/32 dev lo && ip -n a addr add fd00::1/128 dev lo && ip netns exec a sysctl -qw net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1'
+    )
+    expect(lines[2]).toBe(
+      'ip netns add b && ip -n b link set lo up && ip netns exec b sysctl -qw net.ipv4.ip_forward=1 net.ipv6.conf.all.forwarding=1'
+    )
+  })
+
+  it('sets an end’s MTU before the link comes up', () => {
+    expect(networkSetupLines(network)[3]).toBe(
+      'ip link add a-b netns a type veth peer name b-a netns b && ip -n a addr add 10.0.1.1/30 dev a-b && ip -n b addr add 10.0.1.2/30 dev b-a && ip -n b link set b-a mtu 9000 && ip -n a link set a-b up && ip -n b link set b-a up'
+    )
+  })
+})
+
 describe('a router started another way', () => {
   const network: NetworkDefinition = {
     routers: [
@@ -127,7 +161,7 @@ describe('a router started another way', () => {
     expect(networkProblems(network)).toEqual([])
     const lines = networkSetupLines(network)
     expect(decoded(lines[4] ?? '')[2]).toBe(
-      '# Which FRR daemons this router runs. zebra, mgmtd and staticd always start.\nospfd=yes\nospf6d=no\nisisd=no\nbgpd=no\nbfdd=no\n'
+      '# Which FRR daemons this router runs. zebra, mgmtd and staticd always start.\nospfd=yes\nospf6d=no\nisisd=no\nbgpd=no\nbfdd=no\nvrrpd=no\n'
     )
     expect(decoded(lines[6] ?? '')).toHaveLength(2)
     expect(lines.slice(7)).toEqual([
@@ -202,6 +236,28 @@ describe('a network’s problems', () => {
       'routers[2].daemons: unknown daemon "ripd"',
       'links[0].ends[0].address: expected an address like 10.0.2.1/30, got "10.0.1.1/30 dev lo"',
       'links[0].ends[1].router: no router named "z"',
+    ])
+  })
+
+  it('refuses an IPv6 loopback and an MTU it cannot use', () => {
+    expect(
+      networkProblems({
+        routers: [
+          { name: 'a', loopback6: 'fd00::1/128; reboot', daemons: [], config: '' },
+          { name: 'b', loopback6: 'fd00::2/128', daemons: [], config: '' },
+        ],
+        links: [
+          {
+            ends: [
+              { router: 'a', address: '10.0.1.1/30', mtu: 40 },
+              { router: 'b', address: '10.0.1.2/30', mtu: 9000 },
+            ],
+          },
+        ],
+      })
+    ).toEqual([
+      'routers[0].loopback6: expected an address like fd00::1/128, got "fd00::1/128; reboot"',
+      'links[0].ends[0].mtu: expected 68 to 65535, got 40',
     ])
   })
 
