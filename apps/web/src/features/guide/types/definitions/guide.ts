@@ -33,7 +33,7 @@ export interface SpeakerInfo {
   /** The real thing they are, e.g. "FRR's core daemon". */
   readonly term: string
   /** Which portrait to draw, or null for a voice without one. */
-  readonly portrait: 'zebra' | 'watchfrr' | 'bfdd' | null
+  readonly portrait: 'zebra' | 'watchfrr' | 'ospfd' | 'bfdd' | null
 }
 
 /** A line of the Guide's transcript; `speaker` is the name as the story wrote it. */

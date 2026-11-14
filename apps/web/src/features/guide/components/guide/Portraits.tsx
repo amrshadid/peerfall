@@ -1,8 +1,13 @@
 import type { SpeakerInfo } from '@features/guide/types'
-import { BfddPortrait, WatchfrrPortrait, ZebraPortrait } from '@shared/components/ui'
+import { BfddPortrait, OspfdPortrait, WatchfrrPortrait, ZebraPortrait } from '@shared/components/ui'
 import type { Speaker } from '@shared/types'
 
-const PORTRAITS = { zebra: ZebraPortrait, watchfrr: WatchfrrPortrait, bfdd: BfddPortrait } as const
+const PORTRAITS = {
+  zebra: ZebraPortrait,
+  watchfrr: WatchfrrPortrait,
+  ospfd: OspfdPortrait,
+  bfdd: BfddPortrait,
+} as const
 
 /** The dialogue's portrait sizes, in px: in its header, and in a cut-in. */
 const PORTRAIT_SIZE = 56
