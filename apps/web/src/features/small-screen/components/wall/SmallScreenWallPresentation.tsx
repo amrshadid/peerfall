@@ -21,10 +21,16 @@ export function SmallScreenWallPresentation({ minWidthPx }: SmallScreenWallPrese
           {APP_NAME} needs a bigger screen.
         </h1>
         <p>
-          You configure routers in a terminal and an editor while the network's topology and the outage timeline sit
-          beside them. That needs a window at least {minWidthPx} pixels wide.
+          {APP_NAME} is a free, open-source game that teaches FRRouting, on real FRR routers running in your browser.
         </p>
-        <p>Open {APP_NAME} on a laptop or desktop, or widen this window.</p>
+        {/* Search engines read this page at a phone's width: what the game is may be quoted, how wide it must be may not. */}
+        <div className="small-screen__needs" data-nosnippet="">
+          <p>
+            You configure routers in a terminal and an editor while the network's topology and the outage timeline sit
+            beside them. That needs a window at least {minWidthPx} pixels wide.
+          </p>
+          <p>Open {APP_NAME} on a laptop or desktop, or widen this window.</p>
+        </div>
         <p className="small-screen__note">Your progress and settings stay saved in this browser.</p>
       </Sheet>
     </div>

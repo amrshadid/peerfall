@@ -1,6 +1,7 @@
 import {
   APP_CACHE_PREFIX,
   APP_SHELL,
+  CRAWLER_FILES,
   IMAGE_FILES_NEVER_OPENED,
   SW_FILE,
   SW_MANIFEST_TOKEN,
@@ -27,7 +28,14 @@ export interface OfflineRequest {
 export function precacheFiles(files: readonly string[]): string[] {
   const paths = files.map((file) => file.replace(/^\/+/, ''))
   return [...new Set(paths)]
-    .filter((path) => path !== '' && path !== SW_FILE && !path.endsWith('.map') && !path.startsWith(VM_DIR))
+    .filter(
+      (path) =>
+        path !== '' &&
+        path !== SW_FILE &&
+        !path.endsWith('.map') &&
+        !path.startsWith(VM_DIR) &&
+        !CRAWLER_FILES.includes(path)
+    )
     .sort()
 }
 

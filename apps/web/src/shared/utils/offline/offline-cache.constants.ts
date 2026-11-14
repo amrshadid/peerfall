@@ -27,6 +27,9 @@ export const VM_WARM_CONCURRENCY = 2
 /** What the app posts to the service worker once a network is up: cache the rest of the image. */
 export const SW_WARM_MESSAGE = 'peerfall:warm-vm-image'
 
+// Read by search engines and link previews, never by the game: not worth a player's offline cache.
+export const CRAWLER_FILES: readonly string[] = ['og.png', 'robots.txt', 'sitemap.xml']
+
 // Routes live in the hash, so the root's navigation is this one page.
 export const APP_SHELL = 'index.html'
 
