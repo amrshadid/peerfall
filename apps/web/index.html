@@ -3,14 +3,78 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Learn FRRouting by building, breaking and repairing a real network in your browser." />
+    <meta name="description" content="A free, open-source browser game that teaches FRRouting. Build networks, diagnose outages and verify recovery on real FRR routers running in your browser." />
+    <meta name="author" content="Amr Shadid" />
     <meta name="theme-color" content="#eeeee9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141514" media="(prefers-color-scheme: dark)" />
+    <!-- The drawn icon for browsers; the bitmaps for search results and home screens, which want fixed sizes. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" sizes="48x48" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- The public site's address, for search engines and for the card a shared link shows.
+         These must be absolute, so they name the public site whatever host serves this build. -->
+    <link rel="canonical" href="https://peerfall.shadid.dev/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Peerfall" />
+    <meta property="og:url" content="https://peerfall.shadid.dev/" />
+    <meta property="og:title" content="Peerfall: learn FRRouting on a real network" />
+    <meta property="og:description" content="A free, open-source browser game that teaches FRRouting. Build networks, diagnose outages and verify recovery on real FRR routers running in your browser." />
+    <meta property="og:image" content="https://peerfall.shadid.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Peerfall title screen: the name cut by a section line where a link fails, a New game button, and the Peer Map of stage 1, First router" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Peerfall: learn FRRouting on a real network" />
+    <meta name="twitter:description" content="A free, open-source browser game that teaches FRRouting. Build networks, diagnose outages and verify recovery on real FRR routers running in your browser." />
+    <meta name="twitter:image" content="https://peerfall.shadid.dev/og.png" />
+    <meta name="twitter:image:alt" content="Peerfall title screen: the name cut by a section line where a link fails, a New game button, and the Peer Map of stage 1, First router" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Peerfall",
+        "url": "https://peerfall.shadid.dev/",
+        "description": "A free, open-source browser game that teaches FRRouting. Build networks, diagnose outages and verify recovery on real FRR routers running in your browser.",
+        "image": "https://peerfall.shadid.dev/og.png",
+        "genre": "Educational",
+        "about": "FRRouting (FRR) and IP routing",
+        "gamePlatform": "Web browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "license": "https://opensource.org/license/mit",
+        "sameAs": "https://github.com/amrshadid/peerfall",
+        "author": {
+          "@type": "Person",
+          "name": "Amr Shadid",
+          "url": "https://shadid.dev"
+        }
+      }
+    </script>
     <title>Peerfall: learn FRRouting on a real network</title>
   </head>
   <body>
     <div id="root"></div>
+    <!-- The game is drawn by its script. Without it, this says what the game is and where its source is. -->
+    <noscript>
+      <main style="max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; font: 1rem/1.6 system-ui, sans-serif">
+        <h1>Peerfall</h1>
+        <p>Peerfall is a free, open-source browser game that teaches FRRouting (FRR), from your first router to operating a multi-protocol network. You build networks, diagnose outages and verify recovery.</p>
+        <p>The network is real: a Linux kernel running in an emulated PC inside your browser, with one network namespace per router and FRR’s own daemons in each. You type into the real vtysh. There is nothing to install and no server, and your progress stays in your browser.</p>
+        <p>
+          Peerfall needs JavaScript and a desktop browser. The source is on
+          <a href="https://github.com/amrshadid/peerfall">GitHub</a>, under the MIT license. Made by
+          <a href="https://shadid.dev">Amr Shadid</a>.
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

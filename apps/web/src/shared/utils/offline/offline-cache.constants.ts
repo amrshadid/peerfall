@@ -10,6 +10,9 @@ export const VM_FILE_CACHE = 'peerfall-vm-files-v1'
 export const VM_DIR = 'vm/'
 export const VM_MANIFEST = 'vm/manifest.json'
 
+// Read by search engines and link previews, never by the game: not worth a player's offline cache.
+export const CRAWLER_FILES: readonly string[] = ['og.png', 'robots.txt', 'sitemap.xml']
+
 // Routes live in the hash, so every navigation is this one page.
 export const APP_SHELL = 'index.html'
 

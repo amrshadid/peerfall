@@ -1,4 +1,11 @@
-import { APP_CACHE_PREFIX, SW_FILE, SW_MANIFEST_TOKEN, VM_DIR, VM_MANIFEST } from './offline-cache.constants'
+import {
+  APP_CACHE_PREFIX,
+  CRAWLER_FILES,
+  SW_FILE,
+  SW_MANIFEST_TOKEN,
+  VM_DIR,
+  VM_MANIFEST,
+} from './offline-cache.constants'
 
 export interface SwManifest {
   readonly version: string
@@ -18,7 +25,14 @@ export interface OfflineRequest {
 export function precacheFiles(files: readonly string[]): string[] {
   const paths = files.map((file) => file.replace(/^\/+/, ''))
   return [...new Set(paths)]
-    .filter((path) => path !== '' && path !== SW_FILE && !path.endsWith('.map') && !path.startsWith(VM_DIR))
+    .filter(
+      (path) =>
+        path !== '' &&
+        path !== SW_FILE &&
+        !path.endsWith('.map') &&
+        !path.startsWith(VM_DIR) &&
+        !CRAWLER_FILES.includes(path)
+    )
     .sort()
 }
 
