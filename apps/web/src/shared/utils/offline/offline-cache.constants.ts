@@ -10,6 +10,23 @@ export const VM_FILE_CACHE = 'peerfall-vm-files-v1'
 export const VM_DIR = 'vm/'
 export const VM_MANIFEST = 'vm/manifest.json'
 
+/** The image's file list, beside its `flat/` folder. */
+export const VM_FILE_LIST = 'fs.json'
+
+/**
+ * Image folders the Machine never reads after boot: v86 boots the kernel from its own copy, and
+ * the modules the network needs (veth, sch_netem) are loaded at boot, into the saved Machine.
+ * Together about 26 MB of the image's 38. A network that loads a module of its own (macvlan, for
+ * vrrpd) needs that module's files kept here before it plays offline.
+ */
+export const IMAGE_FILES_NEVER_OPENED = ['/boot/', '/lib/modules/']
+
+/** Image files fetched at once while the cache is filled in the background. */
+export const VM_WARM_CONCURRENCY = 2
+
+/** What the app posts to the service worker once a network is up: cache the rest of the image. */
+export const SW_WARM_MESSAGE = 'peerfall:warm-vm-image'
+
 // Routes live in the hash, so every navigation is this one page.
 export const APP_SHELL = 'index.html'
 

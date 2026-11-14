@@ -3,13 +3,18 @@
 import {
   APP_SHELL,
   appCacheName,
+  imageFilesOf,
+  imageListUrl,
   isStaleAppCache,
   NAVIGATION_TIMEOUT_MS,
   offlineRouteOf,
   RUNTIME_CACHE,
   SW_MANIFEST_TOKEN,
+  SW_WARM_MESSAGE,
   type SwManifest,
   VM_FILE_CACHE,
+  VM_MANIFEST,
+  VM_WARM_CONCURRENCY,
 } from '@shared/utils/offline'
 
 // The app compiles against the DOM library, which has no worker events; these are the parts used.
@@ -22,12 +27,17 @@ interface FetchEvent extends ExtendableEvent {
   respondWith(response: Promise<Response>): void
 }
 
+interface ExtendableMessageEvent extends ExtendableEvent {
+  readonly data: unknown
+}
+
 interface WorkerScope {
   readonly registration: { readonly scope: string }
   readonly clients: { claim(): Promise<void> }
   skipWaiting(): Promise<void>
   addEventListener(type: 'install' | 'activate', listener: (event: ExtendableEvent) => void): void
   addEventListener(type: 'fetch', listener: (event: FetchEvent) => void): void
+  addEventListener(type: 'message', listener: (event: ExtendableMessageEvent) => void): void
 }
 
 const worker = self as unknown as WorkerScope
@@ -106,6 +116,52 @@ async function shell(request: Request): Promise<Response> {
   const hit = await (await caches.open(current)).match(urlOf(APP_SHELL))
   return hit ?? network
 }
+
+let warming: Promise<void> | null = null
+
+/**
+ * The Machine fetches the image's files as Linux opens them, so a player who goes offline would
+ * miss every daemon no mission of theirs has started yet (ospfd, bfdd…). Once a network is up,
+ * every file the game may open is cached, two at a time, skipping the ones already there.
+ */
+async function warmImage(): Promise<void> {
+  const manifest = await (await caches.open(RUNTIME_CACHE)).match(urlOf(VM_MANIFEST))
+  if (!manifest) {
+    return
+  }
+  const { version } = (await manifest.json()) as { version: string }
+  const listUrl = imageListUrl(scope, version)
+  const cache = await caches.open(VM_FILE_CACHE)
+  const list = (await cache.match(listUrl)) ?? (await fetch(listUrl))
+  const queue = imageFilesOf(await list.json())
+  const flat = new URL('flat/', listUrl).href
+  const lane = async () => {
+    for (let file = queue.shift(); file !== undefined; file = queue.shift()) {
+      const url = flat + file
+      if (await cache.match(url)) {
+        continue
+      }
+      const response = await fetch(url)
+      if (keepable(response)) {
+        await cache.put(url, response)
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: VM_WARM_CONCURRENCY }, lane))
+}
+
+worker.addEventListener('message', (event) => {
+  if (event.data !== SW_WARM_MESSAGE || warming !== null) {
+    return
+  }
+  // Offline or interrupted, it stops; the next network that comes up starts it again.
+  warming = warmImage()
+    .catch(() => undefined)
+    .finally(() => {
+      warming = null
+    })
+  event.waitUntil(warming)
+})
 
 worker.addEventListener('fetch', (event) => {
   const { request } = event

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { SW_MANIFEST_TOKEN, VM_FILE_CACHE } from './offline-cache.constants'
 import {
   appCacheName,
+  imageFilesOf,
+  imageListUrl,
   injectSwManifest,
   isStaleAppCache,
   type OfflineRequest,
@@ -67,6 +69,76 @@ describe('injectSwManifest', () => {
   it('is null when the worker lost its token', () => {
     expect(injectSwManifest('const m = 1', manifest)).toBeNull()
     expect(injectSwManifest(`x${SW_MANIFEST_TOKEN}`, manifest)).toBeNull()
+  })
+})
+
+describe('the image files cached for offline play', () => {
+  const FILE = 0o100644
+  const LINK = 0o120777
+  const DIR = 0o040755
+  // The shape of v86's fs.json: [name, size, mtime, mode, uid, gid, children or file].
+  const FS = {
+    fsroot: [
+      [
+        'bin',
+        0,
+        0,
+        DIR,
+        0,
+        0,
+        [
+          ['bash', 815636, 0, FILE, 0, 0, '08e938121b.bin.zst'],
+          ['sh', 12, 0, LINK, 0, 0, '/bin/busybox'],
+        ],
+      ],
+      ['boot', 0, 0, DIR, 0, 0, [['vmlinuz-virt', 8106496, 0, FILE, 0, 0, 'kernel.bin.zst']]],
+      ['lib', 0, 0, DIR, 0, 0, [['modules', 0, 0, DIR, 0, 0, [['veth.ko.gz', 9000, 0, FILE, 0, 0, 'veth.bin.zst']]]]],
+      [
+        'usr',
+        0,
+        0,
+        DIR,
+        0,
+        0,
+        [
+          [
+            'lib',
+            0,
+            0,
+            DIR,
+            0,
+            0,
+            [
+              [
+                'frr',
+                0,
+                0,
+                DIR,
+                0,
+                0,
+                [
+                  ['ospfd', 1, 0, FILE, 0, 0, 'ospfd.bin.zst'],
+                  ['bash', 1, 0, FILE, 0, 0, '08e938121b.bin.zst'],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ],
+  }
+
+  it('lists every file the game may open once, without links, the kernel or its modules', () => {
+    expect(imageFilesOf(FS)).toEqual(['08e938121b.bin.zst', 'ospfd.bin.zst'])
+  })
+
+  it('lists nothing from a file list it cannot read', () => {
+    expect(imageFilesOf(null)).toEqual([])
+    expect(imageFilesOf({ fsroot: 'x' })).toEqual([])
+  })
+
+  it("finds an image version's file list beside its files", () => {
+    expect(imageListUrl(SCOPE, 'd725945d2815')).toBe(`${SCOPE}vm/d725945d2815/fs.json`)
   })
 })
 
