@@ -161,19 +161,33 @@ budget then fails the tests.
 ## The network
 
 `network:` lists the routers and the links between them. Every router runs zebra and
-mgmtd; `daemons:` adds others (`staticd`, `ospfd`, `ospf6d`, `isisd`, `bgpd`, `bfdd`).
+mgmtd; `daemons:` adds others (`staticd`, `ospfd`, `ospf6d`, `isisd`, `bgpd`, `bfdd`, `vrrpd`).
 `config:` is the router's `frr.conf`, after the lines the Machine writes itself
-(hostname, log file). Two optional fields set up a mission that does not start from
-"everything running and addressed":
+(hostname, log file). A router's `loopback` is its IPv4 address on `lo` (`10.255.0.1/32`).
+These optional fields set up a mission that does not start from "everything running and
+addressed", or that needs more than IPv4:
 
 | Field                        | What it does                                                                                                                                                                                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | router `startup: watchfrr`   | FRR is started by its own init script (`/usr/lib/frr/frrinit.sh start <router>`): watchfrr starts the daemons, loads `frr.conf` and restarts a daemon that dies, as on an installed router. The script always starts staticd as well. |
 | router `startup: none`       | FRR is installed and configured (`frr.conf`, `daemons`) and nothing runs: starting it is the player's.                                                                                                                                |
 | link end `unaddressed: true` | The Machine leaves that interface without its address: giving it, in FRR, is the player's. `address` is then the one the mission plans for it.                                                                                        |
+| router `loopback6`           | An IPv6 address for `lo` (`fd00::1/128`). Every router of a network that has one forwards IPv6. Links stay IPv4: OSPFv3 and IS-IS talk over the `fe80::` link-local address the kernel gives every interface.                         |
+| link end `mtu`               | The largest packet that end sends, 68 to 65535 bytes (Linux's 1500 when left out), set before the link comes up: `mtu: 9000` on one end is an MTU mismatch.                                                                            |
 
 Left out, a router's daemons are started one by one by the Machine and every link end
-gets its address from Linux.
+gets its address from Linux. A router that runs `vrrpd` gets the kernel's macvlan module
+loaded: VRRP sends from a macvlan interface per virtual router.
+
+A network has settled once nothing has changed for a few seconds and every link between two
+routers running the same link-state daemon has its peers up on both ends: Full for `ospfd`
+and `ospf6d`, Up for `isisd`. The Machine reads that from their logs, so give `router ospf6`
+and `router isis` the line `log-adjacency-changes` (`log-adjacency-changes detail` under
+`router ospf`, as The Link That Never Went Down has). Peers that have not formed after 40
+seconds, OSPF's dead interval, are the network as it is: a mission that starts with a peer
+missing or stuck settles then. A network with an IS-IS link must stay unchanged for 35
+seconds, not a few: isisd holds back a new LSP after a change, and on the Machine the routes a
+new IS-IS peer brought reached the kernel up to 29 seconds after the peer came up.
 
 ## Checks
 
@@ -192,16 +206,20 @@ families, and a mission may use both.
 
 **State checks** read the network as it is, after every command the player finishes and
 whenever routing settles. They read it as root: `vtysh -c 'show daemons'`, `ip route show`,
-`show ip route json`, `show running-config`, the router's `frr.conf`, and a short `ping`. FRR is never restarted
-to judge a mission.
+`show ip route json`, `show ipv6 route json`, `show running-config`, the router's `frr.conf`,
+`show ip ospf neighbor json`, `show ipv6 ospf6 neighbor json`, `show isis neighbor json`,
+`show ip ospf database json`, and a short `ping`. Each is read only for the routers whose
+checks need it. FRR is never restarted to judge a mission.
 
 | Kind      | Fields                                                                                                      | Passes when                                                                                                                                                                                                                                                                                                                  |
 | --------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `daemons` | `router`, `daemons` (list)                                                                                  | each of those FRR daemons (`watchfrr`, `zebra`, `mgmtd`, `staticd`, …) runs on the router and answers vtysh                                                                                                                                                                                                                  |
-| `route`   | `router`; `prefix` or `to`; optional `protocol`, `via`, `interface`                                         | the router's kernel has a route for exactly `prefix`, or one that covers the address `to` (the longest match), installed by `protocol` (`kernel` for a connected route, `static`, `ospf`…), with that next hop and that way out                                                                                              |
-| `rib`     | `router`, `prefix`; optional `protocol`, `via`, `selected`                                                  | zebra's routing table (`show ip route json`) holds a route for exactly `prefix`, from `protocol` (`static`, `connected`, `ospf`…), with `via` among its next hops, selected for forwarding or not as `selected` says. Unlike `route`, it sees a backup route that waits, which never reaches the kernel                      |
-| `reaches` | `from`, `to`, `minReplies` (2)                                                                              | at least that many of three packets from the router to the address are answered, and the address is not the router's own (a `local` route in its zebra)                                                                                                                                                                      |
+| `route`   | `router`; `prefix` or `to`; optional `protocol`, `via` or `vias`, `interface`                               | the router's kernel has a route for exactly `prefix`, or one that covers the address `to` (the longest match), installed by `protocol` (`kernel` for a connected route, `static`, `ospf`…), with that next hop and that way out. `vias` (two or more) passes when the route's next hops are exactly those, in any order: equal-cost paths used together. IPv4 only |
+| `rib`     | `router`, `prefix`; optional `protocol`, `via`, `selected`                                                  | zebra's routing table (`show ip route json`) holds a route for exactly `prefix`, from `protocol` (`static`, `connected`, `ospf`…), with `via` among its next hops, selected for forwarding or not as `selected` says. Unlike `route`, it sees a backup route that waits, which never reaches the kernel. An IPv6 `prefix` (`fd00::3/128`) reads `show ipv6 route json`, where OSPFv3's routes are `ospf6` |
+| `reaches` | `from`, `to`, `minReplies` (2), optional `size`                                                             | at least that many of three packets from the router to the address (IPv4 or IPv6) are answered, and the address is not the router's own (a `local` route in its zebra). `size` is the bytes of data in each packet (ping's `-s`, 0 to 9000): a packet larger than a link carries                                         |
 | `config`  | `router`, `source` (`running`, `saved` or `started`), `block` (list, optional), `line`, `absent` (optional) | the router's running configuration, its saved `frr.conf`, or the `frr.conf` FRR last started from with its init script during play, has `line` inside those blocks (`block: [interface lo]`). `line` is a whole line or its first words. With `absent: true`, that configuration exists and has no such line in those blocks |
+| `peer`    | `router`, `protocol` (`ospf`, `ospf6` or `isis`), `peer`; optional `interface`, `level` (IS-IS only)        | the router's daemon for that protocol lists `peer` in its final state: Full for OSPF and OSPFv3, Up for IS-IS. `peer` is the OSPF router id (`10.255.0.2`), or the IS-IS name as `show isis neighbor` prints it: the peer's hostname (`b`), or its system id when isisd does not know it. A peer stuck before Full (ExStart) is listed and fails |
+| `lsa`     | `router`, `type` (`router`, `network`, `summary`, `asbr-summary`, `external`), `id`; `area` (every type but `external`); optional `advRouter`, `absent` | the router's OSPF database (`show ip ospf database json`) holds an LSA of that type with that Link State ID, in that area's database, sent by `advRouter`. An external LSA belongs to no area. With `absent: true`, ospfd answers and its database has no such LSA |
 
 A mission with only state checks needs no `fault:`, no `probe:` and no
 `recoveryTargetMs:`. It may still have a `probe:`, for the player to send. The schema
