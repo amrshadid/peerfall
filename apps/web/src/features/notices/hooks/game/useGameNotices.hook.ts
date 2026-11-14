@@ -1,7 +1,6 @@
 import { useNotices } from '@app/store'
 import { codexFiledNotice, missionPassedNotice, saveFailedNotice } from '@features/notices/utils/notices'
-import { useEventListener } from '@peerfall/core/hooks'
-import { GAME_EVENTS, type MissionCompletedPayload, type SaveFailedPayload } from '@peerfall/game'
+import { useMissionCompleted, useSaveFailed } from '@peerfall/game/hooks'
 import type { MissionId } from '@peerfall/game/types'
 
 /**
@@ -14,14 +13,12 @@ export function useGameNotices(
 ): void {
   const { showNotice } = useNotices()
 
-  useEventListener<MissionCompletedPayload>(GAME_EVENTS.MISSION_COMPLETED, ({ payload }) => {
-    showNotice(missionPassedNotice(payload.missionId, titleOf(payload.missionId), payload.at))
-    const filed = codexFiledNotice(payload.missionId, cardsOf(payload.missionId), payload.at)
+  useMissionCompleted(({ missionId, at }) => {
+    showNotice(missionPassedNotice(missionId, titleOf(missionId), at))
+    const filed = codexFiledNotice(missionId, cardsOf(missionId), at)
     if (filed) {
       showNotice(filed)
     }
   })
-  useEventListener<SaveFailedPayload>(GAME_EVENTS.SAVE_FAILED, ({ payload }) =>
-    showNotice(saveFailedNotice(payload.at))
-  )
+  useSaveFailed(({ at }) => showNotice(saveFailedNotice(at)))
 }
