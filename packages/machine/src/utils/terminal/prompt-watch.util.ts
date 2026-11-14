@@ -174,6 +174,11 @@ export function watchOutput(
       line = ''
       continue
     }
+    // readline rings the bell (`\a`) for a Backspace on an empty line; like any control character
+    // that is not handled above, it draws nothing and must not land in the command line.
+    if (char < ' ' || char === '\u007f') {
+      continue
+    }
     screen = writeAt(screen, cursor, char)
     cursor++
     if (line.length >= LONGEST_PROMPT) {

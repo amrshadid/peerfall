@@ -193,6 +193,13 @@ describe('the command line a finished command was typed as', () => {
     ).toEqual([['a(config-if)# desription x']])
   })
 
+  it('leaves out the bell rung for a Backspace on an empty line', () => {
+    const atInterface = watchOutput(EMPTY_PROMPT_WATCH, 'a(config-if)# ').watch
+    expect(
+      linesOf(atInterface, [['\b\b\bsh int br\r', ['\u0007\u0007\u0007', 'sh int br\r\n', 'a(config-if)# ']]])
+    ).toEqual([['a(config-if)# sh int br']])
+  })
+
   it('is the line readline drew again after Ctrl-U', () => {
     const atVtysh = watchOutput(EMPTY_PROMPT_WATCH, '\r\nro         route      router-id  \r\na# sh ip ro').watch
     expect(linesOf(atVtysh, [['\u0015exit\r', ['\ra# \u001b[Kexit\r\n', '\u001b[?2004ha:~# ']]])).toEqual([['a# exit']])
