@@ -31,8 +31,10 @@ interface VmState {
 interface VmActions {
   setStatus: (status: VmStatus) => void
   setNetwork: (network: NetworkPhase, errors?: readonly string[]) => void
-  setRouter: (router: string | null) => void
-  /** The Machine's news about its terminal: where the shell is, and how many commands finished. */
+  /**
+   * The Machine's news about its terminal: where the shell is, and how many commands finished.
+   * The only way `router` changes, so the map and the terminal never disagree.
+   */
   applyShell: (update: VmShellUpdate) => void
   applyEvents: (update: VmEventUpdate) => void
   /** Keeps the interfaces a state read found; routers it did not read them on keep their last reading. */
@@ -66,7 +68,6 @@ export const useVmStore = create<VmStore>()(
             ? { network, networkErrors: errors, interfaces: NO_INTERFACES }
             : { network, networkErrors: errors }
         ),
-      setRouter: (router) => set({ router }),
       applyShell: ({ router, commandsFinished }) =>
         // The count only grows: news from a VM replaced since must not take it back.
         set((state) => ({ router, commandsFinished: Math.max(state.commandsFinished, commandsFinished) })),

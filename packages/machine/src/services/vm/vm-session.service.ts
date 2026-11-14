@@ -450,8 +450,9 @@ export function createVmSession(wasmUrl?: string): VmSession {
           const wanted = router
           await restore(running, kept.state)
           rewindEvents(kept.events)
-          // The restored shell is in the router it was in when saved, until it is moved back.
-          shellIn(kept.router)
+          // The restored shell is in the router it was in when saved. It is moved back before the
+          // store hears of it, so the map never shows a router the player did not pick.
+          router = kept.router
           if (wanted !== router) {
             await moveShell(wanted)
           } else {
@@ -462,6 +463,8 @@ export function createVmSession(wasmUrl?: string): VmSession {
           status('ready')
           return true
         } finally {
+          // Whatever happened, the store ends where the shell is.
+          shellNews()
           release()
         }
       })
