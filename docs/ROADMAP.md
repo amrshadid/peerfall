@@ -32,9 +32,20 @@ who did not write it, and was played end to end in the app following its Guide.
 
 - **Add stages 1 and 2 to `lab/`**, so they can be repeated on native FRR, and check them
   there.
-- **A tab left in the background.** Find out whether the browser slows the Machine enough
-  to drop a healthy BFD session, and pause or void a timed run when the tab is hidden.
-- **Measure the first visit's download** and say it in the README.
+- **A tab left in the background: settled.** It does drop a healthy BFD session. In Chrome,
+  with 4.1's network healthy and BFD on both ends, a tab hidden for 6.5 minutes came back with
+  the session to a re-created (a new discriminator, up for 2 min 17 s) while the Machine's
+  clock had kept time. A fault run the tab is hidden for is now not judged, and the player is
+  told why. Still open: a network built while the window is hidden from the start had not
+  finished after 5 minutes; on macOS a window covered by other apps counts as hidden too.
+- **First visit's download: measured** on the production build with brotli, cold cache:
+  0.3 MB until the title is usable (1.6 MB once the service worker has stored the app),
+  15.2 MB until 1.1's terminal is ready (8 MB of it the kernel), 22.2 MB once the rest of the
+  machine is cached for offline play.
+- **Offline: checked.** After one visit, with the server gone, the title, the Peer Map, 1.1
+  (Linux booted) and 4.1 (ospfd and bfdd, never started online) all play. The image's files
+  are fetched as Linux opens them, so the service worker now caches the rest of them once a
+  network is up.
 
 ### Engine
 
@@ -43,7 +54,6 @@ who did not write it, and was played end to end in the app following its Guide.
 - **Routes that are not routes in the event stream:** address changes show up as
   `fib_install` events named `local` and `broadcast`.
 - **The terminal's router after a restore** can differ from the one highlighted on the map.
-- **Offline play**, checked.
 
 ### Content
 

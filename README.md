@@ -7,7 +7,10 @@
 [![FRR 10.6](https://img.shields.io/badge/FRR-10.6-black)](docs/ARCHITECTURE.md#the-machine)
 
 **Play it in your browser: [peerfall.shadid.dev](https://peerfall.shadid.dev)** (a
-desktop browser; the first visit downloads the Linux machine).
+desktop browser). The first visit downloads about 0.3 MB before the title screen is usable
+and about 15 MB until the first mission's terminal is ready, most of it the Linux kernel;
+once a network is up, the rest of the machine (about 7 MB) is cached in the background, and
+the game then plays offline.
 
 > We reject: kings, presidents and voting. We believe in: rough consensus and running code.
 >
