@@ -1,4 +1,10 @@
-import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
+import {
+  FIRST_MISSION,
+  JOURNEY_SKILLS,
+  journeyFixture,
+  longerJourneyFixture,
+  SECOND_MISSION,
+} from '@features/map/utils/fixtures'
 import { describe, expect, it } from 'vitest'
 import { PLANNED_PROGRESS } from './journey.constants'
 import {
@@ -111,13 +117,55 @@ describe('journeyChapters', () => {
     })
   })
 
-  it('names what a mission needs first by title, and whether it is met', () => {
-    const locked = journeyStops(journeyChapters(longerJourneyFixture(false), FIRST_MISSION))[1]
+  it('names the skills a mission needs, whether a completed mission has earned each, and which one earns it', () => {
+    const locked = journeyStops(journeyChapters(longerJourneyFixture(false), FIRST_MISSION, JOURNEY_SKILLS))[1]
     expect(locked?.needs).toEqual([
-      { id: 'the-link-that-never-went-down', title: 'The Link That Never Went Down', met: false },
+      {
+        id: 'bfd-fast-detection',
+        title: 'Make OSPF notice a dead link in under a second with BFD',
+        met: false,
+        earnedIn: 'The Link That Never Went Down',
+      },
     ])
     const open = journeyStops(journeyChapters(longerJourneyFixture(true), SECOND_MISSION))[1]
     expect(open?.needs[0]?.met).toBe(true)
+  })
+
+  it('carries the skills a mission earns, its time and its Codex cards', () => {
+    const [first, second] = journeyStops(journeyChapters(longerJourneyFixture(true), SECOND_MISSION, JOURNEY_SKILLS))
+    expect(first).toMatchObject({
+      skills: JOURNEY_SKILLS,
+      minutes: 25,
+      codex: [{ id: 'bfd', term: 'BFD' }],
+      regionId: 'notice-it-fast',
+    })
+    // A skill the tree doesn't list is named by its id; a mission that gives no time has none.
+    expect(second).toMatchObject({ skills: [{ id: 'graceful-restart', title: 'graceful-restart' }], minutes: null })
+  })
+
+  it("groups a stage's missions in its regions, each with its own progress", () => {
+    const chapter = journeyChapters(longerJourneyFixture(true), SECOND_MISSION)[3]
+    expect(chapter?.regions).toEqual([
+      expect.objectContaining({
+        key: 'recover-from-failure/notice-it-fast',
+        name: 'Notice it fast',
+        guide: 'bfdd, zebra',
+        done: 1,
+        tone: 'progress',
+        progress: 'in progress · 1 of 2',
+      }),
+    ])
+    expect(chapter?.regions[0]?.stops).toEqual(chapter?.stops)
+    expect(journeyChapters(journeyFixture('completed'), null)[3]?.regions[0]?.progress).toBe('passed · 1 of 1')
+    expect(journeyChapters(journeyFixture('locked'), null)[3]?.regions[0]?.progress).toBe('ahead · 0 of 1')
+    expect(journeyChapters(journeyFixture(), null)[0]?.regions).toEqual([])
+  })
+
+  it("names a stop by the first skill its mission earns in the Skills view, else by the mission's title", () => {
+    const skills = journeyStops(journeyChapters(longerJourneyFixture(true), SECOND_MISSION, JOURNEY_SKILLS, 'skills'))
+    expect(skills.map((stop) => stop.title)).toEqual(['Measure an outage and tell what noticed it', 'graceful-restart'])
+    const missions = journeyStops(journeyChapters(longerJourneyFixture(true), SECOND_MISSION, JOURNEY_SKILLS))
+    expect(missions.map((stop) => stop.title)).toEqual([FIRST_MISSION.title, SECOND_MISSION.title])
   })
 
   it('is empty before the content is loaded', () => {

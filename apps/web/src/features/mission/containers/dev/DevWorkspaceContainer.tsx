@@ -29,13 +29,7 @@ import { useMachineLock } from '@shared/hooks/machine'
 import { hrefOf } from '@shared/navigation'
 import { ariaKeyShortcut, SHORTCUTS } from '@shared/utils/keyboard'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import {
-  DEBRIEF_COMMANDS,
-  DEBRIEF_EXPLANATION,
-  DEBRIEF_LAB_NOTE,
-  DEBRIEF_LEARNED,
-  DEBRIEF_MEASURES,
-} from '@/test/fixtures/debrief.fixture'
+import { DEBRIEF_CARDS, DEBRIEF_LEARNED, DEBRIEF_MEASURES } from '@/test/fixtures/debrief.fixture'
 import { COMMANDS, HINTS, OBJECTIVES } from '@/test/fixtures/guide.fixture'
 import { BASELINE_EVENTS, HEALTHY_EVENTS, REPAIRED_EVENTS } from '@/test/fixtures/machine-events.fixture'
 import { TRIANGLE } from '@/test/fixtures/network.fixture'
@@ -148,7 +142,7 @@ export function DevWorkspaceContainer() {
         page: `${TITLE}(dev)`,
         volume: `${APP_MANUAL} · Workspace fixtures`,
         bar: {
-          titleHref: hrefOf({ name: 'title' }),
+          mapHref: hrefOf({ name: 'map' }),
           heading: TITLE,
           subheading: 'Stage 4 · Recover from failure',
           steps: MISSION_STEPS,
@@ -166,7 +160,7 @@ export function DevWorkspaceContainer() {
           hintEnabled: !debriefOpen,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
-          onRestart: () => setRestartOpen(true),
+          onReplay: () => setRestartOpen(true),
         },
         panels,
         slots: {
@@ -264,19 +258,22 @@ export function DevWorkspaceContainer() {
         ],
         debrief: debriefOpen ? (
           <DebriefPresentation
-            title={TITLE}
-            verdict={{ passed: true, text: 'Passed: traffic was back in 0.90 s, inside the 2.00 s target.' }}
+            headline="An interface that is up says nothing about packets getting through."
+            result="Mission complete · 3 of 3 objectives met · traffic back in 0.90 s, inside 2.00 s"
             measures={DEBRIEF_MEASURES}
-            explanation={DEBRIEF_EXPLANATION}
             learned={DEBRIEF_LEARNED}
-            commands={DEBRIEF_COMMANDS}
-            labNote={DEBRIEF_LAB_NOTE}
+            cards={DEBRIEF_CARDS}
+            seenIn={`4.1 ${TITLE}`}
+            stage={null}
             next={null}
             onReplay={restart}
-            titleHref={hrefOf({ name: 'title' })}
+            mapHref={hrefOf({ name: 'map' })}
+            onMap={() => setDebriefOpen(false)}
           />
         ) : null,
-        restart: { open: restartOpen, onConfirm: restart, onCancel: () => setRestartOpen(false) },
+        // The workbench's restart is a replay already: back to the scene, hints dropped.
+        restart: { open: false, onConfirm: restart, onCancel: () => setRestartOpen(false) },
+        replay: { open: restartOpen, onConfirm: restart, onCancel: () => setRestartOpen(false) },
         status: { save: 'saved', savedAgoMs: null, machine: MACHINE_STATUS[phase], onShortcuts: openCheatSheet },
       }}
     />

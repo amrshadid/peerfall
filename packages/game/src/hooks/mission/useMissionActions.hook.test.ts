@@ -12,6 +12,7 @@ import {
   bfdBothEndsRun,
   bfdOneEndRun,
   EXAMPLE_MISSION,
+  exampleContent,
   FOLLOW_UP_MISSION,
   healthyRun,
   installTestGame,
@@ -91,7 +92,7 @@ describe('mission actions', () => {
     expect(mission.judge(bfdBothEndsRun())).toMatchObject(expected)
     expect(await mission.saveBaseline(baselineRun())).toMatchObject(expected)
     expect(await mission.submitRun(bfdBothEndsRun())).toMatchObject(expected)
-    expect(mission.showDebrief()).toMatchObject(expected)
+    expect(await mission.showDebrief()).toMatchObject(expected)
   })
 
   it('plays the mission through: baseline, a failed attempt, the repair, the debrief', async () => {
@@ -109,18 +110,20 @@ describe('mission actions', () => {
     const failed = await mission.submitRun(bfdOneEndRun())
     expect(failed).toMatchObject({ success: true, data: { passed: false } })
     expect(state().active?.verdict?.passed).toBe(false)
-    expect(mission.showDebrief()).toMatchObject({ success: false, error: { code: 'FORBIDDEN' } })
-    expect(missionStatus(state().progress, FOLLOW_UP_MISSION)).toBe('locked')
+    expect(await mission.showDebrief()).toMatchObject({ success: false, error: { code: 'FORBIDDEN' } })
+    expect(state().progress.debrief).toBeUndefined()
+    expect(missionStatus(state().progress, FOLLOW_UP_MISSION, exampleContent())).toBe('locked')
 
     clock.advance(60_000)
     const completedAt = clock.now()
     const passed = await mission.submitRun(bfdBothEndsRun())
     expect(passed).toMatchObject({ success: true, data: { passed: true } })
     expect(findMissionProgress(state().progress, ID)).toMatchObject({ attempts: 2, completedAt })
-    expect(missionStatus(state().progress, FOLLOW_UP_MISSION)).toBe('available')
+    expect(missionStatus(state().progress, FOLLOW_UP_MISSION, exampleContent())).toBe('available')
     expect(savedComparison(state().progress, EXAMPLE_MISSION)?.outageSavedMs).toBe(34_970 - 834)
 
-    expect(mission.showDebrief()).toMatchObject({ success: true, data: { phase: 'debrief' } })
+    expect(await mission.showDebrief()).toMatchObject({ success: true, data: { phase: 'debrief' } })
+    expect(state().progress.debrief).toEqual({ missionId: ID, verdict: passed.data })
     expect(recorded.of(GAME_EVENTS.RUN_RECORDED)).toMatchObject([
       { role: 'baseline', passed: false },
       { role: 'attempt', passed: false },
@@ -132,6 +135,51 @@ describe('mission actions', () => {
     // Every step was written before its flow resolved.
     expect(storedProgress(storage.map.get(KEY))).toEqual(state().progress)
     recorded.stop()
+  })
+
+  it("reopens at a debrief left open, with the verdict it was shown with, as Kernelfall's card", async () => {
+    const { mission, storage } = await openGame()
+    await mission.start(ID)
+    mission.begin()
+    const passed = await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+    mission.leave()
+
+    // A reload: the game starts empty and reads the save again from the same storage.
+    expect(storedProgress(storage.map.get(KEY)).debrief).toEqual({ missionId: ID, verdict: passed.data })
+    await uninstallTestGame()
+    installTestGame({ storage })
+    await createSaveActions().open()
+    expect(await createMissionActions().start(ID)).toMatchObject({
+      success: true,
+      data: { phase: 'debrief', verdict: passed.data },
+    })
+  })
+
+  it('closes the debrief when the player leaves through it or goes back into play', async () => {
+    const { mission, storage } = await openGame()
+    await mission.start(ID)
+    await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+
+    await mission.leaveDebrief()
+    expect(state().progress.debrief).toBeUndefined()
+    expect(storedProgress(storage.map.get(KEY)).debrief).toBeUndefined()
+    expect(await mission.start(ID)).toMatchObject({ data: { phase: 'incident', verdict: null } })
+
+    await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+    expect(mission.begin()).toMatchObject({ success: true, data: { phase: 'play' } })
+    expect(state().progress.debrief).toBeUndefined()
+  })
+
+  it("opens another mission at its incident while one mission's debrief is open", async () => {
+    const { mission } = await openGame()
+    await mission.start(ID)
+    await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+    expect(await mission.start(FOLLOW_UP_MISSION.id)).toMatchObject({ data: { phase: 'incident' } })
+    expect(state().progress.debrief?.missionId).toBe(ID)
   })
 
   it('completes a mission once: passing again changes neither the date nor the order', async () => {
@@ -158,6 +206,50 @@ describe('mission actions', () => {
     await mission.submitRun(bfdBothEndsRun())
     expect(recorded.of(GAME_EVENTS.MISSION_COMPLETED)).toMatchObject([{ attempts: 1, hintsUsed: 2 }])
     recorded.stop()
+  })
+
+  it("replays from the incident as Kernelfall's Replay level: no verdict, every hint again, nothing left open", async () => {
+    const { mission, storage, clock } = await openGame()
+    await mission.start(ID)
+    mission.begin()
+    await revealHint()
+    await revealHint()
+    await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+    const recorded = recordGameEvents()
+
+    const replayed = await mission.replay()
+
+    expect(replayed).toMatchObject({
+      success: true,
+      data: { mission: EXAMPLE_MISSION, phase: 'incident', verdict: null },
+    })
+    expect(state().active).toMatchObject({ phase: 'incident', verdict: null })
+    const record = findMissionProgress(state().progress, ID)
+    expect(record).toMatchObject({ hintsRevealed: 0, attempts: 1 })
+    expect(record?.completedAt).not.toBeNull()
+    expect(state().progress.completionOrder).toEqual([ID])
+    expect(state().progress.debrief).toBeUndefined()
+    const saved = storedProgress(storage.map.get(KEY))
+    expect(saved.debrief).toBeUndefined()
+    expect(findMissionProgress(saved, ID)?.hintsRevealed).toBe(0)
+    expect(recorded.of(GAME_EVENTS.MISSION_STARTED)).toEqual([{ missionId: ID, resumed: true, at: clock.now() }])
+    recorded.stop()
+  })
+
+  it('replays only an active mission', async () => {
+    const { mission } = await openGame()
+    expect(await mission.replay()).toMatchObject({ success: false })
+  })
+
+  it('counts no attempt for a mission opened twice, as React opens it twice in development', async () => {
+    const { mission } = await openGame()
+    await mission.start(ID)
+    mission.leave()
+    await mission.start(ID)
+    expect(state().progress.missions.filter((record) => record.missionId === ID)).toHaveLength(1)
+    expect(findMissionProgress(state().progress, ID)).toMatchObject({ attempts: 0, hintsRevealed: 0 })
+    expect(state().active).toMatchObject({ phase: 'incident' })
   })
 
   it('judges the events so far without keeping anything', async () => {

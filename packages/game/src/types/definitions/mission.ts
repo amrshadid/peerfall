@@ -2,6 +2,7 @@ import type { StringRule } from '@peerfall/core/types'
 import type { LinkName, NetworkDefinition, ProbeDefinition } from '@peerfall/machine/types'
 import type { CheckDefinition } from '#types/definitions/checks'
 import type { ConceptId } from '#types/definitions/concepts'
+import type { SkillId } from '#types/definitions/skills'
 
 export type MissionId = string
 export type ChapterId = string
@@ -28,6 +29,23 @@ export interface ChapterDefinition {
   readonly standsFor?: string
   /** "You can now…" lines, shown once every mission of the stage is completed. */
   readonly outcomes: readonly string[]
+  /** Its missions grouped in play order, as the map draws them; empty for a stage with no missions yet. */
+  readonly regions: readonly RegionDefinition[]
+}
+
+/** A part of a stage: a few missions on one subject, with its own heading on the map. */
+export interface RegionDefinition {
+  /** Unique across the game. */
+  readonly id: string
+  readonly name: string
+  /** What its missions cover, in a few words: "FRR's daemons, how FRR is started and kept running". */
+  readonly caption: string
+  /** The FRR daemon who speaks in its missions. */
+  readonly guide: string
+  /** Where it lives in FRR's source tree, as Kernelfall prints a region's kernel source. */
+  readonly source: string
+  /** Its missions by id, in play order. */
+  readonly missions: readonly MissionId[]
 }
 
 /** One of the mission's three hints: a nudge, then the concept, then the spot. Never the fix itself. */
@@ -91,9 +109,6 @@ export interface FaultDefinition {
   readonly link: LinkName
 }
 
-/** The bounds of a probe's interval: fast enough to measure a sub-second outage, slow enough for the Machine. */
-export const PROBE_INTERVAL_MS = { min: 10, max: 10_000 } as const
-
 /** A parsed and validated `mission.yaml`. */
 export interface MissionDefinition {
   readonly id: MissionId
@@ -107,8 +122,10 @@ export interface MissionDefinition {
   readonly chapter: ChapterId
   /** The whole mission in one sentence. */
   readonly objective: string
-  /** Missions that must be completed first. */
-  readonly prerequisites: readonly MissionId[]
+  /** The skills of `skills.yaml` it earns once completed. */
+  readonly skills: readonly SkillId[]
+  /** The skills it needs: it opens once missions completed earlier have earned every one. */
+  readonly prerequisites: readonly SkillId[]
   /** Concepts of `concepts.yaml` it introduces, at most `CORE_CONCEPT_BUDGET`. */
   readonly teaches: readonly ConceptId[]
   /** Concepts it only names on the big picture; a later mission teaches them. */

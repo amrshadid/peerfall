@@ -8,7 +8,7 @@
 
 ## See it
 
-> **zebra:** FRR has a console of its own, called `vtysh`, where you ask FRR questions and give it orders. Type it.
+> **zebra:** FRR has a console of its own, where you ask FRR questions and give it orders. Type `vtysh`.
 
 ---
 

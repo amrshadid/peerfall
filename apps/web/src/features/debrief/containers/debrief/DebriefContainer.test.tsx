@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { MISSION_FIXTURE } from '@features/mission/utils/fixtures'
+import { CONTENT_FIXTURE, MISSION_FIXTURE } from '@features/mission/utils/fixtures'
+import { codexView } from '@peerfall/game/utils'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DebriefContainer } from './DebriefContainer'
@@ -7,12 +8,16 @@ import { DebriefContainer } from './DebriefContainer'
 const mocks = vi.hoisted(() => ({
   mission: null as unknown,
   repaired: null as unknown,
+  codex: null as unknown,
   playAgain: vi.fn(),
+  leaveDebrief: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('@peerfall/game/hooks', () => ({
   useActiveMission: () => ({ mission: mocks.mission, isCompleted: true }),
   useRunComparison: () => ({ baseline: null, repaired: mocks.repaired, comparison: null }),
+  useCodex: () => mocks.codex,
+  useMissionActions: () => ({ leaveDebrief: mocks.leaveDebrief }),
 }))
 
 // The content on disk changes as missions are written: the screen is tested on a fixed one.
@@ -22,6 +27,12 @@ vi.mock('@features/content/hooks/content', async () => {
 })
 
 const mission = MISSION_FIXTURE
+
+const COMPLETED = {
+  missions: [{ missionId: mission.id, firstStartedAt: 0, completedAt: 1, attempts: 1, hintsRevealed: 0, runs: [] }],
+  completionOrder: [mission.id],
+  lastActive: mission.id,
+}
 
 const REPAIRED = {
   role: 'attempt',
@@ -44,6 +55,7 @@ const REPAIRED = {
 beforeEach(() => {
   mocks.mission = mission
   mocks.repaired = REPAIRED
+  mocks.codex = codexView(COMPLETED, CONTENT_FIXTURE.game)
 })
 
 afterEach(() => {
@@ -52,23 +64,34 @@ afterEach(() => {
 })
 
 describe('DebriefContainer', () => {
-  it('opens with the verdict and the numbers it rests on', () => {
+  it("opens with the debrief's first sentence and the result, with the numbers it rests on", () => {
     render(<DebriefContainer onPlayAgain={mocks.playAgain} />)
-    expect(screen.getByRole('heading', { level: 2, name: 'The Link That Never Went Down' })).toBeTruthy()
-    expect(screen.getByText('Passed: traffic was back in 0.80 s, inside the 2.00 s target.')).toBeTruthy()
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'You met FRR the way it runs on a real router.' })
+    ).toBeTruthy()
+    expect(
+      screen.getByText('Mission complete · 3 of 3 objectives met · traffic back in 0.80 s, inside 2.00 s')
+    ).toBeTruthy()
     expect(screen.getByText('Outage after your change')).toBeTruthy()
   })
 
-  it('names the terms the mission filed in the Codex; the story tells the debrief in the Guide', () => {
+  it('names the terms it taught and prints the cards it filed in the Codex', () => {
     render(<DebriefContainer onPlayAgain={mocks.playAgain} />)
-    expect(screen.getByText('BFD')).toBeTruthy()
-    expect(screen.queryByRole('heading', { name: 'Try it on real FRR' })).toBeNull()
+    expect(screen.getAllByText('BFD').length).toBeGreaterThan(0)
+    const card = screen.getByRole('article', { name: 'BFD' })
+    expect(card.querySelector('.pf-man-page__stamp')?.textContent).toBe('FiledCodex · The Link That Never Went Down')
   })
 
-  it('plays the mission again from the start on Play it again', () => {
+  it('plays the mission again from the start on Replay mission, and leads back to the Peer Map', () => {
     render(<DebriefContainer onPlayAgain={mocks.playAgain} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Play it again' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Replay mission' }))
     expect(mocks.playAgain).toHaveBeenCalledTimes(1)
+    const map = screen.getByRole('link', { name: 'Back to the map' })
+    expect(map.getAttribute('href')).toBe('#/map')
+    expect(mocks.leaveDebrief).not.toHaveBeenCalled()
+    fireEvent.click(map)
+    // Leaving through the debrief closes it, so the mission no longer reopens at it.
+    expect(mocks.leaveDebrief).toHaveBeenCalledTimes(1)
   })
 
   it('draws nothing when no mission is being played', () => {

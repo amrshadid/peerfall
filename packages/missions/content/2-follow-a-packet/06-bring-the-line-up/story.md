@@ -54,16 +54,18 @@ ping: connect: Network unreachable
 
 ---
 
+> **zebra:** On a it reads like this; b and c name their own file.
+
 ```
-c# write memory
+a# write memory
 Note: this version of vtysh never writes vtysh.conf
 Building Configuration...
-Integrated configuration saved to /etc/frr/c/frr.conf
+Integrated configuration saved to /etc/frr/a/frr.conf
 [OK]
-c# watchfrr[599]: [WFP93-1D146] configuration write completed with exit code 0
+a# watchfrr[505]: [WFP93-1D146] configuration write completed with exit code 0
 ```
 
-> **zebra:** `Integrated configuration saved to /etc/frr/c/frr.conf`: that file is what watchfrr reads. Now prove it. Restart FRR on each router with its init script: `/usr/lib/frr/frrinit.sh restart a`, and the same on b and on c, each with its own name.
+> **zebra:** `/etc/frr/a/frr.conf` is the file watchfrr reads. Now prove it: restart FRR on each router with its init script and the router's name. On a, type `/usr/lib/frr/frrinit.sh restart a`, and the same on b and on c.
 
 ---
 

@@ -10,18 +10,13 @@ export interface MissionTopBarProps {
 export function MissionTopBar({ bar, onMenu }: MissionTopBarProps) {
   return (
     <nav className="screen__topbar mission-topbar" aria-label="Mission">
-      <ButtonLink href={bar.titleHref} variant="quiet">
+      <ButtonLink href={bar.mapHref} variant="quiet">
         <Icon name="back" />
-        Title
+        Map
       </ButtonLink>
-      <Button
-        variant="quiet"
-        aria-label="Start this mission again"
-        title="Start this mission again"
-        onClick={bar.onRestart}
-      >
+      <Button variant="quiet" aria-label="Replay this mission" title="Replay this mission" onClick={bar.onReplay}>
         <Icon name="replay" />
-        <span className="mission-topbar__label">Restart</span>
+        <span className="mission-topbar__label">Replay</span>
       </Button>
       <div className="mission-topbar__name">
         {/* Long titles wrap and clamp on narrow screens; the tooltip keeps the whole name. */}

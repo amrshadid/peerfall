@@ -19,7 +19,8 @@
   --panel-head: 2.75rem;
   /* Defaults per screen width; a size the player dragged to (--guide-w, --network-w) wins over them. */
   --guide-default: 21.25rem;
-  --network-default: 27rem;
+  /* Narrow enough that the terminal keeps its 90 columns at 1440px. */
+  --network-default: 23rem;
   /* The containing block for the debrief, placed by grid lines. */
   position: relative;
   display: grid;
@@ -233,7 +234,7 @@
   }
 }
 
-/* Small laptops: the side columns give way so the terminal keeps its 80 columns as long as it can. */
+/* Small laptops: the side columns give way so the terminal keeps its 90 columns as long as it can. */
 @media (max-width: 72rem) {
   .mission-work {
     --guide-default: 16.25rem;

@@ -85,17 +85,29 @@ describe('MissionScreenPresentation', () => {
     expect(document.getElementById('mission-guide')?.hasAttribute('inert')).toBe(false)
   })
 
-  it('asks before it starts the mission again', () => {
-    const onRestart = vi.fn()
+  it("asks before it replays the mission from the top bar, in Kernelfall's words", () => {
+    const onReplay = vi.fn()
     const onConfirm = vi.fn()
     layout({
-      bar: { ...MISSION_LAYOUT.bar, onRestart },
-      restart: { open: true, onConfirm, onCancel: () => {} },
+      bar: { ...MISSION_LAYOUT.bar, onReplay },
+      replay: { open: true, onConfirm, onCancel: () => {} },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
-    expect(onRestart).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Replay this mission' }))
+    expect(onReplay).toHaveBeenCalledTimes(1)
+    const dialog = screen.getByRole('dialog', { name: 'Replay this mission?' })
+    expect(dialog.textContent).toContain(
+      "starts again from its scene, on the network as the mission found it: this play-through's steps and hints are dropped"
+    )
+    expect(within(dialog).getByRole('button', { name: 'Keep playing' })).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Replay from the scene' }))
+    expect(onConfirm).toHaveBeenCalledTimes(1)
+  })
+
+  it("asks before the Guide's Start over resets the network, keeping the play-through", () => {
+    const onConfirm = vi.fn()
+    layout({ restart: { open: true, onConfirm, onCancel: () => {} } })
     const dialog = screen.getByRole('dialog', { name: 'Start this mission again?' })
-    expect(dialog.textContent).toContain('nothing is timed')
+    expect(dialog.textContent).toContain('the hints you asked for are kept')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Start again' }))
     expect(onConfirm).toHaveBeenCalledTimes(1)
   })

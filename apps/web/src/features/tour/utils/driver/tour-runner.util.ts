@@ -6,6 +6,7 @@ import { TOUR_AIM_CLASS, TOUR_AIM_SHOWN_CLASS } from './tour-driver.constants'
 import { tourConfig } from './tour-driver.util'
 import { measureStage } from './tour-measure.util'
 import { boxStyle, sameBox, stageBox } from './tour-stage.util'
+import { passWheelThrough } from './tour-wheel.util'
 
 // driver.js is imperative and draws over the whole page, so the one running tour lives here, outside React.
 let active: Driver | null = null
@@ -87,6 +88,7 @@ export function playTour(stops: readonly TourStop[], animate: boolean): void {
   const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null
   const aims = createAims()
   let stopFollowing = () => {}
+  const stopPassingWheel = passWheelThrough()
   const tour = driver({
     ...tourConfig(stops, animate, aims.aimAt),
     onPopoverRender: (popover) => {
@@ -108,6 +110,7 @@ export function playTour(stops: readonly TourStop[], animate: boolean): void {
     },
     onDestroyed: () => {
       stopFollowing()
+      stopPassingWheel()
       aims.removeAll()
       active = null
       if (returnTo?.isConnected) {

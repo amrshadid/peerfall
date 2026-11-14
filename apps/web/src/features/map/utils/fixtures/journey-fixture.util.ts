@@ -22,16 +22,36 @@ export const FIRST_MISSION: JourneyMissionSource = {
   id: 'the-link-that-never-went-down',
   title: 'The Link That Never Went Down',
   objective: 'Make the network notice a link that drops every packet while its interfaces stay up.',
+  skills: ['outage-measure', 'bfd-fast-detection'],
   prerequisites: [],
   recoveryTargetMs: 2000,
+  minutes: 25,
+  codex: [{ id: 'bfd', term: 'BFD', simple: 'A fast hello between two neighbours.', sources: ['bfdd/bfd.c'] }],
 }
 
 export const SECOND_MISSION: JourneyMissionSource = {
   id: 'a-restart-nobody-noticed',
   title: 'A Restart Nobody Noticed',
   objective: 'Restart a routing daemon without its neighbours dropping a packet.',
-  prerequisites: [FIRST_MISSION.id],
+  skills: ['graceful-restart'],
+  prerequisites: ['bfd-fast-detection'],
   recoveryTargetMs: 500,
+  codex: [],
+}
+
+/** The skill tree's part the fixture's missions name; `graceful-restart` is left out, to be named by its id. */
+export const JOURNEY_SKILLS = [
+  { id: 'outage-measure', title: 'Measure an outage and tell what noticed it' },
+  { id: 'bfd-fast-detection', title: 'Make OSPF notice a dead link in under a second with BFD' },
+] as const
+
+/** Stage 4's one region, as chapters.yaml writes it. */
+const NOTICE_IT_FAST = {
+  id: 'notice-it-fast',
+  name: 'Notice it fast',
+  caption: 'measure an outage, the OSPF dead timer, BFD',
+  guide: 'bfdd, zebra',
+  source: 'bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c',
 }
 
 type Missions = JourneyChapterSource['missions']
@@ -41,10 +61,11 @@ function entry(mission: JourneyMissionSource, status: MissionStatus, attempts = 
 }
 
 function journey(missions: Missions): readonly JourneyChapterSource[] {
-  return STAGES.map(([id, title, summary], index) => ({
-    chapter: { id, stage: index + 1, title, summary, outcomes: [] },
-    missions: id === 'recover-from-failure' ? missions : [],
-  }))
+  return STAGES.map(([id, title, summary], index) => {
+    const own = id === 'recover-from-failure' ? missions : []
+    const regions = own.length === 0 ? [] : [{ ...NOTICE_IT_FAST, missions: own.map((each) => each.mission.id) }]
+    return { chapter: { id, stage: index + 1, title, summary, outcomes: [], regions }, missions: own }
+  })
 }
 
 /** The curriculum as it is today: eleven stages and the one mission of stage 4. */

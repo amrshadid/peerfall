@@ -25,11 +25,8 @@ export function useNetwork(network: NetworkDefinition | null, key: string): UseN
     if (!booted || !network) {
       return
     }
-    const store = useVmStore.getState()
-    void setupVmNetwork(key, network, () => {
-      store.setRouter(null)
-      store.setNetwork('building')
-    }).then((built) => {
+    // The router is not set here: the Machine says where its shell is once the build restores it.
+    void setupVmNetwork(key, network, () => useVmStore.getState().setNetwork('building')).then((built) => {
       // null: this VM already has this mission's network.
       if (built) {
         useVmStore.getState().setNetwork(built.ok ? 'ready' : 'failed', built.ok ? [] : built.errors)

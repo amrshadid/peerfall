@@ -10,14 +10,19 @@ import {
 import { MAX_SAVED_ATTEMPTS, type RunRole, type SavedRun } from '#types/definitions/runs'
 import {
   baselineRun,
+  closeDebrief,
   continueMission,
   emptyProgress,
   findMissionProgress,
   latestAttempt,
   missionList,
   missionStatus,
+  openDebrief,
+  openDebriefOf,
+  progressSkills,
   recordRun,
   repairedRun,
+  replayMission,
   revealNextHint,
   savedComparison,
   startMission,
@@ -55,13 +60,17 @@ describe('starting a mission', () => {
 
 describe('mission status', () => {
   it('goes from available to in progress to completed, and unlocks what needed it', () => {
-    expect(missionStatus(emptyProgress(), MISSION)).toBe('available')
-    expect(missionStatus(emptyProgress(), FOLLOW_UP_MISSION)).toBe('locked')
-    expect(missionStatus(started(), MISSION)).toBe('in_progress')
+    const content = exampleContent()
+    expect(missionStatus(emptyProgress(), MISSION, content)).toBe('available')
+    expect(missionStatus(emptyProgress(), FOLLOW_UP_MISSION, content)).toBe('locked')
+    expect(missionStatus(started(), MISSION, content)).toBe('in_progress')
+    expect(progressSkills(emptyProgress(), content)).toEqual(new Set())
 
     const completed = after(run('attempt', true, 500))
-    expect(missionStatus(completed, MISSION)).toBe('completed')
-    expect(missionStatus(completed, FOLLOW_UP_MISSION)).toBe('available')
+    expect(missionStatus(completed, MISSION, content)).toBe('completed')
+    // The follow-up needs the skill the first mission earns.
+    expect(progressSkills(completed, content)).toEqual(new Set(MISSION.skills))
+    expect(missionStatus(completed, FOLLOW_UP_MISSION, content)).toBe('available')
   })
 
   it('lists every chapter, with attempts and hints used per mission', () => {
@@ -107,6 +116,27 @@ describe('revealing hints', () => {
   })
 })
 
+describe('replaying a mission', () => {
+  it('puts every hint back and closes its debrief, keeping completion, attempts and runs', () => {
+    const completed = after(run('baseline', false, 400), run('attempt', true, 500))
+    const hinted = revealNextHint(revealNextHint(completed, MISSION) ?? completed, MISSION) ?? completed
+    const open = openDebrief(hinted, ID, null)
+
+    const replayed = replayMission(open, ID)
+
+    const before = findMissionProgress(open, ID)
+    expect(findMissionProgress(replayed, ID)).toEqual({ ...before, hintsRevealed: 0 })
+    expect(replayed.debrief).toBeUndefined()
+    expect(replayed.completionOrder).toEqual([ID])
+    expect(replayed.lastActive).toBe(ID)
+  })
+
+  it('leaves a mission never started alone', () => {
+    const progress = emptyProgress()
+    expect(replayMission(progress, ID)).toBe(progress)
+  })
+})
+
 describe('recording runs', () => {
   it('keeps a baseline without counting it as an attempt or completing anything', () => {
     const progress = after(run('baseline', false, 200))
@@ -123,7 +153,7 @@ describe('recording runs', () => {
 
   it('never takes a completion back when a later attempt fails', () => {
     const progress = after(run('attempt', true, 400), run('attempt', false, 500))
-    expect(missionStatus(progress, MISSION)).toBe('completed')
+    expect(missionStatus(progress, MISSION, exampleContent())).toBe('completed')
     expect(latestAttempt(progress, MISSION)?.passed).toBe(false)
     expect(repairedRun(progress, MISSION)?.savedAt).toBe(400)
   })
@@ -162,5 +192,25 @@ describe('comparing saved runs', () => {
     expect(baselineRun(progress, changed)).toBeNull()
     expect(latestAttempt(progress, changed)).toBeNull()
     expect(savedComparison(progress, changed)).toBeNull()
+  })
+})
+
+describe('the open debrief', () => {
+  const ID = EXAMPLE_MISSION.id
+  const verdict = { passed: true, objectives: [] }
+  const started = startMission(emptyProgress(), ID, 0)
+  const completed = { ...started, completionOrder: [ID] }
+
+  it('is opened for a mission, and read back only for that mission once it is completed', () => {
+    const open = openDebrief(completed, ID, verdict)
+    expect(openDebriefOf(open, ID)).toEqual({ missionId: ID, verdict })
+    expect(openDebriefOf(open, FOLLOW_UP_MISSION.id)).toBeUndefined()
+    expect(openDebriefOf(openDebrief(started, ID, verdict), ID)).toBeUndefined()
+  })
+
+  it('is closed without a trace, and closing none changes nothing', () => {
+    expect(closeDebrief(openDebrief(completed, ID, verdict))).toEqual(completed)
+    expect('debrief' in closeDebrief(openDebrief(completed, ID, verdict))).toBe(false)
+    expect(closeDebrief(completed)).toBe(completed)
   })
 })

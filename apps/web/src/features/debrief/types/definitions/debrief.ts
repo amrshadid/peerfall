@@ -1,4 +1,4 @@
-import type { MarkdownBlock } from '@features/guide/types'
+import type { CodexCardData } from '@shared/types'
 
 /** One measured number of the run, e.g. "Recovery" / "0.90 s". */
 export interface DebriefMeasure {
@@ -8,29 +8,31 @@ export interface DebriefMeasure {
   readonly tone?: 'good' | 'bad'
 }
 
-/** A command to repeat the exercise with, on real FRR outside the game. */
-export interface DebriefCommand {
-  readonly command: string
-  readonly explain: string
+/** The stage this mission finished, with what the player can now do: Kernelfall's region block. */
+export interface DebriefStage {
+  /** "Stage 1 · First router". */
+  readonly name: string
+  readonly outcomes: readonly string[]
 }
 
 export interface DebriefPresentationProps {
-  /** The mission's name. */
-  title: string
-  /** Whether the run met the mission's outcome, and that verdict in words, e.g. "Passed: traffic was back in 0.90 s". */
-  verdict: { readonly passed: boolean; readonly text: string }
+  /** The debrief's first sentence, as Kernelfall's card opens with it. Text may set terms in `code`. */
+  headline: string
+  /** The result in one line, e.g. "Mission complete · 2 of 2 objectives met". */
+  result: string
   measures: readonly DebriefMeasure[]
-  /** Why it worked: one paragraph per entry. Text may set real terms in `code`, **strong** or _emphasis_. */
-  explanation: readonly string[]
-  /** The mission's own debrief as its file wrote it, with its headings and the commands to repeat; printed after the measurements. */
-  text?: readonly MarkdownBlock[]
   /** The terms this mission taught, as the player met them. */
   learned: readonly string[]
-  commands: readonly DebriefCommand[]
-  /** Where the same network runs outside the game, e.g. a line about the lab; null for none. */
-  labNote: string | null
+  /** The Codex cards this mission filed, printed whole as Kernelfall's card prints them. */
+  cards: readonly CodexCardData[]
+  /** "The Dark Cable": the mission the cards were filed in, for their stamp. */
+  seenIn: string
+  /** Set on the mission that finished its stage; null on the others. */
+  stage: DebriefStage | null
   /** The mission after this one; null when there is none yet. */
   next: { readonly label: string; onSelect(): void } | null
   onReplay: () => void
-  titleHref: string
+  mapHref: string
+  /** Called as Back to the map is followed: the debrief is closed, as Kernelfall files its card. */
+  onMap: () => void
 }

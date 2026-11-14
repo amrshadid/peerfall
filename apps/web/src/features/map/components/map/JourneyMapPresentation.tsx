@@ -1,6 +1,6 @@
-import type { MapDetail } from '@features/map/types'
+import type { MapDetail, MapView } from '@features/map/types'
 import { ManHead, ScreenFrame } from '@shared/components/layout'
-import { ButtonLink, Icon } from '@shared/components/ui'
+import { ButtonLink, Icon, Segmented } from '@shared/components/ui'
 import { APP_MANUAL } from '@shared/constants/app'
 import type { ScreenChrome } from '@shared/types'
 import './JourneyMap.css'
@@ -10,6 +10,9 @@ import { MapSection, type MapSectionProps } from './MapSection'
 export interface JourneyMapPresentationProps {
   chrome: ScreenChrome
   titleHref: string
+  /** What the stops are named by: their mission, or the first skill it earns. */
+  view: MapView
+  onView: (view: MapView) => void
   /** Where Continue goes; null when every mission that is open is completed. */
   recommended: { readonly label: string; readonly href: string } | null
   section: MapSectionProps
@@ -24,6 +27,8 @@ export interface JourneyMapPresentationProps {
 export function JourneyMapPresentation({
   chrome,
   titleHref,
+  view,
+  onView,
   recommended,
   section,
   detail,
@@ -45,6 +50,15 @@ export function JourneyMapPresentation({
           <h1 tabIndex={-1} className="map-topbar__title">
             Peer Map
           </h1>
+          <Segmented
+            legend="Show"
+            options={[
+              { value: 'missions', label: 'Missions' },
+              { value: 'skills', label: 'Skills' },
+            ]}
+            value={view}
+            onChange={onView}
+          />
           {recommended && (
             <p className="map-topbar__next">
               Recommended next: <b title={recommended.label}>{recommended.label}</b>

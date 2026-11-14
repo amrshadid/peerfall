@@ -1,7 +1,9 @@
+import { probeProblems } from '@peerfall/machine/utils'
 import { describe, expect, it } from 'vitest'
-import { EXAMPLE_CHAPTERS_YAML, EXAMPLE_MISSION_YAML, STATE_MISSION_YAML } from '#test/index'
+import { EXAMPLE_CHAPTERS_YAML, EXAMPLE_MISSION_YAML, EXAMPLE_REGION, STATE_MISSION_YAML } from '#test/index'
 import { validateChapters } from '#utils/validate/chapters.schema'
 import { validateMission } from '#utils/validate/mission.schema'
+import { validateSkills } from '#utils/validate/skills.schema'
 
 const YAML = EXAMPLE_MISSION_YAML
 const [REACHES, DIRECT, RECOVERS] = YAML.objectives
@@ -45,7 +47,7 @@ describe('validateMission', () => {
         dificulty: 'hard',
       })
     ).toEqual([
-      'dificulty: unknown field (expected one of: id, version, title, summary, minutes, chapter, objective, prerequisites, teaches, names, uses, network, fault, probe, recoveryTargetMs, restartOnCheck, objectives, hints, chips, codex, story)',
+      'dificulty: unknown field (expected one of: id, version, title, summary, minutes, chapter, objective, skills, prerequisites, teaches, names, uses, network, fault, probe, recoveryTargetMs, restartOnCheck, objectives, hints, chips, codex, story)',
       'id: expected a kebab-case id like recover-from-failure, got "The Link"',
       'version: expected a number from 1 to 9007199254740991, got 0',
       'title: expected non-empty text, got empty text',
@@ -138,6 +140,25 @@ describe('validateMission', () => {
         'probe.destination: expected an address like 10.255.0.3, got "c"',
         'probe.intervalMs: expected a number from 10 to 10000, got 5',
       ])
+    })
+
+    it('accepts a probe exactly when the Machine would run it', () => {
+      const probes = [
+        YAML.probe,
+        { ...YAML.probe, id: 'a-name-of-sixteen' },
+        { ...YAML.probe, id: 'a-name-of-sixteen!' },
+        { ...YAML.probe, id: '1st' },
+        { ...YAML.probe, destination: '10.255.0.256' },
+        { ...YAML.probe, destination: '10.255.0.255' },
+        { ...YAML.probe, intervalMs: 10_000 },
+        { ...YAML.probe, intervalMs: 10_001 },
+      ]
+      for (const probe of probes) {
+        const accepted = validateMission({ ...YAML, probe }).ok
+        const network = validateMission(YAML)
+        const runs = network.ok && probeProblems(probe, network.value.network).length === 0
+        expect({ probe, accepted }).toEqual({ probe, accepted: runs })
+      }
     })
   })
 
@@ -451,11 +472,34 @@ describe('validateMission', () => {
     })
   })
 
-  it('reports a mission that requires itself or the same mission twice', () => {
-    expect(errorsWith({ prerequisites: [YAML.id] })).toEqual(['prerequisites: a mission cannot require itself'])
+  it('reports a mission that needs a skill it earns, the same skill twice, or earns none', () => {
+    expect(errorsWith({ prerequisites: [...YAML.skills] })).toEqual([
+      'prerequisites: "bfd-fast-detection" is also a skill this mission earns',
+    ])
     expect(errorsWith({ prerequisites: ['first-contact', 'first-contact'] })).toEqual([
       'prerequisites: "first-contact" appears more than once',
     ])
+    expect(errorsWith({ skills: [] })).toEqual(['skills: expected at least one skill the mission earns'])
+    expect(errorsWith({ skills: undefined })).toEqual(['skills: expected a list, got nothing'])
+  })
+})
+
+describe('validateSkills', () => {
+  it('reads each skill and reports what is wrong with it', () => {
+    expect(validateSkills({ skills: [{ id: 'a', title: 'A', region: 'r' }] })).toEqual({
+      ok: true,
+      value: [{ id: 'a', title: 'A', region: 'r', prerequisites: [] }],
+    })
+    expect(validateSkills({ skills: [{ id: 'A b', title: '', region: 'r', prerequisites: ['x'], level: 1 }] })).toEqual(
+      {
+        ok: false,
+        errors: [
+          'skills[0].level: unknown field (expected one of: id, title, region, prerequisites)',
+          'skills[0].id: expected a kebab-case id like recover-from-failure, got "A b"',
+          'skills[0].title: expected non-empty text, got empty text',
+        ],
+      }
+    )
   })
 })
 
@@ -476,7 +520,7 @@ describe('validateChapters', () => {
       ok: false,
       errors: [
         'version: unknown field (expected one of: chapters)',
-        'chapters[1].stage: unknown field (expected one of: id, title, summary, story, guide, standsFor, outcomes)',
+        'chapters[1].stage: unknown field (expected one of: id, title, summary, story, guide, standsFor, outcomes, regions)',
         'chapters[1].summary: expected non-empty text, got empty text',
         'chapters: "recover-from-failure" appears more than once',
       ],
@@ -486,5 +530,29 @@ describe('validateChapters', () => {
       errors: ['chapters: expected at least one chapter'],
     })
     expect(validateChapters([])).toMatchObject({ ok: false })
+  })
+
+  it("reads a chapter's regions, each with at least one mission", () => {
+    const [first] = EXAMPLE_CHAPTERS_YAML.chapters
+    expect(validateChapters({ chapters: [{ ...first, regions: [EXAMPLE_REGION] }] })).toMatchObject({
+      ok: true,
+      value: [{ regions: [EXAMPLE_REGION] }],
+    })
+    expect(validateChapters(EXAMPLE_CHAPTERS_YAML)).toMatchObject({
+      ok: true,
+      value: [{ regions: [] }, { regions: [] }],
+    })
+    const broken = { ...EXAMPLE_REGION, id: 'Notice', missions: ['a', 'a'], stops: 1 }
+    expect(
+      validateChapters({ chapters: [{ ...first, regions: [broken, { ...EXAMPLE_REGION, missions: [] }] }] })
+    ).toEqual({
+      ok: false,
+      errors: [
+        'chapters[0].regions[0].stops: unknown field (expected one of: id, name, caption, guide, source, missions)',
+        'chapters[0].regions[0].id: expected a kebab-case id like recover-from-failure, got "Notice"',
+        'chapters[0].regions[0].missions: "a" appears more than once',
+        'chapters[0].regions[1].missions: expected at least one mission',
+      ],
+    })
   })
 })

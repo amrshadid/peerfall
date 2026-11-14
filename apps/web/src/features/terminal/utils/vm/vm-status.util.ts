@@ -9,3 +9,14 @@ export function vmStatusLine(phase: VmPhase, detail: string | null): string | nu
   }
   return `${DIM}${detail === null ? line : `${line} ${detail}`}${RESET}\r\n`
 }
+
+/** Going back to a saved network or building a new one: the shell on screen is about to be replaced. */
+const REPLACES_SHELL: readonly VmPhase[] = ['restoring', 'setting-up']
+
+/**
+ * True when a running Machine starts over (Start over, a replayed run, a new network): what the
+ * terminal shows belongs to a shell that is gone, and a stale prompt would sit above the new one.
+ */
+export function clearsTerminal(previous: VmPhase | null, next: VmPhase): boolean {
+  return previous === 'ready' && REPLACES_SHELL.includes(next)
+}

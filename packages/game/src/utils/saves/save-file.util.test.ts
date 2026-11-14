@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { baselineRun, bfdBothEndsRun, EXAMPLE_MISSION } from '#test/index'
 import type { Progress } from '#types/definitions/progress'
 import { SAVE_FORMAT, SAVE_VERSION } from '#types/definitions/saves'
+import { judgeMission } from '#utils/checks/index'
 import { emptyProgress } from '#utils/progress/index'
 import { summariseRun } from '#utils/runs/index'
 import { exportSave, importSave, parseJson, readSaveFile, toSaveFile } from '#utils/saves/save-file.util'
@@ -52,6 +53,66 @@ describe('save files', () => {
       ok: true,
       value: { progress: PROGRESS, savedAt: 99, migratedFrom: null },
     })
+  })
+
+  it('round-trips an open debrief with its verdict, every kind of check result in it', () => {
+    const route = { prefix: '10.0.2.0/30', protocol: 'kernel', nextHops: [{ via: null, interface: 'a-c' }] }
+    const rib = {
+      prefix: '10.255.0.3/32',
+      protocol: 'static',
+      distance: 1,
+      metric: 0,
+      selected: true,
+      installed: true,
+      nextHops: [{ via: '10.0.1.2', interface: null }],
+    }
+    const debrief: Progress['debrief'] = {
+      missionId: MISSION_ID,
+      verdict: {
+        passed: true,
+        objectives: [
+          ...judgeMission(EXAMPLE_MISSION, bfdBothEndsRun(), null).objectives,
+          {
+            objectiveId: 'daemons',
+            result: { kind: 'daemons', passed: true, failure: null, router: 'a', running: ['zebra'], missing: [] },
+          },
+          { objectiveId: 'route', result: { kind: 'route', passed: true, failure: null, router: 'a', route } },
+          {
+            objectiveId: 'rib',
+            result: { kind: 'rib', passed: true, failure: null, router: 'a', routes: [rib], found: rib },
+          },
+          {
+            objectiveId: 'reaches',
+            result: { kind: 'reaches', passed: true, failure: null, from: 'a', to: '10.0.2.2', sent: 3, received: 3 },
+          },
+          {
+            objectiveId: 'config',
+            result: {
+              kind: 'config',
+              passed: false,
+              failure: 'not_configured',
+              router: 'a',
+              source: 'saved',
+              found: null,
+            },
+          },
+        ],
+      },
+    }
+    const progress: Progress = { ...PROGRESS, debrief }
+    const stored = JSON.parse(JSON.stringify(toSaveFile(progress, 99)))
+    expect(readSaveFile(stored)).toEqual({ ok: true, value: { progress, savedAt: 99, migratedFrom: null } })
+  })
+
+  it('loads a save written before the debrief field existed, and refuses a broken one', () => {
+    const stored = JSON.parse(JSON.stringify(toSaveFile(PROGRESS, 99)))
+    expect(readSaveFile(stored)).toMatchObject({ ok: true, value: { progress: PROGRESS } })
+    expect('debrief' in PROGRESS).toBe(false)
+    const broken = {
+      ...stored,
+      progress: { ...stored.progress, debrief: { missionId: MISSION_ID, verdict: { passed: 'yes' } } },
+    }
+    expect(readSaveFile(broken).ok).toBe(false)
   })
 
   it('treats an empty slot as a new game', () => {

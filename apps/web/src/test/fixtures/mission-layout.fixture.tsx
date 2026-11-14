@@ -10,7 +10,7 @@ export const MISSION_LAYOUT: MissionLayoutModel = {
   page: 'The Link That Never Went Down(4.1)',
   volume: 'Peerfall Network Manual · Recover from failure',
   bar: {
-    titleHref: '#/',
+    mapHref: '#/map',
     heading: 'The Link That Never Went Down',
     subheading: 'Stage 4 · Recover from failure',
     steps: MISSION_STEPS,
@@ -22,7 +22,7 @@ export const MISSION_LAYOUT: MissionLayoutModel = {
     hintEnabled: true,
     hintKeyShortcut: 'Alt+H',
     onHint: noop,
-    onRestart: noop,
+    onReplay: noop,
   },
   panels: { editor: true, topology: true, timeline: true },
   slots: {
@@ -37,5 +37,6 @@ export const MISSION_LAYOUT: MissionLayoutModel = {
   titleBlock: [{ label: 'Recovery target', value: 'under 2 s' }],
   debrief: null,
   restart: { open: false, onConfirm: noop, onCancel: noop },
+  replay: { open: false, onConfirm: noop, onCancel: noop },
   status: { save: 'saved', savedAgoMs: null, machine: 'Linux and FRR: running', onShortcuts: noop },
 }

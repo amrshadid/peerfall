@@ -34,32 +34,35 @@ function cellWidthPerPx(fontFamily: string): number {
   return context.measureText('W').width / MEASURE_PX || FALLBACK_CELL_WIDTH_PER_PX
 }
 
-// Never fewer than 80 columns: a narrow box shrinks the type, then scrolls. A wide one gets more columns.
-function sizeToBox(terminal: Terminal, fit: FitAddon): void {
+// The type shrinks first, so 80 columns stay in sight while they can; then the columns are what the
+// box holds. They are xterm's own count, from the cells it really draws: a column more than that is
+// drawn past the panel's edge, cut off. The guest's tty is told the same size and wraps there.
+// Returns whether the type changed.
+function sizeToBox(terminal: Terminal, fit: FitAddon): boolean {
   const box = terminal.element
   const parent = box?.parentElement
   if (!box || !parent) {
-    return
+    return false
   }
   const style = getComputedStyle(box)
   const padding = (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0)
   const width = parent.clientWidth - padding - SCROLLBAR_PX
   const size = consoleSize(width, cellWidthPerPx(terminal.options.fontFamily ?? ''))
-  if (terminal.options.fontSize !== size.fontSize) {
+  const retyped = terminal.options.fontSize !== size.fontSize
+  if (retyped) {
     terminal.options.fontSize = size.fontSize
   }
-  box.style.width = size.scrolls ? `${Math.ceil(size.gridWidth + padding + SCROLLBAR_PX)}px` : ''
   const proposed = fit.proposeDimensions()
   if (!proposed || Number.isNaN(proposed.rows) || Number.isNaN(proposed.cols)) {
-    return
+    return retyped
   }
-  const cols = size.scrolls ? CONSOLE_COLS : Math.max(CONSOLE_COLS, proposed.cols)
-  if (proposed.rows !== terminal.rows || cols !== terminal.cols) {
-    terminal.resize(cols, proposed.rows)
+  if (proposed.rows !== terminal.rows || proposed.cols !== terminal.cols) {
+    terminal.resize(proposed.cols, proposed.rows)
   }
+  return retyped
 }
 
-/** An xterm.js terminal in `element`: at least 80 columns, as many rows as fit, the page's theme. */
+/** An xterm.js terminal in `element`: as many columns and rows as its box shows, the page's theme. */
 export function openTerminal(element: HTMLElement, { convertEol = true }: OpenTerminalOptions = {}): OpenTerminal {
   const terminal = new Terminal({
     cursorBlink: true,
@@ -74,9 +77,29 @@ export function openTerminal(element: HTMLElement, { convertEol = true }: OpenTe
   const fit = new FitAddon()
   terminal.loadAddon(fit)
   terminal.open(element)
-  sizeToBox(terminal, fit)
-  const resize = new ResizeObserver(() => sizeToBox(terminal, fit))
+  let frame: number | null = null
+  // xterm measures its cells again after a new type size or a font that finished loading; the
+  // columns are counted once more on the next frame, in the cells it then draws.
+  const refit = () => {
+    if (frame !== null) {
+      cancelAnimationFrame(frame)
+    }
+    frame = requestAnimationFrame(() => {
+      frame = null
+      sizeToBox(terminal, fit)
+    })
+  }
+  const size = () => {
+    if (sizeToBox(terminal, fit)) {
+      refit()
+    }
+  }
+  size()
+  const resize = new ResizeObserver(size)
   resize.observe(element)
+  // Missing where nothing is drawn (jsdom).
+  const fonts: FontFaceSet | undefined = document.fonts
+  fonts?.addEventListener('loadingdone', refit)
   const unfollowTheme = followTheme(terminal, element)
 
   return {
@@ -84,6 +107,10 @@ export function openTerminal(element: HTMLElement, { convertEol = true }: OpenTe
     dispose: () => {
       unfollowTheme()
       resize.disconnect()
+      fonts?.removeEventListener('loadingdone', refit)
+      if (frame !== null) {
+        cancelAnimationFrame(frame)
+      }
       terminal.dispose()
     },
   }

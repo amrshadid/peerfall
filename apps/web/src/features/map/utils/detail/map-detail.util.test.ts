@@ -1,11 +1,17 @@
-import { FIRST_MISSION, journeyFixture, longerJourneyFixture, SECOND_MISSION } from '@features/map/utils/fixtures'
+import {
+  FIRST_MISSION,
+  JOURNEY_SKILLS,
+  journeyFixture,
+  longerJourneyFixture,
+  SECOND_MISSION,
+} from '@features/map/utils/fixtures'
 import { journeyChapters, journeyMarks, journeyStops } from '@features/map/utils/journey'
 import { describe, expect, it } from 'vitest'
-import { PLAN_NOTES } from './map-detail.constants'
-import { formatTarget, lockNoteOf, mapDetailOf, playLabelOf } from './map-detail.util'
+import { PLAN_NOTES, TYPICAL_MISSION_TIME } from './map-detail.constants'
+import { formatTarget, lockNoteOf, mapDetailOf, missionTimeOf, playLabelOf } from './map-detail.util'
 
 function detailOf(source: ReturnType<typeof journeyFixture>, next: { id: string } | null, at = 0) {
-  const chapters = journeyChapters(source, next)
+  const chapters = journeyChapters(source, next, JOURNEY_SKILLS)
   const stop = journeyStops(chapters)[at]
   if (!stop) {
     throw new Error('the fixture has no such stop')
@@ -16,20 +22,28 @@ function detailOf(source: ReturnType<typeof journeyFixture>, next: { id: string 
 describe('mapDetailOf', () => {
   it('says everything about an open mission and links to it', () => {
     expect(detailOf(journeyFixture('available'), FIRST_MISSION)).toEqual({
-      place: 'Stage 4 · Recover from failure · 4.1',
+      place: 'Stage 4 · Recover from failure · Notice it fast · 4.1',
       title: 'The Link That Never Went Down',
       state: 'available',
       planned: false,
       status: 'Available, you are here',
       about: { term: 'Objective', text: FIRST_MISSION.objective },
-      parts: ['bfdd', 'graceful restart', 'fast reroute', 'vrrpd'],
+      skills: JOURNEY_SKILLS,
       needs: [],
+      time: 'About 25 min',
       attempts: 'None yet',
       hints: 'None',
       recovery: 'Traffic back within 2 s',
+      parts: ['bfdd', 'graceful restart', 'fast reroute', 'vrrpd'],
+      codex: [{ id: 'bfd', term: 'BFD', href: '#/codex/bfd' }],
       play: { label: 'Play', href: '#/mission/the-link-that-never-went-down' },
       note: null,
     })
+  })
+
+  it('gives a mission without its own estimate the typical time', () => {
+    expect(detailOf(longerJourneyFixture(true), SECOND_MISSION, 1).time).toBe(TYPICAL_MISSION_TIME)
+    expect(missionTimeOf({ minutes: 10 })).toBe('About 10 min')
   })
 
   it('counts attempts and hints in words', () => {
@@ -61,10 +75,13 @@ describe('mapDetailOf', () => {
       about: { term: 'Covers', text: 'Start FRR on Linux, find its daemons, use vtysh, and save a configuration.' },
       // Only what stage 1's missions use: they never run frr-reload.
       parts: ['watchfrr', 'mgmtd', 'vtysh'],
+      skills: [],
       needs: null,
+      time: null,
       attempts: null,
       hints: null,
       recovery: null,
+      codex: [],
       play: null,
       note: PLAN_NOTES.planned,
     })
@@ -75,7 +92,14 @@ describe('mapDetailOf', () => {
     expect(detail.play).toBeNull()
     expect(detail.status).toBe('Locked')
     expect(detail.note).toBe('Locked: complete The Link That Never Went Down first.')
-    expect(detail.needs).toEqual([{ id: FIRST_MISSION.id, title: FIRST_MISSION.title, met: false }])
+    expect(detail.needs).toEqual([
+      {
+        id: 'bfd-fast-detection',
+        title: 'Make OSPF notice a dead link in under a second with BFD',
+        met: false,
+        earnedIn: FIRST_MISSION.title,
+      },
+    ])
     expect(detail.recovery).toBe('Traffic back within 500 ms')
   })
 })

@@ -1,7 +1,21 @@
+import type { NonEmptyList } from '@peerfall/core/types'
 import { describeType, type Issues, ObjectReader } from '@peerfall/core/utils'
-import { DETECTION_EVENTS, type Detection, type Outage, type RouteHop } from '#types/definitions/checks'
+import type { KernelRoute, RibRoute } from '@peerfall/machine/types'
+import {
+  CHECK_FAILURES,
+  CHECK_KINDS,
+  type CheckFailure,
+  type CheckResult,
+  CONFIG_SOURCES,
+  DETECTION_EVENTS,
+  type Detection,
+  type MissionVerdict,
+  type Outage,
+  type Recovery,
+  type RouteHop,
+} from '#types/definitions/checks'
 import { HINT_TIERS } from '#types/definitions/hints'
-import type { MissionProgress, Progress } from '#types/definitions/progress'
+import type { MissionProgress, OpenDebrief, Progress } from '#types/definitions/progress'
 import {
   type AdjacencyChange,
   type GoodProbe,
@@ -122,12 +136,150 @@ function readMission(mission: ObjectReader): MissionProgress {
   }
 }
 
+const FAILURES = Object.values(CHECK_FAILURES) as unknown as NonEmptyList<CheckFailure>
+
+/** A field that must be there and be true or false: `flag` would take a missing one as false. */
+function readBoolean(reader: ObjectReader, key: string): boolean {
+  const value = reader.value(key)
+  if (typeof value !== 'boolean') {
+    reader.issues.add(reader.pathOf(key), `expected true or false, got ${describeType(value)}`)
+    return false
+  }
+  return value
+}
+
+const readList = <T>(reader: ObjectReader, key: string, read: (item: ObjectReader) => T): readonly T[] =>
+  reader.list(key, (value, at) => read(new ObjectReader(value, at, reader.issues)))
+
+function readKernelRoute(route: ObjectReader): KernelRoute {
+  return {
+    prefix: route.string('prefix'),
+    protocol: route.text('protocol'),
+    nextHops: readList(route, 'nextHops', (hop) => ({ via: readVia(hop), interface: hop.string('interface') })),
+  }
+}
+
+function readRibRoute(route: ObjectReader): RibRoute {
+  return {
+    prefix: route.string('prefix'),
+    protocol: route.string('protocol'),
+    distance: route.integer('distance', 0),
+    metric: route.integer('metric', 0),
+    selected: readBoolean(route, 'selected'),
+    installed: readBoolean(route, 'installed'),
+    nextHops: readList(route, 'nextHops', (hop) => ({
+      via: readVia(hop),
+      interface: hop.nullable('interface', (key) => hop.string(key)),
+    })),
+  }
+}
+
+function readRecovery(recovery: ObjectReader): Recovery {
+  return {
+    sequence: recovery.integer('sequence', 0),
+    atMs: readTime(recovery, 'atMs'),
+    afterFaultMs: readTime(recovery, 'afterFaultMs'),
+    route: readRoute(recovery.object('route')),
+  }
+}
+
+/** One check's result, every kind with the evidence the Guide prints for it. */
+function readResult(result: ObjectReader): CheckResult {
+  const common = {
+    passed: readBoolean(result, 'passed'),
+    failure: result.nullable('failure', (key) => result.oneOf(key, FAILURES)),
+  }
+  const kind = result.oneOf('kind', CHECK_KINDS)
+  switch (kind) {
+    case 'reachable':
+      return { kind, ...common, replies: result.integer('replies', 0) }
+    case 'path':
+      return {
+        kind,
+        ...common,
+        before: readNullable(result, 'before', readRoute),
+        after: readNullable(result, 'after', readRoute),
+      }
+    case 'recovery':
+      return {
+        kind,
+        ...common,
+        recovery: readNullable(result, 'recovery', readRecovery),
+        limitMs: readTime(result, 'limitMs'),
+      }
+    case 'outage':
+      return {
+        kind,
+        ...common,
+        outage: readNullable(result, 'outage', readOutage),
+        limitMs: readTime(result, 'limitMs'),
+      }
+    case 'detected-by':
+      return { kind, ...common, detection: readNullable(result, 'detection', readDetection) }
+    case 'daemons':
+      return {
+        kind,
+        ...common,
+        router: result.string('router'),
+        running: result.stringList('running'),
+        missing: result.stringList('missing'),
+      }
+    case 'route':
+      return { kind, ...common, router: result.string('router'), route: readNullable(result, 'route', readKernelRoute) }
+    case 'rib':
+      return {
+        kind,
+        ...common,
+        router: result.string('router'),
+        routes: readList(result, 'routes', readRibRoute),
+        found: readNullable(result, 'found', readRibRoute),
+      }
+    case 'reaches':
+      return {
+        kind,
+        ...common,
+        from: result.string('from'),
+        to: result.string('to'),
+        sent: result.integer('sent', 0),
+        received: result.integer('received', 0),
+      }
+    case 'config':
+      return {
+        kind,
+        ...common,
+        router: result.string('router'),
+        source: result.oneOf('source', CONFIG_SOURCES),
+        found: result.nullable('found', (key) => result.text(key)),
+      }
+  }
+}
+
+function readVerdict(verdict: ObjectReader): MissionVerdict {
+  return {
+    passed: readBoolean(verdict, 'passed'),
+    objectives: readList(verdict, 'objectives', (objective) => ({
+      objectiveId: objective.string('objectiveId'),
+      result: readResult(objective.object('result')),
+    })),
+  }
+}
+
+function readOpenDebrief(debrief: ObjectReader): OpenDebrief {
+  return {
+    missionId: debrief.string('missionId'),
+    verdict: readNullable(debrief, 'verdict', readVerdict),
+  }
+}
+
 /** Reads a current-version `Progress` from untrusted save data. */
 export function readProgress(value: unknown, path: string, issues: Issues): Progress {
   const progress = new ObjectReader(value, path, issues)
+  // Added after version 2 without a bump: a save without it is a save with no debrief open.
+  const debrief = progress.optional('debrief', (key) => readOpenDebrief(progress.object(key)))
   return {
     missions: progress.list('missions', (entry, at) => readMission(new ObjectReader(entry, at, issues))),
     completionOrder: progress.stringList('completionOrder'),
     lastActive: progress.nullable('lastActive', (key) => progress.string(key)),
+    ...(debrief === undefined ? {} : { debrief }),
   }
 }

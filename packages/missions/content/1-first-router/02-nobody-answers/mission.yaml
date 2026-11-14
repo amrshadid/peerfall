@@ -5,7 +5,8 @@ summary: Meet FRR on a router where none of it runs, start its core daemon zebra
 minutes: 15
 chapter: first-router
 objective: zebra runs on router a, started for that router, and answers in vtysh.
-prerequisites: [the-dark-cable]
+skills: [frr-start-zebra]
+prerequisites: [linux-interfaces-and-routes]
 teaches: [frr-daemon, zebra, vtysh]
 names: [pathspace, saved-config, daemons-file, frr-init-script]
 uses: [router, interface]

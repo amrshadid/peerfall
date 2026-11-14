@@ -32,6 +32,9 @@ vi.mock('@xterm/xterm', () => ({
       screen.text += typeof data === 'string' ? data : new TextDecoder().decode(data)
     }
     focus() {}
+    reset() {
+      screen.text = ''
+    }
     dispose() {}
   },
 }))
@@ -98,6 +101,15 @@ describe('useTerminalView', () => {
       }
     })
     expect(screen.text).toBe('abc\r\nd')
+  })
+
+  it('clears the whole screen, the last prompt too, and shows what comes after', () => {
+    const { result } = open()
+    act(() => result.current.write('a# '))
+    act(() => result.current.clear())
+    expect(screen.text).toBe('')
+    act(() => result.current.write('a# '))
+    expect(screen.text).toBe('a# ')
   })
 
   it('drops every key while locked, and hands them out again once unlocked', () => {

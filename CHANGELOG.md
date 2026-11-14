@@ -15,6 +15,23 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   it, and has a `robots.txt` and a sitemap. With JavaScript off, the page says what
   Peerfall is and where its source is.
 
+### Changed
+
+- **The debrief is laid out as Kernelfall's level card:** the debrief's first line as its
+  heading, the result in one line, every Codex card the mission filed printed in full, and
+  Next mission, Replay mission and Back to the map. A stage's last mission closes the stage
+  with what you can now do. The top bar goes back to the Peer Map.
+- **Alt+P looks at the previous step**, as in Kernelfall.
+- **A reload on the debrief brings it back**, with every step clickable, as Kernelfall brings
+  back its level card; leaving through one of its buttons closes it.
+- **The Peer Map has regions and skills, as Kernelfall's Kernel Map:** each stage's missions
+  sit in regions (Meet the router, Configure it and keep it, Routes by hand, zebra's choice,
+  Notice it fast), each with its own heading, what it covers, its guide, its place in FRR's
+  source and its own progress. Missions open by the skills earlier missions earn, in the same
+  order as before. A Missions / Skills switch names each stop by its mission or its first
+  skill, and the side panel adds Skill, Needs (each skill met or not), Time and the
+  mission's Codex cards.
+
 ### Fixed
 
 - **A search result names the game, not "Needs a bigger screen".** Search engines read

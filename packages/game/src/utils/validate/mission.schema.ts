@@ -1,6 +1,12 @@
 import type { StringRule, Validated } from '@peerfall/core/types'
 import { Issues, ObjectReader, reportDuplicates } from '@peerfall/core/utils'
-import type { NetworkDefinition, ProbeDefinition } from '@peerfall/machine/types'
+import {
+  IPV4,
+  type NetworkDefinition,
+  PROBE_ID,
+  PROBE_INTERVAL_MS,
+  type ProbeDefinition,
+} from '@peerfall/machine/types'
 import { interfaceName } from '@peerfall/machine/utils'
 import { CORE_CONCEPT_BUDGET } from '#types/definitions/concepts'
 import { HINT_TIERS } from '#types/definitions/hints'
@@ -12,7 +18,6 @@ import {
   KEBAB_ID,
   type MissionDefinition,
   type ObjectiveDefinition,
-  PROBE_INTERVAL_MS,
   type StoryRefs,
 } from '#types/definitions/mission'
 import { hasStateChecks, isStateCheck } from '#utils/checks/state-checks.util'
@@ -27,6 +32,7 @@ const MISSION_KEYS = [
   'minutes',
   'chapter',
   'objective',
+  'skills',
   'prerequisites',
   'teaches',
   'names',
@@ -62,14 +68,11 @@ const ONE_LINE: StringRule = { pattern: /^[^\n\0]+$/, expected: 'one line' }
 /** About how long a mission takes a new player, in minutes. */
 const MINUTES = { min: 1, max: 120 } as const
 
-const IPV4_ADDRESS: StringRule = {
-  pattern: /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/,
-  expected: 'an address like 10.255.0.3',
-}
+// The Machine's own rules for a probe, which it applies again before it runs one as root.
+const IPV4_ADDRESS: StringRule = { pattern: IPV4, expected: 'an address like 10.255.0.3' }
 
-// The probe's id names a file and a shell word on the Machine.
-const PROBE_ID: StringRule = {
-  pattern: /^[a-z][a-z0-9-]{0,15}$/,
+const PROBE_NAME: StringRule = {
+  pattern: PROBE_ID,
   expected: 'a lower-case name of at most 16 characters like a-to-c',
 }
 
@@ -89,7 +92,7 @@ function readFault(fault: ObjectReader): FaultDefinition {
 function readProbe(probe: ObjectReader): ProbeDefinition {
   probe.rejectUnknownKeys(['id', 'from', 'source', 'destination', 'intervalMs'])
   return {
-    id: probe.string('id', PROBE_ID),
+    id: probe.string('id', PROBE_NAME),
     from: probe.string('from'),
     source: probe.string('source', IPV4_ADDRESS),
     destination: probe.string('destination', IPV4_ADDRESS),
@@ -353,6 +356,7 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     ...(minutes !== undefined && { minutes }),
     chapter: reader.string('chapter', KEBAB_ID),
     objective: reader.string('objective'),
+    skills: reader.stringList('skills', KEBAB_ID),
     prerequisites: reader.stringList('prerequisites', KEBAB_ID),
     teaches: reader.stringList('teaches', KEBAB_ID),
     names: reader.has('names') ? reader.stringList('names', KEBAB_ID) : [],
@@ -392,6 +396,7 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     'codex',
     issues
   )
+  reportDuplicates(mission.skills, 'skills', issues)
   reportDuplicates(mission.prerequisites, 'prerequisites', issues)
   reportDuplicates(mission.restartOnCheck ?? [], 'restartOnCheck', issues)
   reportDuplicates(
@@ -404,8 +409,11 @@ export function validateMission(raw: unknown): Validated<MissionDefinition> {
     if (mission.objectives.length === 0) {
       issues.add('objectives', 'expected at least one objective')
     }
-    if (mission.prerequisites.includes(mission.id)) {
-      issues.add('prerequisites', 'a mission cannot require itself')
+    if (mission.skills.length === 0) {
+      issues.add('skills', 'expected at least one skill the mission earns')
+    }
+    for (const skill of mission.prerequisites.filter((id) => mission.skills.includes(id))) {
+      issues.add('prerequisites', `"${skill}" is also a skill this mission earns`)
     }
     reportMismatches(mission, issues)
   }

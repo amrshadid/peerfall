@@ -80,7 +80,7 @@ a:~# ip route
 
 ## Watch it
 
-> **zebra:** Before you look: what will `ip route` show now?
+> **zebra:** Before you type `ip route`: what will it show now?
 >
 > - the same single line
 > - [x] a second line, for c's network, through `a-c`
@@ -94,7 +94,7 @@ a:~# ip route
 10.0.2.0/30 dev a-c proto kernel scope link src 10.0.2.1
 ```
 
-> **zebra:** A second line, and nobody typed it. `proto kernel` says Linux added it itself, the moment `a-c` came up with its address: whatever is in c's network can be reached straight out of that cable. A route works like a signpost: this way for those addresses. Unlike a signpost, only its own router reads it, and every router along the way needs its own. Ping c again.
+> **zebra:** A second line, and nobody typed it. `proto kernel` says Linux added it itself, the moment `a-c` came up with its address: whatever is in c's network can be reached straight out of that cable. A route works like a signpost: this way for those addresses. Unlike a signpost, only its own router reads it, and every router along the way needs its own. Ping c again: `ping -c 3 10.0.2.2`.
 
 ---
 

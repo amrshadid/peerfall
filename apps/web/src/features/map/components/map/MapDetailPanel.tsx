@@ -35,14 +35,13 @@ export function MapDetailPanel({ detail }: { detail: MapDetail }) {
               <dt>{detail.about.term}</dt>
               <dd>{detail.about.text}</dd>
             </div>
-            {detail.parts.length > 0 && (
+            {detail.skills.length > 0 && (
               <div>
-                <dt>FRR parts</dt>
-                <dd className="map-detail__parts">
-                  {detail.parts.map((part, index) => (
-                    <span key={part}>
-                      {index > 0 && ' · '}
-                      <code>{part}</code>
+                <dt>Skill</dt>
+                <dd>
+                  {detail.skills.map((skill) => (
+                    <span key={skill.id} className="map-detail__skill">
+                      {skill.title} <code>{skill.id}</code>
                     </span>
                   ))}
                 </dd>
@@ -55,15 +54,21 @@ export function MapDetailPanel({ detail }: { detail: MapDetail }) {
                   {detail.needs.length === 0
                     ? 'Nothing: start here'
                     : detail.needs.map((need) => (
-                        <span key={need.id} className="map-detail__need">
-                          {need.title}{' '}
+                        <span key={need.id} className="map-detail__need" title={need.title}>
+                          <code>{need.id}</code>{' '}
                           <span className={need.met ? 'map-detail__ok' : 'map-detail__missing'}>
                             <span aria-hidden="true">{need.met ? '✓' : '✗'}</span>
-                            <span className="pf-visually-hidden">{need.met ? 'completed' : 'not completed yet'}</span>
+                            <span className="pf-visually-hidden">{need.met ? ' met' : ' not yet'}</span>
                           </span>
                         </span>
                       ))}
                 </dd>
+              </div>
+            )}
+            {detail.time !== null && (
+              <div>
+                <dt>Time</dt>
+                <dd>{detail.time}</dd>
               </div>
             )}
             {detail.attempts !== null && (
@@ -82,6 +87,34 @@ export function MapDetailPanel({ detail }: { detail: MapDetail }) {
               <div>
                 <dt>Target</dt>
                 <dd>{detail.recovery}</dd>
+              </div>
+            )}
+            {detail.parts.length > 0 && (
+              <div>
+                <dt>FRR parts</dt>
+                <dd className="map-detail__parts">
+                  {detail.parts.map((part, index) => (
+                    <span key={part}>
+                      {index > 0 && ' · '}
+                      <code>{part}</code>
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+            {detail.codex.length > 0 && (
+              <div>
+                <dt>Codex</dt>
+                <dd className="map-detail__codex">
+                  {detail.codex.map((card, index) => (
+                    <span key={card.id}>
+                      {index > 0 && ' · '}
+                      <a href={card.href}>
+                        <code>{card.term}</code>
+                      </a>
+                    </span>
+                  ))}
+                </dd>
               </div>
             )}
           </dl>

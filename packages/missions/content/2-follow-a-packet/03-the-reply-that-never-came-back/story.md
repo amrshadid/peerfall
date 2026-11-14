@@ -107,7 +107,7 @@ PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.573/0.914/1.274/0.286 ms
 ```
 
-> **zebra:** Every reply came back, with `ttl=63`. TTL, time to live, is a hop count every packet carries. c starts its reply at 64, and each router that passes a packet on lowers it by one, so b made it 63. A router that would lower it to 0 drops the packet instead and tells the sender, so a packet caught between routers can't circle for ever. `traceroute -n 10.0.2.2` uses exactly that.
+> **zebra:** Every reply came back, with `ttl=63`. TTL, time to live, is a hop count every packet carries. c starts its reply at 64, and each router that passes a packet on lowers it by one, so b made it 63. A router that would lower it to 0 drops the packet instead and tells the sender, so a packet caught between routers can't circle for ever. traceroute uses exactly that: type `traceroute -n 10.0.2.2`.
 
 ---
 

@@ -74,7 +74,8 @@ export interface GuidePace {
   readonly shown: number
   /** By question id; null where the player asked to be shown. */
   readonly picks: Readonly<Record<number, number | null>>
-  advance(): void
+  /** Shows the next beat, or `steps` more. */
+  advance(steps?: number): void
   /** Records an answer and shows the story up to `shown` beats. */
   pick(predict: number, option: number | null, shown: number): void
 }
@@ -153,6 +154,8 @@ export interface GuidePresentationProps {
   stepLabel: string
   /** Set while looking back at a done step. */
   reviewNote: string | null
+  /** A line before the story, such as how to get where a skipped step left the terminal; null for none. */
+  lead?: string | null
   /** The beats reached so far; the last one is where the player is. */
   beats: readonly GuideBeat[]
   /** Shows the next beat without running anything; null on the last one or while a question waits. */

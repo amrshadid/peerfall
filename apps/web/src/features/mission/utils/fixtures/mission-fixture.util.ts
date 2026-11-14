@@ -12,6 +12,7 @@ export const CHAPTER_FIXTURE: ChapterDefinition = {
   title: 'Recover from failure',
   summary: 'Notice a dead path in under a second.',
   outcomes: [],
+  regions: [],
 }
 
 export const MISSION_FIXTURE: MissionDefinition = {
@@ -20,6 +21,7 @@ export const MISSION_FIXTURE: MissionDefinition = {
   title: 'The Link That Never Went Down',
   chapter: CHAPTER_FIXTURE.id,
   objective: 'When the link between a and c stops passing packets, traffic is back through b in under two seconds.',
+  skills: ['bfd-fast-detection'],
   prerequisites: [],
   teaches: [],
   names: [],
@@ -79,7 +81,10 @@ export const CONTENT_FIXTURE: LoadedContent = {
     missions: [MISSION_FIXTURE],
     concepts: [],
     fieldGuide: { entries: [] },
+    skills: [],
     mission: (id) => (id === MISSION_FIXTURE.id ? MISSION_FIXTURE : undefined),
+    skill: () => undefined,
+    earnedIn: (id) => (MISSION_FIXTURE.skills.includes(id) ? MISSION_FIXTURE : undefined),
     missionsIn: (chapter) => (chapter === CHAPTER_FIXTURE.id ? [MISSION_FIXTURE] : []),
     numberOf: (id) => (id === MISSION_FIXTURE.id ? '4.1' : undefined),
     concept: () => undefined,

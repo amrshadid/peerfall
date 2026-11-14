@@ -72,7 +72,8 @@ afterEach(() => {
 })
 
 describe('openTerminal', () => {
-  it("opens at Section 2's type size with at least 80 columns, the rows fitted to its box", () => {
+  it("opens at Section 2's type size, the columns and rows fitted to its box", () => {
+    xterm.proposed = { cols: 80, rows: 30 }
     const { terminal } = openTerminal(box(1000))
     expect(xterm.options).toMatchObject({
       cols: CONSOLE_COLS,
@@ -91,12 +92,30 @@ describe('openTerminal', () => {
     expect(terminal.cols).toBe(132)
   })
 
-  it('keeps 80 columns in a narrow box: the type shrinks to its floor, then the box scrolls sideways', () => {
+  it('never draws more columns than xterm fits in the box, so none is cut off at its edge', () => {
+    // The box measured wide enough for 80 at 14px, but xterm's own cells (rounded to device pixels) fit 78.
+    xterm.proposed = { cols: 78, rows: 30 }
+    const { terminal } = openTerminal(box(1000))
+    expect(terminal.options.fontSize).toBe(FONT_SIZE_PX)
+    expect(terminal.cols).toBe(78)
+  })
+
+  it('in a narrow box shrinks the type to its floor, then takes fewer columns and wraps, never scrolls sideways', () => {
     const { terminal } = openTerminal(box(300))
-    expect(terminal.cols).toBe(CONSOLE_COLS)
     expect(terminal.options.fontSize).toBe(MIN_FONT_SIZE_PX)
-    // 80 cells of 6.6px and xterm's 14px scrollbar.
-    expect(terminal.element?.style.width).toBe('542px')
+    expect(terminal.cols).toBe(50)
+    expect(terminal.element?.style.width).toBe('')
+  })
+
+  it('counts the columns again a frame after the type changes, in the cells xterm then draws', () => {
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback))
+    vi.stubGlobal('cancelAnimationFrame', () => {})
+    const { terminal } = openTerminal(box(300))
+    expect(frames).toHaveLength(1)
+    xterm.proposed = { cols: 49, rows: 30 }
+    frames[0]?.(0)
+    expect(terminal.cols).toBe(49)
   })
 
   it('stops following its element and closes the terminal on dispose', () => {

@@ -8,6 +8,12 @@ export const SHORTCUTS: readonly Shortcut[] = [
   // The editor handles this itself, so it has no id here: listed so players find it.
   { id: null, group: 'Game', action: 'Apply the configuration (in the editor)', binding: APPLY_BINDING },
   { id: 'next-step', group: 'Game', action: 'Next step', binding: { code: 'KeyN', alt: true } },
+  {
+    id: 'previous-step',
+    group: 'Game',
+    action: 'Look at the previous step',
+    binding: { code: 'KeyP', alt: true },
+  },
   { id: 'hint', group: 'Game', action: 'Hint', binding: { code: 'KeyH', alt: true } },
   { id: 'focus-guide', group: 'Game', action: 'Focus Guide', binding: { code: 'KeyG', alt: true } },
   { id: 'focus-editor', group: 'Game', action: 'Focus editor', binding: { code: 'KeyE', alt: true } },

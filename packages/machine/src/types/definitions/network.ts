@@ -61,6 +61,9 @@ export const ROUTER_NAME = /^[a-z][a-z0-9]{0,5}$/
 /** A probe's name is a shell word and part of a file name. */
 export const PROBE_ID = /^[a-z][a-z0-9-]{0,15}$/
 
+/** The bounds of a probe's interval: fast enough to measure a sub-second outage, slow enough for the Machine. */
+export const PROBE_INTERVAL_MS = { min: 10, max: 10_000 } as const
+
 export const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/
 
 export const IPV4_WITH_PREFIX = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}\/(3[0-2]|[12]?\d)$/

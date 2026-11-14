@@ -1,4 +1,11 @@
-export { DONE_STATES, HERE_WORDS, PLANNED_PROGRESS, PLANNED_STOP, STATUS_WORDS } from './journey.constants'
+export {
+  DONE_STATES,
+  HERE_WORDS,
+  PLANNED_PROGRESS,
+  PLANNED_STOP,
+  STATUS_WORDS,
+  TONE_WORDS,
+} from './journey.constants'
 export {
   currentChapter,
   isDone,
@@ -11,5 +18,6 @@ export {
   plannedKeyOf,
   plannedStopOf,
   progressOf,
+  regionProgressOf,
   toneOf,
 } from './journey.util'

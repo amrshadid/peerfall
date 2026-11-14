@@ -168,9 +168,11 @@ button.topology__router:hover {
   color: var(--ink-2);
 }
 
-/* The router the terminal is in: inked solid, and it says so. */
-.topology__router--selected,
-.topology__router--selected:hover {
+/* The router the terminal is in: inked solid, and it says so. As specific as the hover above
+   (`button.` and all): with less, a selected router under a resting pointer took the hover's grey
+   behind its own pale text, grey on grey, as router a did when a revisit put it under the pointer. */
+button.topology__router--selected,
+button.topology__router--selected:hover {
   background: var(--ink);
   color: var(--sheet);
 }

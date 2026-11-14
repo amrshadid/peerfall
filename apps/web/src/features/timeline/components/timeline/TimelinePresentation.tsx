@@ -53,7 +53,7 @@ export function TimelinePresentation({ baseline, repaired, targetSeconds = null 
               <>
                 <span className="timeline__target-line" style={{ left: percent(axisPercent(targetSeconds, axis)) }} />
                 <span
-                  // Past the middle the name is set to the line's left, so it never runs off the axis's end.
+                  // Beside the line: to its right, or past the middle to its left, so it stays on the axis.
                   className={`timeline__target${axisPercent(targetSeconds, axis) > HALF ? ' timeline__target--end' : ''}`}
                   style={{ left: percent(axisPercent(targetSeconds, axis)) }}
                 >

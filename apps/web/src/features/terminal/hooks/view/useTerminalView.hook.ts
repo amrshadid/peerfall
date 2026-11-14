@@ -16,6 +16,8 @@ export interface TerminalView {
   /** Shows console bytes or text. What arrives before the terminal has opened is kept and shown first. */
   readonly write: (data: Uint8Array | string) => void
   readonly focus: () => void
+  /** Empties the screen and its scrollback, for a shell that replaces the one shown. */
+  readonly clear: () => void
 }
 
 /** An xterm.js terminal in `container`. It knows nothing of the Machine: keys go out, bytes come in. */
@@ -38,6 +40,12 @@ export function useTerminalView(
   }, [])
 
   const focus = useCallback(() => terminal.current?.focus(), [])
+
+  // reset, not clear: xterm's clear keeps the prompt's line, the very line that is stale.
+  const clear = useCallback(() => {
+    early.current = []
+    terminal.current?.reset()
+  }, [])
 
   useEffect(() => {
     if (terminal.current) {
@@ -73,5 +81,5 @@ export function useTerminalView(
     }
   }, [container])
 
-  return useMemo(() => ({ write, focus }), [write, focus])
+  return useMemo(() => ({ write, focus, clear }), [write, focus, clear])
 }

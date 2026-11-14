@@ -1,6 +1,7 @@
 export * from '#hooks/codex/index'
 export * from '#hooks/hints/index'
 export * from '#hooks/mission/index'
+export * from '#hooks/notifications/index'
 export * from '#hooks/progress/index'
 export * from '#hooks/runs/index'
 export * from '#hooks/saves/index'

@@ -6,6 +6,7 @@ import {
   validateConcepts,
   validateFieldGuide,
   validateMission,
+  validateSkills,
 } from '@peerfall/game/utils'
 import {
   CHAPTERS_FILE,
@@ -14,6 +15,7 @@ import {
   FIELD_GUIDE_FILE,
   type LoadedContent,
   MISSION_FILE,
+  SKILLS_FILE,
   STORY_FILE,
 } from '#types/definitions/content'
 import type { Story } from '#types/definitions/story'
@@ -65,6 +67,7 @@ export function loadContent(files: ContentFiles): Validated<LoadedContent> {
   const chapters = readYaml(files.chapters, CHAPTERS_FILE, validateChapters, errors)
   const concepts = readYaml(files.concepts, CONCEPTS_FILE, validateConcepts, errors)
   const fieldGuide = readYaml(files.fieldGuide, FIELD_GUIDE_FILE, validateFieldGuide, errors)
+  const skills = readYaml(files.skills, SKILLS_FILE, validateSkills, errors)
   const missions: MissionDefinition[] = []
   const stories = new Map<MissionId, Story>()
   const folders = new Map<MissionId, string>()
@@ -96,10 +99,16 @@ export function loadContent(files: ContentFiles): Validated<LoadedContent> {
     folders.set(mission.id, folder)
   }
 
-  if (!chapters || !concepts || !fieldGuide || errors.length > 0) {
+  // The map draws a stage's missions under its regions' headings, so the game's content groups them all.
+  chapters?.forEach((chapter, at) => {
+    if (chapter.regions.length === 0 && missions.some((mission) => mission.chapter === chapter.id)) {
+      errors.push(`${CHAPTERS_FILE}: chapters[${at}].regions: a chapter with missions groups them in regions`)
+    }
+  })
+  if (!chapters || !concepts || !fieldGuide || !skills || errors.length > 0) {
     return { ok: false, errors }
   }
-  const game = createGameContent({ chapters, missions, concepts, fieldGuide })
+  const game = createGameContent({ chapters, missions, concepts, fieldGuide, skills })
   if (!game.ok) {
     return game
   }

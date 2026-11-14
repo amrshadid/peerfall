@@ -21,6 +21,11 @@ const fieldGuideFiles = import.meta.glob<string>('../../../content/field-guide.y
   import: 'default',
   eager: true,
 })
+const skillFiles = import.meta.glob<string>('../../../content/skills.yaml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 const missionFiles = import.meta.glob<string>('../../../content/*/*/mission.yaml', {
   query: '?raw',
   import: 'default',
@@ -48,6 +53,7 @@ export const CONTENT_FILES: ContentFiles = {
   chapters: Object.values(chapterFiles)[0] ?? '',
   concepts: Object.values(conceptFiles)[0] ?? '',
   fieldGuide: Object.values(fieldGuideFiles)[0] ?? '',
+  skills: Object.values(skillFiles)[0] ?? '',
   missions: relativeToContent(missionFiles),
   stories: relativeToContent(storyFiles),
 }

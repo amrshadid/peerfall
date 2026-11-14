@@ -2,6 +2,9 @@
 # A chapter with missions also has its Codex title page: `story` (the stage in a few lines),
 # `guide` (the FRR daemon who guides it), `standsFor` (the real part of FRR it is about) and
 # `outcomes` (the "You can now…" lines shown once every mission of the stage is completed).
+# Its `regions` group its missions in play order, each under its own heading on the map:
+# `caption` (what the missions cover), `guide` (the daemons who speak in them), `source` (where
+# that lives in FRR's source tree) and `missions` (their ids, so folders and ids stay as they are).
 chapters:
   - id: first-router
     title: First router
@@ -14,6 +17,20 @@ chapters:
       - use vtysh, its help and its modes
       - read the running configuration, save it and know what a restart leaves
       - find a line FRR refused
+    regions:
+      - id: meet-the-router
+        name: Meet the router
+        caption: a router as Linux shows it, FRR's daemons and vtysh, the init script and watchfrr
+        guide: zebra, watchfrr
+        source: zebra/, lib/libfrr.c, vtysh/, watchfrr/, tools/frrinit.sh.in
+        missions: [the-dark-cable, nobody-answers, the-silent-router]
+      - id: configure-and-keep-it
+        name: Configure it and keep it
+        caption: vtysh's help and modes, the running configuration, write memory, the log and a file check
+        guide: zebra, watchfrr
+        source: lib/command.c, vtysh/vtysh_config.c, lib/log.c, watchfrr/
+        missions:
+          [the-routers-language, what-it-does-now, gone-after-the-restart, the-skipped-line, a-router-from-nothing]
   - id: follow-a-packet
     title: Follow a packet
     summary: Addresses and connected routes, static routes and next hops, the way back, zebra's table and the kernel's, and administrative distance.
@@ -26,6 +43,19 @@ chapters:
       - find a missing way back
       - follow a route from FRR's configuration through zebra's table into the kernel's
       - choose between routes with administrative distance
+    regions:
+      - id: routes-by-hand
+        name: Routes by hand
+        caption: addresses and connected routes, static routes and next hops, the way back
+        guide: zebra, staticd
+        source: zebra/connected.c, lib/prefix.c, staticd/, zebra/rt_netlink.c
+        missions: [two-ends-of-one-cable, one-hop-further, the-reply-that-never-came-back]
+      - id: zebras-choice
+        name: zebra's choice
+        caption: zebra's table and the kernel's, administrative distance, a line of three routers
+        guide: zebra, watchfrr
+        source: zebra/zebra_rib.c, zebra/zebra_nhg.c, zebra/zebra_rnh.c, lib/frrdistance.h
+        missions: [written-but-not-used, the-backup-path, bring-the-line-up]
   - id: build-an-underlay
     title: Build an underlay
     summary: OSPF and IS-IS adjacencies, the link-state database, costs, areas and equal paths.
@@ -39,6 +69,13 @@ chapters:
       - measure an outage from a probe's replies
       - tell which event noticed a failure first
       - make OSPF notice a dead link in under a second with BFD
+    regions:
+      - id: notice-it-fast
+        name: Notice it fast
+        caption: measure an outage, the OSPF dead timer, BFD
+        guide: bfdd, zebra
+        source: bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c
+        missions: [the-link-that-never-went-down]
   - id: other-interior-protocols
     title: The other interior protocols
     summary: RIP, EIGRP, Babel, OpenFabric and NHRP, and where each one fits.

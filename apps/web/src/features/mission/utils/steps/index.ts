@@ -1,1 +1,1 @@
-export { panelsOfStep } from './mission-step.util'
+export { panelsOfStep, previousStepOf } from './mission-step.util'

@@ -78,11 +78,13 @@
   white-space: nowrap;
 }
 
+.map-detail__skill,
 .map-detail__need {
   display: block;
 }
 
-.map-detail__parts {
+.map-detail__parts,
+.map-detail__codex {
   line-height: 1.6;
 }
 

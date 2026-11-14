@@ -37,6 +37,34 @@ describe('layoutMap', () => {
     expect(chapter?.name).toBe('Stage 4: Recover from failure')
   })
 
+  it("prints each region's heading under its stage: name, progress, what it covers with its guide, its FRR source", () => {
+    const scene = layoutMap(journeyChapters(longerJourneyFixture(true), SECOND_MISSION), WIDTH)
+    const stage = scene.chapters[3]
+    const region = stage?.regions[0]
+    expect(stage?.regions).toHaveLength(1)
+    expect(region?.key).toBe('recover-from-failure/notice-it-fast')
+    expect(region?.texts.map((item) => [item.style, item.text])).toEqual([
+      ['region', 'Notice it fast'],
+      ['tone-progress', 'in progress · 1 of 2'],
+      ['meta', 'measure an outage, the OSPF dead timer, BFD · guide: bfdd, zebra'],
+      ['mono', 'bfdd/, ospfd/ospf_bfd.c, ospfd/ospf_nsm.c'],
+    ])
+    // The band runs from under the stage's header to below its last row of stops.
+    expect(region?.top).toBeGreaterThanOrEqual((stage?.panel.y ?? 0) + (stage?.panel.height ?? 0))
+    for (const stop of missions(scene)) {
+      expect(stop.y).toBeGreaterThan(region?.top ?? 0)
+      expect(stop.y).toBeLessThan(region?.bottom ?? 0)
+    }
+    // A planned stage has no regions.
+    expect(scene.chapters[0]?.regions).toEqual([])
+    // The overview keeps a region's name and progress only.
+    const overview = layoutMap(journeyChapters(longerJourneyFixture(true), SECOND_MISSION), WIDTH, 'overview')
+    expect(overview.chapters[3]?.regions[0]?.texts.map((item) => item.text)).toEqual([
+      'Notice it fast',
+      'in progress · 1 of 2',
+    ])
+  })
+
   it('draws a stage with no missions as one planned stop on the road that says so in words', () => {
     const scene = layoutMap(today(), WIDTH)
     const planned = scene.stops.filter((stop) => stop.stop.planned)

@@ -5,7 +5,8 @@ summary: Start FRR the way a router does, with its own script, and watch watchfr
 minutes: 15
 chapter: first-router
 objective: FRR runs on router a, started by its init script, with watchfrr keeping its daemons running.
-prerequisites: [nobody-answers]
+skills: [frr-init-script]
+prerequisites: [frr-start-zebra]
 teaches: [watchfrr, frr-init-script, daemons-file]
 names: [mgmtd, staticd]
 uses: [frr-daemon, zebra, vtysh]

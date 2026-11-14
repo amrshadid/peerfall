@@ -5,7 +5,8 @@ summary: Stage 1's capstone. Start FRR on a router that was never started, put i
 minutes: 20
 chapter: first-router
 objective: FRR runs on router a, started by its init script, and after a restart a's interface to c is described and not shut down.
-prerequisites: [the-skipped-line]
+skills: [frr-router-from-nothing]
+prerequisites: [config-find-refused-line]
 teaches: []
 names: []
 uses:

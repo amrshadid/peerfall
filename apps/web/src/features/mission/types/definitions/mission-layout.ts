@@ -1,8 +1,10 @@
+import type { GuidePace } from '@features/guide/types'
 import type { PanelId, PanelSizes, RailStep, SaveState, ScreenChrome, TitleBlockEntry } from '@shared/types'
 import type { ReactNode } from 'react'
 
 export interface MissionTopBarData {
-  readonly titleHref: string
+  /** Back to the Peer Map, as Kernelfall's top bar goes back to the Kernel Map. */
+  readonly mapHref: string
   /** The mission's name. */
   readonly heading: string
   /** Where it sits in the journey, e.g. "Stage 4 · Recover from failure". */
@@ -20,8 +22,8 @@ export interface MissionTopBarData {
   /** The Hint shortcut as `aria-keyshortcuts` wants it, e.g. `Alt+H`. */
   readonly hintKeyShortcut: string
   onHint(): void
-  /** Asks to start the mission again from the network as the mission found it. */
-  onRestart(): void
+  /** Asks to replay the mission from its scene, as Kernelfall's top bar asks to replay a level. */
+  onReplay(): void
 }
 
 /** What goes in each panel. A slot whose panel is locked is not rendered. */
@@ -82,7 +84,10 @@ export interface MissionLayoutModel {
   readonly titleBlock: readonly TitleBlockEntry[]
   /** Laid over the workspace and the network once the mission is judged; null before. */
   readonly debrief: ReactNode | null
+  /** The Guide's Start over: the network as the mission found it, the play-through kept. */
   readonly restart: ConfirmDialog
+  /** The top bar's Replay: the mission from its scene, its steps and hints dropped. */
+  readonly replay: ConfirmDialog
   readonly status: MissionStatusBar
 }
 
@@ -104,15 +109,26 @@ export interface MissionRunView<Run> {
    * saved before then no longer describes it, so objectives are read from the run alone.
    */
   readonly startedOver: boolean
-  /** Goes on to the next step of the story; null where the story moves on by itself or ends. */
+  /**
+   * Goes on to the next step of the story; null where the story moves on by itself or ends, and
+   * while a question of the step waits for the player's call.
+   */
   readonly onNext: (() => void) | null
   /** Jumps from the scene straight to Build it; null on other steps. */
   readonly onSkipToBuild: (() => void) | null
+  /** Build it was reached by skipping See it, whose commands it may take for granted. */
+  readonly skippedSeeIt: boolean
+  /**
+   * How far into the current step's story the player is. Kept here, beside the step, so the way on
+   * can wait for an unanswered question and a look back at a done step leaves it where it was.
+   */
+  readonly pace: GuidePace
   /** Asks before the network goes back to how the mission found it. */
   readonly onStartOver: () => void
   /**
-   * Plays the mission again from See it, without asking: the network goes back to how the mission
-   * found it and the objectives start unmet. The debrief's Play it again.
+   * Plays the mission again from its scene, as Kernelfall's Replay level does, without asking: the
+   * network goes back to how the mission found it, the objectives start unmet and the hints are
+   * all to ask for again. The debrief's Replay mission.
    */
   readonly onPlayAgain: () => void
 }

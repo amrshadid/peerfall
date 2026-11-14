@@ -12,6 +12,7 @@ const FIRST_ROUTER: ChapterDefinition = {
   guide: 'zebra',
   standsFor: 'zebra, vtysh and the daemons watchfrr starts',
   outcomes: ['Start FRR the way it is started on a real router.', 'Save a change so it survives a restart.'],
+  regions: [],
 }
 
 const FOLLOW_A_PACKET: ChapterDefinition = {
@@ -20,6 +21,7 @@ const FOLLOW_A_PACKET: ChapterDefinition = {
   title: 'Follow a packet',
   summary: 'Addresses, routes and the way back.',
   outcomes: ['Read a routing table.'],
+  regions: [],
 }
 
 const VTYSH: CodexCard = {

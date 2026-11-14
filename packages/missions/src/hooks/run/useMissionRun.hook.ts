@@ -135,7 +135,9 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
   current.current = mission
   // Bumped by everything that makes a judging in flight stale: another mission, Start over.
   const generation = useRef(0)
-  // The attempt that completes the mission is recorded once per play-through, not on every read after.
+  // An attempt is a run the player made happen, as Kernelfall counts each run of the checker: each
+  // fault run after the baseline, passed or not, and, when live judging finds every objective met,
+  // that one pass per play-through (never every read after it).
   const submitted = useRef(false)
   // The Machine as it was last read: a probe or a fault run judges the objectives that read the
   // state as that read left them, instead of un-ticking them.
@@ -300,6 +302,10 @@ export function useMissionRun(mission: MissionDefinition | null): UseMissionRunR
       if (!alone.data.passed && baseline === null) {
         await actions.saveBaseline(outcome.events)
       } else {
+        // A pass recorded here is this play-through's pass: live judging must not record it again.
+        if (merged.data.passed) {
+          submitted.current = true
+        }
         await actions.submitRun(outcome.events, checked.current, previous)
       }
     } finally {

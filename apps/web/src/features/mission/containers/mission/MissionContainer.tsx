@@ -2,7 +2,9 @@ import { useCheatSheet, usePanelSizes, useShowAllPanels } from '@app/store'
 import { useSaveStatus } from '@features/chrome/hooks/save'
 import { useScreenChrome } from '@features/chrome/hooks/screen'
 import { useContent } from '@features/content/hooks/content'
+import { useGuidePace } from '@features/guide/hooks/pace'
 import { waitReasonOf } from '@features/guide/utils/run'
+import { beatsOf, blocksFor, pacedGuideOf, predictWaitsIn } from '@features/guide/utils/story'
 import { MissionScreenPresentation } from '@features/mission/components/layout'
 import { useStoryStep } from '@features/mission/hooks/story'
 import type { MissionRunView } from '@features/mission/types'
@@ -13,19 +15,21 @@ import {
   openPanelsKey,
   panelsFor,
 } from '@features/mission/utils/layout'
-import { panelsOfStep } from '@features/mission/utils/steps'
+import { panelsOfStep, previousStepOf } from '@features/mission/utils/steps'
 import { useShortcut } from '@features/shortcuts/hooks/keys'
+import { terminalLabelOf } from '@features/terminal/utils/label'
 import { formatSeconds } from '@features/timeline/utils/runs'
 import { useTourScreen } from '@features/tour/hooks/tour'
 import { useActiveMission, useHints, useMissionActions, useProgress } from '@peerfall/game/hooks'
-import { useMachineStatus, useRouterSelection } from '@peerfall/machine/hooks'
+import { useCommandFinished, useMachineStatus, useRouterSelection } from '@peerfall/machine/hooks'
 import { type UseMissionRunResult, useMissionRun } from '@peerfall/missions/hooks'
 import { APP_MANUAL } from '@shared/constants/app'
 import { useMachineLock } from '@shared/hooks/machine'
 import { useNow } from '@shared/hooks/time'
 import { hrefOf } from '@shared/navigation'
 import { ariaKeyShortcut, SHORTCUTS } from '@shared/utils/keyboard'
-import { type ReactNode, useEffect, useState } from 'react'
+import { networkStatusOf } from '@shared/utils/machine'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 
 export type MissionView = MissionRunView<UseMissionRunResult>
 
@@ -66,7 +70,7 @@ export function MissionContainer({
   const content = useContent()
   const definition = content.game.mission(missionId) ?? null
   const { isOpen } = useProgress()
-  const { start, begin, showDebrief, leave } = useMissionActions()
+  const { start, begin, replay, showDebrief, leave } = useMissionActions()
   const active = useActiveMission()
   const [refused, setRefused] = useState<string | null>(null)
 
@@ -112,6 +116,7 @@ export function MissionContainer({
   const { saveState, lastSavedAt } = useSaveStatus()
   const now = useNow()
   const [restartOpen, setRestartOpen] = useState(false)
+  const [replayOpen, setReplayOpen] = useState(false)
 
   const phase = active.phase ?? 'incident'
   // Every reset of the network starts the story's played steps over.
@@ -128,8 +133,19 @@ export function MissionContainer({
   // Each new step can open a panel, which gets its own tour stop once.
   useTourScreen('mission', mission ? openPanelsKey(panels) : 'opening')
 
-  const onNext =
-    step === 'scene'
+  // The current step's story, paced here as Kernelfall's level screen paces it: a command the
+  // player finishes shows the next beat when it is the one the beat asked for.
+  const storySections = mission ? content.storyOf(mission.id)?.sections : undefined
+  const beats = useMemo(() => beatsOf(blocksFor(step, storySections)), [step, storySections])
+  const pace = useGuidePace(`${storyKey}#${step}`)
+  const paced = pacedGuideOf(beats, pace, false)
+  useCommandFinished((_count, lines?: readonly string[]) => paced.onCommands(lines))
+  // A question is answered before the story moves on: the next step would show what it asked about.
+  const predictWaits = predictWaitsIn(beats, pace.picks)
+
+  const onNext = predictWaits
+    ? null
+    : step === 'scene'
       ? () => {
           begin()
           story.goTo('see')
@@ -142,6 +158,18 @@ export function MissionContainer({
             ? showDebrief
             : null
   useShortcut('next-step', () => onNext?.(), mission !== null && onNext !== null)
+  // As Kernelfall's: each press looks one done step further back, as clicking it on the rail does.
+  const doneSteps = MISSION_STEPS.slice(0, Math.max(0, stepIndex)).map((entry) => entry.id)
+  useShortcut(
+    'previous-step',
+    () => {
+      const previous = previousStepOf(doneSteps, story.reviewing)
+      if (previous !== null) {
+        story.review(previous)
+      }
+    },
+    mission !== null
+  )
   // Hints are for the steps played on the network, one at a time: a nudge, the concept, the spot.
   const hintEnabled = phase === 'play' && hints.next !== null
   const revealHint = () => {
@@ -183,6 +211,12 @@ export function MissionContainer({
       }
     })
   }
+  // As Kernelfall's Replay level: the mission again from its scene, on the network as it found
+  // it, with every hint to ask for again.
+  const replayFromScene = () => {
+    startOver()
+    void replay()
+  }
   const view: MissionView = {
     run,
     step,
@@ -194,19 +228,20 @@ export function MissionContainer({
       step === 'scene'
         ? () => {
             begin()
-            story.goTo('build')
+            story.skipToBuild()
           }
         : null,
+    skippedSeeIt: story.skippedSeeIt,
+    pace,
     onStartOver: () => setRestartOpen(true),
-    // As Kernelfall's Replay level: the mission again on the network as it found it. While the
-    // network is busy, the Start over dialog says why it has to wait.
+    // The debrief's Replay mission, unasked as Kernelfall's card replays. While the network is
+    // busy, the Replay dialog says why it has to wait.
     onPlayAgain: () => {
       if (restartWait !== null) {
-        setRestartOpen(true)
+        setReplayOpen(true)
         return
       }
-      startOver()
-      begin()
+      replayFromScene()
     },
   }
   const lastRunFellShort = verdict !== null && !verdict.passed
@@ -220,7 +255,7 @@ export function MissionContainer({
         page: `${mission.title}(${chapter?.stage ?? 0}.${number})`,
         volume: chapter ? `${APP_MANUAL} · ${chapter.title}` : APP_MANUAL,
         bar: {
-          titleHref: hrefOf({ name: 'title' }),
+          mapHref: hrefOf({ name: 'map' }),
           heading: mission.title,
           subheading: chapter ? `Stage ${chapter.stage} · ${chapter.title}` : '',
           steps: MISSION_STEPS,
@@ -239,11 +274,11 @@ export function MissionContainer({
           hintEnabled,
           hintKeyShortcut: HINT_BINDING ? ariaKeyShortcut(HINT_BINDING) : '',
           onHint: revealHint,
-          onRestart: () => setRestartOpen(true),
+          onReplay: () => setReplayOpen(true),
         },
         panels,
         slots: { guide: guide(view), terminal: terminal(view), editor: editor(view), topology, timeline },
-        terminalLabel: router === null ? 'the Machine: select a router on the map' : `router ${router}`,
+        terminalLabel: terminalLabelOf({ router, firstRouter, routersBuilt }),
         terminalStatus: lock?.title ?? null,
         titleBlock: [
           {
@@ -274,10 +309,19 @@ export function MissionContainer({
           },
           onCancel: () => setRestartOpen(false),
         },
+        replay: {
+          open: replayOpen,
+          unavailable: restartWait,
+          onConfirm: () => {
+            setReplayOpen(false)
+            replayFromScene()
+          },
+          onCancel: () => setReplayOpen(false),
+        },
         status: {
           save: saveState,
           savedAgoMs: lastSavedAt === null ? null : now - lastSavedAt,
-          machine: MACHINE_STATUS[machine.phase],
+          machine: networkStatusOf(machine.phase, run.phase) ?? MACHINE_STATUS[machine.phase],
           onShortcuts: openCheatSheet,
         },
       }}

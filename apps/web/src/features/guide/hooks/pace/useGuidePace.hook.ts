@@ -10,18 +10,19 @@ interface PaceState {
 const startOf = (key: string): PaceState => ({ key, shown: 1, picks: {} })
 
 /**
- * How far into a step's transcript the player is. `advance` shows the next beat: the container
- * calls it for each command the player finishes in the terminal, and Continue calls it too, so
- * the explanation of a result comes after the result. `key` names the step; a new one starts over.
+ * How far into a step's transcript the player is. `advance` shows the next beat (or `steps` more):
+ * the screen calls it for each command the player finishes that the beat asked for, and Continue
+ * calls it too, so the explanation of a result comes after the result. `key` names the step and
+ * the play-through; a new one starts over.
  */
 export function useGuidePace(key: string): GuidePace {
   const [pace, setPace] = useState<PaceState>(() => startOf(key))
   const current = pace.key === key ? pace : startOf(key)
   const advance = useCallback(
-    () =>
+    (steps = 1) =>
       setPace((previous) => {
         const from = previous.key === key ? previous : startOf(key)
-        return { ...from, shown: from.shown + 1 }
+        return { ...from, shown: from.shown + steps }
       }),
     [key]
   )

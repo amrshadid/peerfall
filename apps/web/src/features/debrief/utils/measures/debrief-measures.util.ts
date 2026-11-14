@@ -57,23 +57,27 @@ export function debriefMeasuresOf(
   return measures
 }
 
-/** The verdict in one sentence, with the number it rests on when a run measured one. */
-export function debriefVerdictOf(
+/**
+ * The result line under the headline, as Kernelfall's card writes it ("Level complete · 2 of 2 ·
+ * Taint 0, clean"): the mission, its objectives, and the recovery it was timed on, if any.
+ * Peerfall has no Taint, so that part is left out rather than stood in for.
+ */
+export function debriefResultOf(
   passed: boolean,
+  objectives: number,
   repaired: RunSummary | null,
   targetMs: number | null
-): { readonly passed: boolean; readonly text: string } {
-  if (targetMs === null) {
-    return { passed, text: passed ? 'Passed: every objective is met.' : 'Not passed yet: an objective is still open.' }
-  }
-  const target = seconds(targetMs)
+): string {
   if (!passed) {
-    return { passed, text: `Not passed yet: traffic has to be back in under ${target}.` }
+    return 'Not passed yet: an objective is still open.'
   }
-  return {
-    passed,
-    text: repaired?.firstGoodProbe
-      ? `Passed: traffic was back in ${seconds(repaired.firstGoodProbe.afterFaultMs)}, inside the ${target} target.`
-      : `Passed: traffic was back inside the ${target} target.`,
+  const parts = ['Mission complete', `${objectives} of ${objectives} objectives met`]
+  if (targetMs !== null) {
+    parts.push(
+      repaired?.firstGoodProbe
+        ? `traffic back in ${seconds(repaired.firstGoodProbe.afterFaultMs)}, inside ${seconds(targetMs)}`
+        : `traffic back inside ${seconds(targetMs)}`
+    )
   }
+  return parts.join(' · ')
 }

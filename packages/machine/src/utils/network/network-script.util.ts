@@ -10,6 +10,7 @@ import {
   type LinkDefinition,
   type NetworkDefinition,
   PROBE_ID,
+  PROBE_INTERVAL_MS,
   ROUTER_NAME,
   type RouterDefinition,
 } from '#types/definitions/network'
@@ -272,8 +273,9 @@ export function probeProblems(probe: ProbeDefinition, network: NetworkDefinition
       problems.push(`probe.${field}: expected an address like 10.255.0.3, got "${probe[field]}"`)
     }
   }
-  if (!(Number.isFinite(probe.intervalMs) && probe.intervalMs >= 10 && probe.intervalMs <= 10_000)) {
-    problems.push(`probe.intervalMs: expected 10 to 10000, got ${probe.intervalMs}`)
+  const { min, max } = PROBE_INTERVAL_MS
+  if (!(Number.isFinite(probe.intervalMs) && probe.intervalMs >= min && probe.intervalMs <= max)) {
+    problems.push(`probe.intervalMs: expected ${min} to ${max}, got ${probe.intervalMs}`)
   }
   return problems
 }

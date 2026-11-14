@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   resize: vi.fn(),
   write: vi.fn(),
   focus: vi.fn(),
+  clear: vi.fn(),
 }))
 
 vi.mock('@peerfall/machine/hooks', () => ({
@@ -26,7 +27,7 @@ vi.mock('@peerfall/machine/hooks', () => ({
 }))
 
 // Stable across renders, as the real view is.
-const view = { write: mocks.write, focus: mocks.focus }
+const view = { write: mocks.write, focus: mocks.focus, clear: mocks.clear }
 vi.mock('@features/terminal/hooks/view', () => ({
   useTerminalView: (_container: unknown, options: TerminalViewOptions) => {
     mocks.options = options
@@ -98,6 +99,32 @@ describe('TerminalContainer', () => {
     rerender(<TerminalContainer />)
     expect(screen.getByRole('status').textContent).toContain('Restoring the Machine')
     expect(options().locked).toBe(false)
+  })
+
+  it.each(['restoring', 'setting-up'] as const)(
+    'clears the old shell off the screen when a running Machine starts over (%s)',
+    (phase) => {
+      at('ready')
+      const { rerender } = render(<TerminalContainer />)
+      expect(mocks.clear).not.toHaveBeenCalled()
+      at(phase)
+      rerender(<TerminalContainer />)
+      expect(mocks.clear).toHaveBeenCalledTimes(1)
+      // Once: the restored shell's own prompt is not cleared away when it comes back.
+      at('ready')
+      rerender(<TerminalContainer />)
+      expect(mocks.clear).toHaveBeenCalledTimes(1)
+    }
+  )
+
+  it('keeps what the Machine printed while it started', () => {
+    at('loading')
+    const { rerender } = render(<TerminalContainer />)
+    at('booting')
+    rerender(<TerminalContainer />)
+    at('ready')
+    rerender(<TerminalContainer />)
+    expect(mocks.clear).not.toHaveBeenCalled()
   })
 
   it('says why the Machine failed, on the plate and in the terminal', () => {

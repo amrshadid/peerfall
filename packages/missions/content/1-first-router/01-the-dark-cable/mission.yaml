@@ -5,6 +5,7 @@ summary: Meet a router through plain Linux, find the interface that is switched 
 minutes: 15
 chapter: first-router
 objective: Router a's interface to c is up, a's routing table has a route through it, and a reaches c.
+skills: [linux-interfaces-and-routes]
 prerequisites: [] # the first mission of the journey
 teaches: [router, interface, route]
 names: [ip-address, prefix, connected-route, frr-daemon, zebra, interface-shutdown, peer]

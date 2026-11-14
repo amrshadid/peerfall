@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   baseline: null as unknown,
   start: vi.fn(),
   begin: vi.fn(),
+  replay: vi.fn(() => Promise.resolve({ success: true })),
+  finished: null as ((count: number, lines?: readonly string[]) => void) | null,
   showDebrief: vi.fn(),
   leave: vi.fn(),
   startOver: vi.fn(() => Promise.resolve()),
@@ -27,6 +29,7 @@ vi.mock('@peerfall/game/hooks', () => ({
   useMissionActions: () => ({
     start: mocks.start,
     begin: mocks.begin,
+    replay: mocks.replay,
     showDebrief: mocks.showDebrief,
     leave: mocks.leave,
   }),
@@ -43,6 +46,9 @@ vi.mock('@peerfall/missions/hooks', () => ({
 vi.mock('@peerfall/machine/hooks', () => ({
   useMachineStatus: () => ({ phase: 'ready', detail: null }),
   useRouterSelection: () => ({ router: mocks.router, select: mocks.select }),
+  useCommandFinished: (callback: (count: number, lines?: readonly string[]) => void) => {
+    mocks.finished = callback
+  },
 }))
 vi.mock('@features/chrome/hooks/screen', () => ({
   useScreenChrome: () => ({
@@ -198,11 +204,52 @@ describe('MissionContainer', () => {
     expect(lastView()?.step).toBe('see')
     expect(screen.getByText('timeline slot')).toBeTruthy()
     expect(screen.queryByText('editor slot')).toBeNull()
+    // See it asks a question: the way on waits for the player's call.
+    expect(lastView()?.onNext).toBeNull()
+    act(() => lastView()?.pace.pick(0, 1, 2))
     act(() => lastView()?.onNext?.())
     expect(lastView()?.step).toBe('build')
     expect(lastView()?.onNext).toBeNull()
     expect(screen.getByText('editor slot')).toBeTruthy()
     expect(screen.getByText('router a')).toBeTruthy()
+  })
+
+  it('offers no way on until the step’s question is answered, "just show me" included', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    const { lastView } = mount()
+    expect(lastView()?.onNext).toBeNull()
+    act(() => lastView()?.pace.pick(0, null, 3))
+    expect(lastView()?.onNext).not.toBeNull()
+  })
+
+  it('releases a pause only on the command its beat asked for, a shortened one too', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    const { lastView } = mount()
+    expect(lastView()?.pace.shown).toBe(1)
+    act(() => mocks.finished?.(1, ['a:~# vtysj']))
+    expect(lastView()?.pace.shown).toBe(1)
+    act(() => mocks.finished?.(2, ['a:~# vtysh']))
+    expect(lastView()?.pace.shown).toBe(2)
+  })
+
+  it('releases a pause on any finished command while the Machine does not say what was typed', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    const { lastView } = mount()
+    act(() => mocks.finished?.(1))
+    expect(lastView()?.pace.shown).toBe(2)
+  })
+
+  it('tells the Guide when Build it was reached by skipping See it', () => {
+    mocks.active = activeAt('incident')
+    const { lastView, redraw } = mount()
+    expect(lastView()?.skippedSeeIt).toBe(false)
+    act(() => lastView()?.onSkipToBuild?.())
+    mocks.active = activeAt('play')
+    redraw()
+    expect(lastView()).toMatchObject({ step: 'build', skippedSeeIt: true })
   })
 
   it('moves Build it on to Watch it by itself once every objective is met live', () => {
@@ -248,20 +295,50 @@ describe('MissionContainer', () => {
     mocks.active = activeAt('play')
     mocks.run = runAt('ready')
     mocks.router = 'b'
-    mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
+    const { lastView } = mount()
+    act(() => lastView()?.onStartOver())
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start again' }))
     await act(async () => {})
     expect(mocks.select).toHaveBeenCalledWith('a')
+  })
+
+  it("replays from the top bar as Kernelfall's does: asked first, then back to the scene with every hint", () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('ready')
+    const { lastView, redraw } = mount()
+    act(() => lastView()?.pace.pick(0, 1, 2))
+    act(() => lastView()?.onNext?.())
+    fireEvent.click(screen.getByRole('button', { name: 'Replay this mission' }))
+    const dialog = screen.getByRole('dialog', { name: 'Replay this mission?' })
+    expect(within(dialog).getByText(/starts again from its scene/)).toBeTruthy()
+    expect(within(dialog).getByText(/steps and hints are dropped/)).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Replay from the scene' }))
+    expect(mocks.startOver).toHaveBeenCalledTimes(1)
+    expect(mocks.replay).toHaveBeenCalledTimes(1)
+    mocks.active = activeAt('incident')
+    redraw()
+    expect(lastView()).toMatchObject({ step: 'scene', startedOver: true })
+  })
+
+  it('keeps the top bar’s Replay back while a run is being measured, and says why', () => {
+    mocks.active = activeAt('play')
+    mocks.run = runAt('faulted')
+    mount()
+    fireEvent.click(screen.getByRole('button', { name: 'Replay this mission' }))
+    const dialog = screen.getByRole('dialog', { name: 'Replay this mission?' })
+    expect(within(dialog).getByText(/A run is being measured\./)).toBeTruthy()
+    expect(within(dialog).queryByRole('button', { name: 'Replay from the scene' })).toBeNull()
+    expect(mocks.replay).not.toHaveBeenCalled()
   })
 
   it('starts over only after asking, and only while the network is the player’s to use', () => {
     mocks.active = activeAt('play')
     mocks.run = runAt('ready')
     const ready = mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
+    act(() => ready.lastView()?.onStartOver())
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start again' }))
     expect(mocks.startOver).toHaveBeenCalledTimes(1)
+    expect(mocks.replay).not.toHaveBeenCalled()
     ready.unmount()
 
     mocks.run = runAt('faulted')
@@ -275,8 +352,8 @@ describe('MissionContainer', () => {
   it('starts over during the scene too, where commands already change the routers', () => {
     mocks.active = activeAt('incident')
     mocks.run = runAt('ready')
-    mount()
-    fireEvent.click(screen.getByRole('button', { name: 'Start this mission again' }))
+    const { lastView } = mount()
+    act(() => lastView()?.onStartOver())
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText(/back to how the mission found it\./)).toBeTruthy()
     expect(within(dialog).queryByText(/healthy/)).toBeNull()
@@ -288,25 +365,31 @@ describe('MissionContainer', () => {
     mocks.active = activeAt('play')
     mocks.run = runAt('ready')
     const { lastView } = mount()
+    act(() => lastView()?.pace.pick(0, 1, 2))
     act(() => lastView()?.onNext?.())
+    act(() => lastView()?.pace.advance())
     fireEvent.click(screen.getByRole('button', { name: /See it/ }))
     expect(lastView()).toMatchObject({ step: 'build', reviewing: 'see' })
+    // Looking back leaves the current step's story where the player was.
+    expect(lastView()?.pace.shown).toBe(2)
     act(() => lastView()?.onEndReview())
     expect(lastView()).toMatchObject({ step: 'build', reviewing: null })
   })
 
-  it('plays again from See it on a reset network, with the saved verdict set aside', () => {
+  it("replays from the scene on a reset network, as Kernelfall's Replay level, with the saved verdict set aside", () => {
     mocks.active = { ...activeAt('debrief', true), verdict: { passed: true, objectives: [] } }
     mocks.run = runAt('ready')
     const { lastView, redraw } = mount()
     expect(lastView()?.startedOver).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'debrief slot' }))
     expect(mocks.startOver).toHaveBeenCalledTimes(1)
-    expect(mocks.begin).toHaveBeenCalledTimes(1)
-    // The game moves to play once begin() is called.
-    mocks.active = { ...activeAt('play', true), verdict: { passed: true, objectives: [] } }
+    expect(mocks.replay).toHaveBeenCalledTimes(1)
+    expect(mocks.begin).not.toHaveBeenCalled()
+    // The game reopens the mission at its incident once replay() is called.
+    mocks.active = activeAt('incident', true)
     redraw()
-    expect(lastView()).toMatchObject({ step: 'see', reviewing: null, startedOver: true })
+    expect(lastView()).toMatchObject({ step: 'scene', reviewing: null, startedOver: true })
+    expect(lastView()?.pace.shown).toBe(1)
   })
 
   it('asks Play it again to wait while a run is being measured', () => {
@@ -315,7 +398,8 @@ describe('MissionContainer', () => {
     mount()
     fireEvent.click(screen.getByRole('button', { name: 'debrief slot' }))
     expect(mocks.startOver).not.toHaveBeenCalled()
-    expect(mocks.begin).not.toHaveBeenCalled()
-    expect(within(screen.getByRole('dialog')).getByText(/A run is being measured\./)).toBeTruthy()
+    expect(mocks.replay).not.toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Replay this mission?' })
+    expect(within(dialog).getByText(/A run is being measured\./)).toBeTruthy()
   })
 })

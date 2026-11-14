@@ -5,7 +5,8 @@ summary: Read the running configuration, label an interface in its own mode, and
 minutes: 15
 chapter: first-router
 objective: Router a's interface to c has a description in the running configuration.
-prerequisites: [the-routers-language]
+skills: [cli-running-config]
+prerequisites: [cli-help-and-modes]
 teaches: [running-config, interface-description]
 names: [saved-config]
 uses: [vtysh, cli-modes, cli-help, interface]

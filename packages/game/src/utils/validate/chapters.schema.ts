@@ -1,12 +1,32 @@
 import type { Validated } from '@peerfall/core/types'
 import { Issues, ObjectReader, reportDuplicates } from '@peerfall/core/utils'
-import { type ChapterDefinition, KEBAB_ID } from '#types/definitions/mission'
+import { type ChapterDefinition, KEBAB_ID, type RegionDefinition } from '#types/definitions/mission'
 
-const CHAPTER_KEYS = ['id', 'title', 'summary', 'story', 'guide', 'standsFor', 'outcomes'] as const
+const CHAPTER_KEYS = ['id', 'title', 'summary', 'story', 'guide', 'standsFor', 'outcomes', 'regions'] as const
+
+const REGION_KEYS = ['id', 'name', 'caption', 'guide', 'source', 'missions'] as const
+
+function readRegion(region: ObjectReader): RegionDefinition {
+  region.rejectUnknownKeys(REGION_KEYS)
+  const read = {
+    id: region.string('id', KEBAB_ID),
+    name: region.string('name'),
+    caption: region.string('caption'),
+    guide: region.string('guide'),
+    source: region.string('source'),
+    missions: region.stringList('missions', KEBAB_ID),
+  }
+  if (region.has('missions') && read.missions.length === 0) {
+    region.issues.add(region.pathOf('missions'), 'expected at least one mission')
+  }
+  reportDuplicates(read.missions, region.pathOf('missions'), region.issues)
+  return read
+}
 
 /**
  * Checks a parsed `chapters.yaml`: the curriculum's stages in order, whether or not a stage has
- * missions yet. A chapter's stage number is its place in the list.
+ * missions yet. A chapter's stage number is its place in the list. Whether each region's missions
+ * exist and are the chapter's own, in play order, is checked with the rest of the content.
  */
 export function validateChapters(raw: unknown): Validated<readonly ChapterDefinition[]> {
   const issues = new Issues()
@@ -31,6 +51,9 @@ export function validateChapters(raw: unknown): Validated<readonly ChapterDefini
         ...(guide !== undefined && { guide }),
         ...(standsFor !== undefined && { standsFor }),
         outcomes: chapter.has('outcomes') ? chapter.stringList('outcomes') : [],
+        regions: chapter.has('regions')
+          ? chapter.list('regions', (region, at) => readRegion(new ObjectReader(region, at, issues)))
+          : [],
       }
     })
     .map((chapter, at): ChapterDefinition => ({ ...chapter, stage: at + 1 }))

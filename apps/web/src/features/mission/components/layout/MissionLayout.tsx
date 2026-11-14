@@ -42,12 +42,13 @@ export function MissionLayout({
   titleBlock,
   debrief,
   restart,
+  replay,
   status,
   panelSizes,
 }: MissionLayoutProps) {
   const network = hasNetworkDock(panels)
   const { sizes, onResize } = panelSizes
-  // Title, Restart and the mission's name sit over the Guide, so it never gets narrower than they are.
+  // Title, Replay and the mission's name sit over the Guide, so it never gets narrower than they are.
   const guideLimits = limitsAtLeast(PANEL_LIMITS.guide, useHeaderWidth('.mission-topbar__name', IDS.guide))
   const covered = debrief !== null
 
@@ -193,6 +194,33 @@ export function MissionLayout({
           <p>
             The network goes back to how the mission found it. Every change you made to the routers is undone. The runs
             you recorded and the hints you asked for are kept. Retrying is free, and nothing is timed.
+          </p>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={replay.open}
+        onClose={replay.onCancel}
+        title="Replay this mission?"
+        actions={
+          <>
+            <Button variant="quiet" onClick={replay.onCancel}>
+              Keep playing
+            </Button>
+            {!replay.unavailable && (
+              <Button variant="primary" onClick={replay.onConfirm}>
+                Replay from the scene
+              </Button>
+            )}
+          </>
+        }
+      >
+        {replay.unavailable ? (
+          <p>{replay.unavailable} Try again when the network is yours to use.</p>
+        ) : (
+          <p>
+            The mission starts again from its scene, on the network as the mission found it: this play-through's steps
+            and hints are dropped. Your recorded runs stay, and a mission you already completed stays completed.
           </p>
         )}
       </Dialog>

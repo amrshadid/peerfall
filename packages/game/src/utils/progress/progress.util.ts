@@ -1,9 +1,19 @@
+import type { MissionVerdict } from '#types/definitions/checks'
 import type { GameContent } from '#types/definitions/content'
 import type { MissionDefinition, MissionId } from '#types/definitions/mission'
-import type { ChapterEntry, EpochMs, MissionProgress, MissionStatus, Progress } from '#types/definitions/progress'
+import type {
+  ChapterEntry,
+  EpochMs,
+  MissionProgress,
+  MissionStatus,
+  OpenDebrief,
+  Progress,
+} from '#types/definitions/progress'
 import { MAX_SAVED_ATTEMPTS, type RunComparison, type SavedRun } from '#types/definitions/runs'
+import type { SkillId } from '#types/definitions/skills'
 import { hintsUsed, nextHint } from '#utils/hints/index'
 import { compareRuns } from '#utils/runs/index'
+import { isMissionOpen, unlockedSkills } from '#utils/skills/index'
 
 export function emptyProgress(): Progress {
   return { missions: [], completionOrder: [], lastActive: null }
@@ -17,11 +27,21 @@ export function isCompleted(progress: Progress, missionId: MissionId): boolean {
   return progress.completionOrder.includes(missionId)
 }
 
-export function missionStatus(progress: Progress, mission: MissionDefinition): MissionStatus {
+/** The skills the player has earned: those of every completed mission. */
+export function progressSkills(progress: Progress, content: Pick<GameContent, 'missions'>): ReadonlySet<SkillId> {
+  return unlockedSkills(content.missions, progress.completionOrder)
+}
+
+/** A mission is locked until the missions completed so far have earned every skill it needs. */
+export function missionStatus(
+  progress: Progress,
+  mission: MissionDefinition,
+  content: Pick<GameContent, 'missions'>
+): MissionStatus {
   if (isCompleted(progress, mission.id)) {
     return 'completed'
   }
-  if (!mission.prerequisites.every((id) => isCompleted(progress, id))) {
+  if (!isMissionOpen(mission, progressSkills(progress, content))) {
     return 'locked'
   }
   return findMissionProgress(progress, mission.id) ? 'in_progress' : 'available'
@@ -30,11 +50,11 @@ export function missionStatus(progress: Progress, mission: MissionDefinition): M
 /** Where "Continue" goes: the mission last played if it isn't done, else the first one open to play. */
 export function continueMission(progress: Progress, content: GameContent): MissionDefinition | null {
   const last = progress.lastActive === null ? undefined : content.mission(progress.lastActive)
-  if (last && missionStatus(progress, last) === 'in_progress') {
+  if (last && missionStatus(progress, last, content) === 'in_progress') {
     return last
   }
   const open = content.missions.filter((mission) => {
-    const status = missionStatus(progress, mission)
+    const status = missionStatus(progress, mission, content)
     return status === 'in_progress' || status === 'available'
   })
   return open[0] ?? null
@@ -48,7 +68,7 @@ export function missionList(progress: Progress, content: GameContent): readonly 
       const record = findMissionProgress(progress, mission.id)
       return {
         mission,
-        status: missionStatus(progress, mission),
+        status: missionStatus(progress, mission, content),
         attempts: record?.attempts ?? 0,
         hintsUsed: hintsUsed(mission, record?.hintsRevealed ?? 0),
       }
@@ -75,10 +95,40 @@ const freshRecord = (missionId: MissionId, now: EpochMs): MissionProgress => ({
   runs: [],
 })
 
+/** Marks the mission's debrief as open, with the verdict the Guide shows beside it. */
+export function openDebrief(progress: Progress, missionId: MissionId, verdict: MissionVerdict | null): Progress {
+  return { ...progress, debrief: { missionId, verdict } }
+}
+
+/** The player left the debrief through one of its ways on, or went back to play: nothing is open. */
+export function closeDebrief(progress: Progress): Progress {
+  const { debrief, ...rest } = progress
+  return debrief === undefined ? progress : rest
+}
+
+/** The open debrief's verdict when it is this mission's and the mission is completed; undefined otherwise. */
+export function openDebriefOf(progress: Progress, missionId: MissionId): OpenDebrief | undefined {
+  const open = progress.debrief
+  return open?.missionId === missionId && isCompleted(progress, missionId) ? open : undefined
+}
+
 /** Opens a mission: a first start adds its record; any start makes it where "Continue" goes. */
 export function startMission(progress: Progress, missionId: MissionId, now: EpochMs): Progress {
   const record = findMissionProgress(progress, missionId) ?? freshRecord(missionId, now)
   return { ...withMission(progress, record), lastActive: missionId }
+}
+
+/**
+ * A fresh play-through of a started mission, as Kernelfall's Replay level: its hints are all to
+ * ask for again and no debrief stays open. Its completion, attempts and saved runs are kept.
+ * Unchanged when the mission was never started.
+ */
+export function replayMission(progress: Progress, missionId: MissionId): Progress {
+  const record = findMissionProgress(progress, missionId)
+  if (!record) {
+    return progress
+  }
+  return { ...closeDebrief(withMission(progress, { ...record, hintsRevealed: 0 })), lastActive: missionId }
 }
 
 /** Reveals the mission's next hint. `null` when the mission isn't started or nothing is left to reveal. */

@@ -44,6 +44,8 @@
   line-height: 1;
   transform: rotate(-6deg);
   animation: pf-stamp 320ms var(--ease-in) both;
+  /* No wider than the room the first sections leave it: a long mission name wraps instead of covering them. */
+  max-width: 9rem;
 }
 
 .pf-man-page__stamp small {

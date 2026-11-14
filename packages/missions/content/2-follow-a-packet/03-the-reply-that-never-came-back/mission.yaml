@@ -5,7 +5,8 @@ summary: Find where a's packets stop when nothing comes back, and give the reply
 minutes: 15
 chapter: follow-a-packet
 objective: Router a reaches router c's address, with a static route on c that brings the replies back through b.
-prerequisites: [one-hop-further]
+skills: [return-path]
+prerequisites: [static-routes]
 teaches: [return-path, ttl]
 uses: [static-route, next-hop, connected-route, cli-modes]
 

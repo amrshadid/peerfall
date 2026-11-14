@@ -1,3 +1,4 @@
+/* Kernelfall's level card (CardOverlay.css), with Peerfall's words. */
 .debrief {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -16,15 +17,6 @@
   gap: 0.5rem;
 }
 
-.debrief__kicker {
-  font-family: var(--mono);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
-
 .debrief__head h2 {
   font-size: 2rem;
   font-variation-settings: "wdth" 125;
@@ -34,24 +26,18 @@
   overflow-wrap: break-word;
 }
 
-/* The words give the verdict; the mark and the colour repeat it. */
-.debrief__verdict {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.debrief__head p {
   color: var(--green);
   font-weight: 700;
 }
 
-.debrief__verdict--open {
-  color: var(--red);
-}
-
-.debrief__learned {
+/* Overrides the green result line above it: these are terms, not a verdict. */
+.debrief__head .debrief__learned {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.25rem 0.5rem;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -71,16 +57,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.625rem;
-  padding-top: 0.25rem;
 }
 
 /* Capped like a printed page, so the lines stay readable when the debrief spans the network dock too. */
 .debrief__body {
   overflow: auto;
-  padding: 1.25rem 1.75rem 2rem;
+  padding: 1.25rem 1.75rem;
   display: grid;
   grid-template-columns: minmax(0, 52rem);
-  gap: 1.5rem;
+  gap: 1rem;
   align-content: start;
 }
 
@@ -88,56 +73,42 @@
   border: var(--rule);
 }
 
-.debrief__why,
-.debrief__commands {
+/* The stage it finished, framed as Kernelfall frames the region a level closes. */
+.debrief__stage {
   display: grid;
   gap: 0.5rem;
+  padding: 0.875rem 1rem 1rem;
+  border: 2px solid var(--red);
 }
 
-.debrief__body p {
-  font-size: 0.9375rem;
-  line-height: 1.55;
+.debrief__stage h3 {
+  font-size: 1.125rem;
+  font-weight: 800;
 }
 
-/* The mission's own text: its `##` headings are the debrief's sections. */
-.debrief__text .guide-md {
-  gap: 0.75rem;
-}
-
-.debrief__text .guide-md__heading {
-  margin-top: 0.75rem;
-  padding-bottom: 0.25rem;
-  border-bottom: var(--rule);
-  font-size: 1.0625rem;
-}
-
-.debrief__text .guide-md__heading:first-child {
-  margin-top: 0;
-}
-
-.debrief__commands dl {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.debrief__commands dl > div {
-  display: grid;
-  grid-template-columns: minmax(12rem, 2fr) 3fr;
-  gap: 0.25rem 1rem;
-  align-items: baseline;
-  padding-bottom: 0.5rem;
-  border-bottom: var(--rule-thin);
-}
-
-.debrief__commands dt code {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  background: var(--soft);
-  font-size: 0.8125rem;
-  overflow-wrap: anywhere;
-}
-
-.debrief__commands dd {
+.debrief__stage p {
   font-size: 0.875rem;
   color: var(--ink-2);
+}
+
+.debrief__stage ul {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 1.25rem;
+  list-style: square;
+  font-size: 0.9375rem;
+}
+
+/* The card feeds out of a printer slot in discrete steps, like machinery. */
+.debrief__feed {
+  animation: debrief-feed var(--t-slow) steps(14, end) both;
+}
+
+@keyframes debrief-feed {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }
