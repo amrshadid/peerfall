@@ -59,9 +59,50 @@
       }
     </script>
     <title>Peerfall: learn FRRouting on a real network</title>
+    <script>
+      // The theme chosen in Settings, before the first paint, so the loading sheet doesn't flash
+      // the other one. Settings written before version 1 have no `state` wrapper.
+      try {
+        var saved = JSON.parse(localStorage.getItem('peerfall:v1:settings') || 'null')
+        var theme = saved && (saved.state ? saved.state.theme : saved.theme)
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch (e) {}
+    </script>
+    <style>
+      /* The loading sheet: the manual's frame while the game's script arrives. React replaces it. */
+      :root { --ground: #eeeee9; --sheet: #fafaf7; --ink: #141414; --ink-2: #55554f; --red: #c8201a; }
+      :root[data-theme='dark'] { --ground: #141514; --sheet: #1c1e1d; --ink: #eaeae4; --ink-2: #a3a39b; --red: #ff6a5c; }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) { --ground: #141514; --sheet: #1c1e1d; --ink: #eaeae4; --ink-2: #a3a39b; --red: #ff6a5c; }
+      }
+      body { margin: 0; background: var(--ground); }
+      .boot { box-sizing: border-box; height: 100vh; padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; color: var(--ink); font: 500 0.75rem/1 ui-monospace, 'IBM Plex Mono', Menlo, monospace; }
+      .boot__head { display: flex; justify-content: space-between; padding: 0.6rem 0; text-transform: uppercase; letter-spacing: 0.02em; }
+      .boot__head span:nth-child(2) { text-transform: none; }
+      .boot__sheet { flex: 1; border: 2px solid var(--ink); background: var(--sheet); display: grid; place-content: center; justify-items: center; gap: 1.25rem; }
+      .boot__name { font: 800 clamp(2.5rem, 7vw, 5rem)/1 system-ui, sans-serif; letter-spacing: -0.03em; margin: 0; }
+      .boot__line { position: relative; width: min(22rem, 60vw); height: 2px; background: repeating-linear-gradient(90deg, var(--ink-2) 0 6px, transparent 6px 10px); overflow: hidden; }
+      .boot__line::after { content: ''; position: absolute; inset: 0 auto 0 0; width: 30%; background: var(--red); animation: boot-run 1.4s ease-in-out infinite; }
+      .boot__note { color: var(--ink-2); margin: 0; }
+      @keyframes boot-run { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+      @media (prefers-reduced-motion: reduce) { .boot__line::after { animation: none; width: 100%; opacity: 0.5; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-label="Loading Peerfall">
+        <header class="boot__head" aria-hidden="true">
+          <span>Peerfall(8)</span>
+          <span>Peerfall Network Manual</span>
+          <span>Peerfall(8)</span>
+        </header>
+        <div class="boot__sheet">
+          <p class="boot__name" aria-hidden="true">Peerfall</p>
+          <div class="boot__line" aria-hidden="true"></div>
+          <p class="boot__note">Starting the manual…</p>
+        </div>
+      </div>
+    </div>
     <!-- The game is drawn by its script. Without it, this says what the game is and where its source is. -->
     <noscript>
       <main style="max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; font: 1rem/1.6 system-ui, sans-serif">
