@@ -103,12 +103,64 @@ function notFoundPage(): Plugin {
   }
 }
 
+interface HostHeaders {
+  headers: { source: string; headers: { key: string; value: string }[] }[]
+}
+
+// The headers the host sends with every page and file of the site, written once in vercel.json.
+const SITE_HEADERS = (
+  JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8')) as HostHeaders
+).headers.find((rule) => rule.source === '/(.*)')?.headers
+
+// A classic inline script (no src, not a module, not data such as JSON-LD) runs only when the
+// policy names its hash. Changing one without updating the hash would leave it blocked on the
+// host alone, so check every emitted page here, where it fails the build. Preview sends the same
+// headers, so the built site is tried under the host's policy before it ships.
+function securityHeaders(): Plugin {
+  const policy = SITE_HEADERS?.find((header) => header.key === 'Content-Security-Policy')?.value
+  return {
+    name: 'peerfall:security-headers',
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
+        if (policy === undefined) {
+          return this.error('vercel.json sends no Content-Security-Policy for /(.*)')
+        }
+        for (const [file, output] of Object.entries(bundle)) {
+          if (output.type !== 'asset' || !file.endsWith('.html')) {
+            continue
+          }
+          for (const [, attributes = '', body = ''] of String(output.source).matchAll(
+            /<script(\s[^>]*)?>([\s\S]*?)<\/script>/g
+          )) {
+            if (/\ssrc=|type="(module|application\/ld\+json)"/.test(attributes)) {
+              continue
+            }
+            const hash = `'sha256-${createHash('sha256').update(body).digest('base64')}'`
+            if (!policy.includes(hash)) {
+              return this.error(`${file} has an inline script the policy blocks: add ${hash} to vercel.json`)
+            }
+          }
+        }
+      },
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((_req, res, next) => {
+        for (const { key, value } of SITE_HEADERS ?? []) {
+          res.setHeader(key, value)
+        }
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
   // For a host that serves the site under a sub-path; Vercel serves it at the root.
   base: process.env.PF_BASE ?? '/',
   // The one place the version is written is package.json; Settings and the status lines print it.
   define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
-  plugins: [react(), tailwindcss(), serviceWorker(), notFoundPage()],
+  plugins: [react(), tailwindcss(), serviceWorker(), notFoundPage(), securityHeaders()],
   build: {
     rolldownOptions: {
       // A static host serves 404.html for an address that is no file of the site.
