@@ -12,6 +12,7 @@ export {
   openDebriefOf,
   recordRun,
   repairedRun,
+  replayMission,
   revealNextHint,
   savedComparison,
   startMission,

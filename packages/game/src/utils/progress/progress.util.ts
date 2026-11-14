@@ -106,6 +106,19 @@ export function startMission(progress: Progress, missionId: MissionId, now: Epoc
   return { ...withMission(progress, record), lastActive: missionId }
 }
 
+/**
+ * A fresh play-through of a started mission, as Kernelfall's Replay level: its hints are all to
+ * ask for again and no debrief stays open. Its completion, attempts and saved runs are kept.
+ * Unchanged when the mission was never started.
+ */
+export function replayMission(progress: Progress, missionId: MissionId): Progress {
+  const record = findMissionProgress(progress, missionId)
+  if (!record) {
+    return progress
+  }
+  return { ...closeDebrief(withMission(progress, { ...record, hintsRevealed: 0 })), lastActive: missionId }
+}
+
 /** Reveals the mission's next hint. `null` when the mission isn't started or nothing is left to reveal. */
 export function revealNextHint(progress: Progress, mission: MissionDefinition): Progress | null {
   const record = findMissionProgress(progress, mission.id)

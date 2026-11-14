@@ -28,6 +28,7 @@ import {
   openDebrief,
   openDebriefOf,
   recordRun,
+  replayMission,
   startMission,
 } from '#utils/progress/index'
 import { summariseRun } from '#utils/runs/index'
@@ -39,6 +40,11 @@ export interface UseMissionActionsResult {
   start: (missionId: MissionId) => Promise<ServiceResponse<ActiveMission>>
   /** Incident read: on to the network. */
   begin: () => ServiceResponse<ActiveMission>
+  /**
+   * The active mission again from its incident, as Kernelfall's Replay level: no verdict, every
+   * hint to ask for again, no debrief left open. Its completion and attempts are kept.
+   */
+  replay: () => Promise<ServiceResponse<ActiveMission>>
   /**
    * How the events so far would be judged, without keeping anything: for ticking objectives live.
    * `state` is the Machine as it was last read, for the checks that read it; without it they are
@@ -184,6 +190,21 @@ export function createMissionActions(): UseMissionActionsResult {
         void closeOpenDebrief()
       }
       return moved
+    },
+    replay: async () => {
+      const { active } = store()
+      if (!active) return noActiveMissionError()
+      const { mission } = active
+      const replayed: ActiveMission = { mission, phase: 'incident', verdict: null }
+      store().setProgress(replayMission(store().progress, mission.id))
+      store().setActive(replayed)
+      eventBus.emit<MissionStartedPayload>(
+        GAME_EVENTS.MISSION_STARTED,
+        { missionId: mission.id, resumed: true, at: getGameNow() },
+        { source: SOURCE }
+      )
+      await announceProgress(SOURCE)
+      return { success: true, data: replayed }
     },
     judge,
     saveBaseline: async (events) => {

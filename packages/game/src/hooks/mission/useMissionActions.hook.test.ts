@@ -207,6 +207,50 @@ describe('mission actions', () => {
     recorded.stop()
   })
 
+  it("replays from the incident as Kernelfall's Replay level: no verdict, every hint again, nothing left open", async () => {
+    const { mission, storage, clock } = await openGame()
+    await mission.start(ID)
+    mission.begin()
+    await revealHint()
+    await revealHint()
+    await mission.submitRun(bfdBothEndsRun())
+    await mission.showDebrief()
+    const recorded = recordGameEvents()
+
+    const replayed = await mission.replay()
+
+    expect(replayed).toMatchObject({
+      success: true,
+      data: { mission: EXAMPLE_MISSION, phase: 'incident', verdict: null },
+    })
+    expect(state().active).toMatchObject({ phase: 'incident', verdict: null })
+    const record = findMissionProgress(state().progress, ID)
+    expect(record).toMatchObject({ hintsRevealed: 0, attempts: 1 })
+    expect(record?.completedAt).not.toBeNull()
+    expect(state().progress.completionOrder).toEqual([ID])
+    expect(state().progress.debrief).toBeUndefined()
+    const saved = storedProgress(storage.map.get(KEY))
+    expect(saved.debrief).toBeUndefined()
+    expect(findMissionProgress(saved, ID)?.hintsRevealed).toBe(0)
+    expect(recorded.of(GAME_EVENTS.MISSION_STARTED)).toEqual([{ missionId: ID, resumed: true, at: clock.now() }])
+    recorded.stop()
+  })
+
+  it('replays only an active mission', async () => {
+    const { mission } = await openGame()
+    expect(await mission.replay()).toMatchObject({ success: false })
+  })
+
+  it('counts no attempt for a mission opened twice, as React opens it twice in development', async () => {
+    const { mission } = await openGame()
+    await mission.start(ID)
+    mission.leave()
+    await mission.start(ID)
+    expect(state().progress.missions.filter((record) => record.missionId === ID)).toHaveLength(1)
+    expect(findMissionProgress(state().progress, ID)).toMatchObject({ attempts: 0, hintsRevealed: 0 })
+    expect(state().active).toMatchObject({ phase: 'incident' })
+  })
+
   it('judges the events so far without keeping anything', async () => {
     const { mission } = await openGame()
     await mission.start(ID)

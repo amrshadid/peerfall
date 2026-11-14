@@ -21,6 +21,7 @@ import {
   openDebriefOf,
   recordRun,
   repairedRun,
+  replayMission,
   revealNextHint,
   savedComparison,
   startMission,
@@ -107,6 +108,27 @@ describe('revealing hints', () => {
 
   it('reveals nothing for a mission not started', () => {
     expect(revealNextHint(emptyProgress(), MISSION)).toBeNull()
+  })
+})
+
+describe('replaying a mission', () => {
+  it('puts every hint back and closes its debrief, keeping completion, attempts and runs', () => {
+    const completed = after(run('baseline', false, 400), run('attempt', true, 500))
+    const hinted = revealNextHint(revealNextHint(completed, MISSION) ?? completed, MISSION) ?? completed
+    const open = openDebrief(hinted, ID, null)
+
+    const replayed = replayMission(open, ID)
+
+    const before = findMissionProgress(open, ID)
+    expect(findMissionProgress(replayed, ID)).toEqual({ ...before, hintsRevealed: 0 })
+    expect(replayed.debrief).toBeUndefined()
+    expect(replayed.completionOrder).toEqual([ID])
+    expect(replayed.lastActive).toBe(ID)
+  })
+
+  it('leaves a mission never started alone', () => {
+    const progress = emptyProgress()
+    expect(replayMission(progress, ID)).toBe(progress)
   })
 })
 
