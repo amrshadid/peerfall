@@ -145,6 +145,12 @@ describe('the image files cached for offline play', () => {
 describe('offlineRouteOf', () => {
   it('serves page loads from the shell', () => {
     expect(offlineRouteOf(get('/', { mode: 'navigate' }), SCOPE)).toBe('shell')
+    expect(offlineRouteOf(get('/index.html', { mode: 'navigate' }), SCOPE)).toBe('shell')
+  })
+
+  it('leaves any other address to the host: its 404 page, or a file such as robots.txt', () => {
+    expect(offlineRouteOf(get('/does-not-exist', { mode: 'navigate' }), SCOPE)).toBe('pass')
+    expect(offlineRouteOf(get('/robots.txt', { mode: 'navigate' }), SCOPE)).toBe('pass')
   })
 
   it('goes to the network first for the image manifest, cache first for image files', () => {

@@ -1,5 +1,6 @@
 import {
   APP_CACHE_PREFIX,
+  APP_SHELL,
   IMAGE_FILES_NEVER_OPENED,
   SW_FILE,
   SW_MANIFEST_TOKEN,
@@ -62,10 +63,12 @@ export function offlineRouteOf(request: OfflineRequest, scope: string): OfflineR
   if (url.origin !== base.origin || !url.pathname.startsWith(base.pathname)) {
     return 'pass'
   }
-  if (request.mode === 'navigate') {
-    return 'shell'
-  }
   const path = url.pathname.slice(base.pathname.length)
+  if (request.mode === 'navigate') {
+    // Routes live in the hash, so only the root is the game: any other address goes to the host,
+    // which answers with its 404 page (or the file, for robots.txt and the like).
+    return path === '' || path === APP_SHELL ? 'shell' : 'pass'
+  }
   if (path === VM_MANIFEST) {
     return 'manifest'
   }

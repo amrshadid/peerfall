@@ -27,7 +27,7 @@ export const VM_WARM_CONCURRENCY = 2
 /** What the app posts to the service worker once a network is up: cache the rest of the image. */
 export const SW_WARM_MESSAGE = 'peerfall:warm-vm-image'
 
-// Routes live in the hash, so every navigation is this one page.
+// Routes live in the hash, so the root's navigation is this one page.
 export const APP_SHELL = 'index.html'
 
 export const SW_MANIFEST_TOKEN = '__PF_SW_MANIFEST__'
