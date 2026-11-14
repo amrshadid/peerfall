@@ -1,0 +1,102 @@
+id: say-hello
+version: 1
+title: Say Hello
+summary: Turn OSPF on for the interface between two routers, watch them become peers, and see the route OSPF brings.
+minutes: 15
+chapter: build-an-underlay
+objective: Routers a and b are OSPF peers over their link, and a has learned b's loopback from OSPF.
+skills: [ospf-peers]
+prerequisites: [static-line-of-routers]
+teaches: [ospf, peer, ospf-interface-area]
+names: [lsdb, ospf-dead-interval, ospf-adjacency]
+uses: [vtysh, cli-modes, rib, administrative-distance]
+
+# Two routers, one link. ospfd runs on both. b has OSPF on b-a and on its loopback; a has it on its
+# loopback only: a-b has no area, so a sends no hellos there and ignores b's.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [ospfd]
+      config: |
+        interface a-b
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+
+objectives:
+  - id: b-is-a-peer
+    text: Make b a's OSPF peer on a-b, in the state Full.
+    check: { kind: peer, router: a, protocol: ospf, peer: 10.255.0.2, interface: a-b }
+  - id: learned-b
+    text: a learns b's loopback, 10.255.0.2/32, from OSPF.
+    check: { kind: rib, router: a, prefix: 10.255.0.2/32, protocol: ospf, selected: true }
+
+hints:
+  - text: On a, compare show ip ospf interface with the interfaces a has. Which one is missing?
+  - text: ospfd speaks only on an interface that has an OSPF area. Both ends of a link must be in the same area.
+  - text: On a, in interface mode for a-b, give it area 0, as b-a has.
+    command: ip ospf area 0
+
+chips:
+  - { command: show ip ospf neighbor, explain: "OSPF's peers on this router and their state" }
+  - { command: show ip ospf interface, explain: "the interfaces OSPF runs on, with their area and timers" }
+  - { command: show running-config, explain: "what the daemons are doing now, OSPF's lines included" }
+  - { command: ip ospf area 0, explain: "in interface mode: run OSPF on this interface, in area 0" }
+  - { command: show ip route, explain: "zebra's table; OSPF's routes are marked O" }
+
+codex:
+  - id: ospf
+    term: OSPF, Open Shortest Path First
+    simple: A routing protocol. Each router tells the others what it is connected to, and each works out its own routes from that.
+    deep: "In FRR, ospfd runs OSPF for IPv4. It sends and hears OSPF packets on each interface it runs on, keeps what its peers tell it, works out the routes, and hands them to zebra. They show as O in show ip route, with distance 110. Nobody writes these routes: when a link changes, OSPF works them out again."
+    sources: [ospfd/ospf_main.c, ospfd/ospf_zebra.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf"
+  - id: peer
+    term: A peer
+    simple: A router that a routing protocol talks to. b becomes a's OSPF peer once both ends of their link speak OSPF.
+    deep: "Each OSPF interface sends a hello every 10 seconds, naming the routers it has heard. Once each end sees itself named, the two swap what they know. show ip ospf neighbor lists each peer by its router id, with a state: Full once they hold the same picture. A neighbour on a link is not a peer until a protocol talks to it."
+    sources: [ospfd/ospf_packet.c, ospfd/ospf_nsm.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf neighbor"
+  - id: ospf-interface-area
+    term: ip ospf area
+    simple: The interface command that runs OSPF on an interface, in an area. Area 0 is where every OSPF network starts.
+    deep: "Typed in interface mode: ip ospf area 0. ospfd then sends hellos out of that interface and tells its peers about the interface's network. Both ends of a link must be in the same area: a hello from another area is refused, and the log says invalid Area ID. router ospf with network lines is the older way to say the same."
+    sources: [ospfd/ospf_vty.c, ospfd/ospf_interface.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf interface"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

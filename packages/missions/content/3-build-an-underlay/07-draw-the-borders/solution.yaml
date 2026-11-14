@@ -1,0 +1,36 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Everything in area 0, a included: a and b become peers and a learns c's loopback, but there
+  # is no border and no summary. a holds c's own router-LSA instead.
+  - id: all-area-0
+    passes: false
+    changes:
+      - router: a
+        lines:
+          [
+            configure terminal,
+            interface a-b,
+            no ip ospf area 1,
+            ip ospf area 0,
+            exit,
+            interface lo,
+            no ip ospf area 1,
+            ip ospf area 0,
+          ]
+  # a's end moved to area 0 instead of b's: the peers form in area 0 and a becomes the border
+  # router itself, with its loopback alone in area 1. c's loopback reaches a as a router-LSA
+  # of area 0, not as b's summary.
+  - id: a-end-to-area-0
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, no ip ospf area 1, ip ospf area 0]
+  - id: b-a-to-area-1
+    passes: true
+    changes:
+      - router: b
+        lines: [configure terminal, interface b-a, no ip ospf area 0, ip ospf area 1]

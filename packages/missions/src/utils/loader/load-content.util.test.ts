@@ -51,9 +51,9 @@ describe('the repository’s content', () => {
       expect([completed.length, open.map((each) => each.id)]).toEqual([completed.length, [mission.id]])
       completed.push(mission.id)
     }
-    // Stage 3 is not written yet: the mission after it needs what stage 2's capstone earns, so the journey stays in order.
+    // Stage 4 opens once stage 3's last written mission is completed, so the journey stays in order.
     expect(game.earnedIn(game.mission('the-link-that-never-went-down')?.prerequisites[0] ?? '')?.id).toBe(
-      'bring-the-line-up'
+      'draw-the-borders'
     )
     // Every skill is earned by one mission, and a mission named by its first skill in the map's Skills view.
     expect(game.skills.map((skill) => game.earnedIn(skill.id)?.id)).not.toContain(undefined)
@@ -88,6 +88,7 @@ describe('the repository’s content', () => {
     expect(game?.missions.map((mission) => game.numberOf(mission.id))).toEqual([
       ...['1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8'],
       ...['2.1', '2.2', '2.3', '2.4', '2.5', '2.6'],
+      ...['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7'],
       '4.1',
     ])
   })
@@ -141,7 +142,7 @@ describe('broken content', () => {
       'missions.the-dark-cable.skills[0]: "linux-interfaces-and-routes" is not a skill of skills.yaml'
     )
     const unearned = `${CONTENT_FILES.skills}  - { id: ghost-skill, title: Nothing, region: notice-it-fast }\n`
-    expect(errorsOf(withFiles({ skills: unearned }))).toEqual(['skills[16]: no mission earns "ghost-skill"'])
+    expect(errorsOf(withFiles({ skills: unearned }))).toEqual(['skills[23]: no mission earns "ghost-skill"'])
   })
 
   it('wants every stage with missions grouped in regions', () => {

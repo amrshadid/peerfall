@@ -1,0 +1,162 @@
+id: the-cheaper-way
+version: 1
+title: The Cheaper Way
+summary: Add up OSPF costs to predict the path between two routers, then change costs to move the traffic both ways.
+minutes: 20
+chapter: build-an-underlay
+objective: Traffic from a to d goes through c, and traffic from d back to a goes through c too.
+skills: [ospf-cost]
+prerequisites: [ospf-mtu]
+teaches: [ospf-cost, spf]
+names: []
+uses: [ospf, peer, lsdb, router-lsa, ttl, ecmp]
+
+# A square: a–b, a–c, b–d, c–d. Every interface costs 10 except both ends of c–d, which cost 30.
+# a reaches d through b (10 + 10 = 20), not through c (10 + 30 = 40), and d comes back the same way.
+network:
+  routers:
+    - name: a
+      loopback: 10.255.0.1/32
+      daemons: [ospfd]
+      config: |
+        interface a-b
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface a-c
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.1
+         log-adjacency-changes detail
+    - name: b
+      loopback: 10.255.0.2/32
+      daemons: [ospfd]
+      config: |
+        interface b-a
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface b-d
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.2
+         log-adjacency-changes detail
+    - name: c
+      loopback: 10.255.0.3/32
+      daemons: [ospfd]
+      config: |
+        interface c-a
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface c-d
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 30
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.3
+         log-adjacency-changes detail
+    - name: d
+      loopback: 10.255.0.4/32
+      daemons: [ospfd]
+      config: |
+        interface d-b
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 10
+        !
+        interface d-c
+         ip ospf area 0
+         ip ospf network point-to-point
+         ip ospf cost 30
+        !
+        interface lo
+         ip ospf area 0
+         ip ospf passive
+        !
+        router ospf
+         ospf router-id 10.255.0.4
+         log-adjacency-changes detail
+  links:
+    - ends:
+        - { router: a, address: 10.0.1.1/30 }
+        - { router: b, address: 10.0.1.2/30 }
+    - ends:
+        - { router: a, address: 10.0.2.1/30 }
+        - { router: c, address: 10.0.2.2/30 }
+    - ends:
+        - { router: b, address: 10.0.3.1/30 }
+        - { router: d, address: 10.0.3.2/30 }
+    - ends:
+        - { router: c, address: 10.0.4.1/30 }
+        - { router: d, address: 10.0.4.2/30 }
+
+# Neither is met at the start: both ways go through b. `via` holds only when the route has that
+# one next hop, so a tie, with two next hops, does not meet it.
+objectives:
+  - id: a-through-c
+    text: Make a send to d's loopback, 10.255.0.4, through c.
+    check: { kind: route, router: a, to: 10.255.0.4, protocol: ospf, via: 10.0.2.2 }
+  - id: d-through-c
+    text: Make d send back to a's loopback, 10.255.0.1, through c too.
+    check: { kind: route, router: d, to: 10.255.0.1, protocol: ospf, via: 10.0.4.1 }
+
+hints:
+  - text: Add up the costs of each path from a to d, then from d to a. Only the cost of the interface a packet leaves by counts.
+  - text: OSPF takes the path with the lowest total. Raise the cost on the way you don't want, at each end that sends into it.
+  - text: On a, in interface mode for a-b, raise its cost above 30. Then the same on b for b-a.
+    command: ip ospf cost 50
+
+chips:
+  - { command: show ip ospf interface, explain: "OSPF on each interface, with its cost" }
+  - { command: show ip ospf route, explain: "OSPF's own table: each network, its total cost and its next hop" }
+  - { command: traceroute -n 10.255.0.4, explain: "at a's shell: the routers a packet to d passes, one per line" }
+  - { command: ip route get 10.255.0.4, explain: "at a's shell: which way Linux sends to d's loopback" }
+  - { command: ip ospf cost, explain: "in interface mode: set the cost of sending out of this interface" }
+  - { command: show ip route, explain: "zebra's table; the second number in brackets is OSPF's cost" }
+
+codex:
+  - id: ospf-cost
+    term: OSPF cost
+    simple: A number on each interface. A path's cost is the sum of the costs of the interfaces it leaves by; the lowest wins.
+    deep: "Set in interface mode with ip ospf cost 50; show ip ospf interface prints Cost: 50. Each router puts its interfaces' costs in its router-LSA. Only the sending end counts, so a path and its way back can cost differently and take different routers. show ip route prints the total as the second number, [110/20]. Left out, the cost comes from the interface's speed."
+    sources: [ospfd/ospf_interface.c, ospfd/ospf_lsa.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf interface"
+  - id: spf
+    term: SPF, the shortest path first
+    simple: How each router turns the shared database into routes. It finds the cheapest path from itself to every router.
+    deep: "ospfd runs Dijkstra's shortest path first on the database, with itself at the root, so every router draws its own tree from the same map. A change in any LSA runs it again. Two paths with the same total cost are both kept, as two next hops. show ip ospf route prints the result, before zebra and the kernel."
+    sources: [ospfd/ospf_spf.c, ospfd/ospf_route.c]
+    docs: https://docs.frrouting.org/en/latest/ospfd.html
+    tryIt: vtysh -c "show ip ospf route"
+
+story:
+  scene: story.md#scene
+  seeIt: story.md#see-it
+  buildIt: story.md#build-it
+  watchIt: story.md#watch-it
+  debrief: story.md#debrief
+  realWorld: story.md#real-world

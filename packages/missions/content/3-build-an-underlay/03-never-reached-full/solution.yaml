@@ -1,0 +1,32 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, `shell` at that router's shell.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Starting OSPF again changes nothing: the two ends still disagree.
+  - id: restart-ospf
+    passes: false
+    changes:
+      - router: a
+        lines: [clear ip ospf process]
+  # The tempting half-fix: OSPF stops comparing MTUs and the peers reach Full, while large
+  # packets are still lost on the link.
+  - id: mtu-ignore
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface a-b, ip ospf mtu-ignore]
+      - router: b
+        lines: [configure terminal, interface b-a, ip ospf mtu-ignore]
+  - id: match-1500
+    passes: true
+    changes:
+      - router: b
+        shell: [ip link set b-a mtu 1500]
+  # Agreeing on 9000 is agreeing too: both ends send and take the same largest packet.
+  - id: match-9000
+    passes: true
+    changes:
+      - router: a
+        shell: [ip link set a-b mtu 9000]

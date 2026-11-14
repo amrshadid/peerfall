@@ -186,15 +186,91 @@ entries:
     kind: vtysh
     what: In configure mode, removes a static route; type it with the same network and next hop it was written with.
     firstMet: written-but-not-used
-  # 4.1 The Link That Never Went Down
+  # 3.1 Say Hello
   - name: show ip ospf neighbor
     kind: vtysh
     what: OSPF's peers on this router, one line each, with their state and the dead timer counting down.
-    firstMet: the-link-that-never-went-down
+    firstMet: say-hello
+    deepenedIn: [never-reached-full, the-link-that-never-went-down]
   - name: show ip ospf interface
     kind: vtysh
-    what: OSPF on each interface, with its cost and its hello and dead timers.
-    firstMet: the-link-that-never-went-down
+    what: OSPF on each interface, with its area, its cost, its MTU and its hello and dead timers. Interfaces without OSPF are not listed.
+    firstMet: say-hello
+    deepenedIn: [the-shared-map, the-cheaper-way, draw-the-borders, the-link-that-never-went-down]
+  - name: ip ospf area
+    kind: vtysh
+    what: "In interface mode, runs OSPF on the interface, in an area: ip ospf area 0. Both ends of a link need the same area."
+    firstMet: say-hello
+    deepenedIn: [draw-the-borders]
+  - name: grep
+    kind: shell
+    what: "print only the lines of a file that hold a word: grep AdjChg /var/log/frr/a.log"
+    firstMet: say-hello
+  # 3.2 The Shared Map
+  - name: show ip ospf database
+    kind: vtysh
+    what: OSPF's link-state database, one line per LSA, with who sent it, its age and its sequence number. The same on every router of an area.
+    firstMet: the-shared-map
+    deepenedIn: [bring-it-in, draw-the-borders]
+  - name: show ip ospf database router
+    kind: vtysh
+    what: "Each router-LSA in full: every link and network it lists, with its cost. A router id after it shows that router's only; self-originate shows this router's own."
+    firstMet: the-shared-map
+  - name: ip ospf passive
+    kind: vtysh
+    what: In interface mode, keeps the interface in OSPF's database but sends no hellos on it, for interfaces no OSPF router listens on, such as lo.
+    firstMet: the-shared-map
+  # 3.3 Never Reached Full
+  - name: ip link show
+    kind: shell
+    what: "one interface's state, MTU and MAC address: ip link show a-b"
+    firstMet: never-reached-full
+  - name: ping -s
+    kind: shell
+    what: "ping with that many bytes of data in each packet: ping -c 2 -s 2000 10.0.1.2"
+    firstMet: never-reached-full
+  - name: ip link set mtu
+    kind: shell
+    what: "set an interface's MTU, the largest packet it sends: ip link set b-a mtu 1500. It lasts until the router boots again."
+    firstMet: never-reached-full
+  # 3.4 The Cheaper Way
+  - name: show ip ospf route
+    kind: vtysh
+    what: OSPF's own table, before zebra's, with each network's total cost and its next hops, every equal path included. IA marks a route from another area, E2 an external one.
+    firstMet: the-cheaper-way
+    deepenedIn: [two-ways-at-once, draw-the-borders]
+  - name: ip ospf cost
+    kind: vtysh
+    what: "In interface mode, sets the cost of sending out of the interface: ip ospf cost 50. A path costs the sum of the interfaces it leaves by."
+    firstMet: the-cheaper-way
+  # 3.5 Two Ways at Once
+  - name: router ospf
+    kind: vtysh
+    what: In configure mode, enters ospfd's own settings, router ospf mode, at the prompt a(config-router)#.
+    firstMet: two-ways-at-once
+  - name: maximum-paths
+    kind: vtysh
+    what: In router ospf mode, the most equal-cost paths ospfd hands zebra for one network, 1 to 256; no maximum-paths puts back the default.
+    firstMet: two-ways-at-once
+  # 3.6 Bring It In
+  - name: redistribute static
+    kind: vtysh
+    what: In router ospf mode, brings the static routes zebra has selected into OSPF as external routes; redistribute connected brings the interfaces' networks.
+    firstMet: bring-it-in
+  - name: show ip ospf database external
+    kind: vtysh
+    what: Each external LSA in full, with its metric, its metric type, and the router that sent it.
+    firstMet: bring-it-in
+  # 3.7 Draw the Borders
+  - name: show ip ospf
+    kind: vtysh
+    what: ospfd's own settings and state, among them the ECMP limit, whether the router is an ABR, and each area with its count of LSAs.
+    firstMet: draw-the-borders
+  - name: show ip ospf database summary
+    kind: vtysh
+    what: Each summary-LSA in full, with its network, its mask and the cost the ABR gives it.
+    firstMet: draw-the-borders
+  # 4.1 The Link That Never Went Down
   - name: ip ospf bfd
     kind: vtysh
     what: In interface mode, asks bfdd for a BFD session with every OSPF peer on that interface. Needed at both ends.

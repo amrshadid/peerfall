@@ -24,7 +24,7 @@ Neighbor ID     Pri State           Up Time         Dead Time Address         In
 10.255.0.3        1 Full/-          16.680s           33.227s 10.0.2.2        a-c:10.0.2.1                         0     0     0
 ```
 
-> **bfdd:** ospfd, FRR's OSPF daemon, talks to the neighbour at the end of each cable: b and c, named by their loopback addresses, which OSPF uses as each router's name. A router that a protocol talks to is a _peer_, and the Peerfall is named after them. `Full` means a and that peer have swapped everything they know of the network: in OSPF's word, an _adjacency_. From what it learned, each router works out its own routes.
+> **bfdd:** a's two peers, b and c, one at the end of each of its cables, named by their router ids, their loopback addresses, as you saw in Say Hello. `Full`: each of these adjacencies has swapped the whole database, so the three routers hold the same map, and each works out its own routes from it.
 
 > **bfdd:** To stay peers, each end sends a _hello_, a small OSPF packet, every 10 seconds. `Dead Time` counts down from 40 seconds and starts again at every hello: that is OSPF's _dead timer_. When it reaches zero, the peer is dropped. Now the route to c's loopback: `show ip route 10.255.0.3`.
 

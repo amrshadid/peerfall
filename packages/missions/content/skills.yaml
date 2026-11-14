@@ -77,12 +77,49 @@ skills:
     region: zebras-choice
     # Earned in 2.6, Bring the Line Up.
     prerequisites: [administrative-distance]
+  # Stage 3, Meet your peers
+  - id: ospf-peers
+    title: Make two routers OSPF peers
+    region: meet-your-peers
+    # Earned in 3.1, Say Hello.
+    prerequisites: [static-line-of-routers]
+  - id: ospf-lsdb
+    title: Read OSPF's database and add to it
+    region: meet-your-peers
+    # Earned in 3.2, The Shared Map.
+    prerequisites: [ospf-peers]
+  - id: ospf-mtu
+    title: Find why OSPF peers never reach Full
+    region: meet-your-peers
+    # Earned in 3.3, Never Reached Full.
+    prerequisites: [ospf-lsdb]
+  # Stage 3, Choose the way
+  - id: ospf-cost
+    title: Predict and steer the path with OSPF costs
+    region: choose-the-way
+    # Earned in 3.4, The Cheaper Way.
+    prerequisites: [ospf-mtu]
+  - id: ospf-ecmp
+    title: Use two equal OSPF paths at once
+    region: choose-the-way
+    # Earned in 3.5, Two Ways at Once.
+    prerequisites: [ospf-cost]
+  - id: ospf-redistribute
+    title: Bring outside routes into OSPF
+    region: choose-the-way
+    # Earned in 3.6, Bring It In.
+    prerequisites: [ospf-ecmp]
+  - id: ospf-areas
+    title: Split a network into OSPF areas
+    region: choose-the-way
+    # Earned in 3.7, Draw the Borders.
+    prerequisites: [ospf-redistribute]
   # Stage 4, Notice it fast
   - id: outage-measure
     title: Measure an outage and tell what noticed it
     region: notice-it-fast
     # Earned in 4.1, The Link That Never Went Down.
-    prerequisites: [static-line-of-routers]
+    prerequisites: [ospf-areas]
   - id: bfd-fast-detection
     title: Make OSPF notice a dead link in under a second with BFD
     region: notice-it-fast

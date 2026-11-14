@@ -1,0 +1,30 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # c's connected routes brought in instead of its static one: the customer's address, which
+  # c knows only from staticd, stays out of OSPF.
+  - id: redistribute-connected
+    passes: false
+    changes:
+      - router: c
+        lines: [configure terminal, router ospf, redistribute connected]
+  # The right line on the wrong router: a has no static route to bring in.
+  - id: on-a
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, router ospf, redistribute static]
+  # A static route on a towards b: a has a route, b has none, and the route is not OSPF's.
+  - id: static-on-a
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 192.0.2.1/32 10.0.1.2]
+  - id: redistribute-static
+    passes: true
+    changes:
+      - router: c
+        lines: [configure terminal, router ospf, redistribute static]

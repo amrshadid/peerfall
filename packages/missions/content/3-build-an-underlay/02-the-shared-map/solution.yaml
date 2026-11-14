@@ -1,0 +1,23 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # The right line on the wrong router: a's loopback is already in OSPF.
+  - id: wrong-router
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, interface lo, ip ospf area 0, ip ospf passive]
+  # Passive with no area: OSPF still does not run on c's lo.
+  - id: passive-only
+    passes: false
+    changes:
+      - router: c
+        lines: [configure terminal, interface lo, ip ospf passive]
+  - id: lo-in-area-0
+    passes: true
+    changes:
+      - router: c
+        lines: [configure terminal, interface lo, ip ospf area 0, ip ospf passive]

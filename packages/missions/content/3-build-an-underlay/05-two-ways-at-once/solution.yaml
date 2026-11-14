@@ -1,0 +1,32 @@
+# The golden runs: what a player might do, and whether the mission must pass.
+# `lines` are typed into that router's vtysh, one after another.
+runs:
+  - id: start
+    passes: false
+    changes: []
+  # Two static routes to d's loopback: both next hops reach the kernel, but they are static
+  # routes, distance 1, not OSPF's. OSPF still hands zebra one path.
+  - id: static-ecmp
+    passes: false
+    changes:
+      - router: a
+        lines: [configure terminal, ip route 10.255.0.4/32 10.0.1.2, ip route 10.255.0.4/32 10.0.2.2]
+  # The limit set and removed on d, the router at the other end: a's own limit still hands
+  # zebra one path.
+  - id: wrong-router
+    passes: false
+    changes:
+      - router: d
+        lines: [configure terminal, router ospf, maximum-paths 1, no maximum-paths 1]
+  # The limit removed: back to FRR's default.
+  - id: no-maximum-paths
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router ospf, no maximum-paths 1]
+  # Any limit of two or more lets both paths through: judged by the kernel's route, not the number.
+  - id: maximum-paths-2
+    passes: true
+    changes:
+      - router: a
+        lines: [configure terminal, router ospf, maximum-paths 2]

@@ -7,14 +7,13 @@ chapter: recover-from-failure
 objective: When the link between a and c stops passing packets, traffic from a to c is back through b in under two seconds.
 # Kept as it was: the network, the probe, the fault, the recovery target, the objectives and
 # their checks, so the four recorded golden runs stay valid. Only the story, hints, chips and
-# cards are new. Stage 3 is not written yet, so the story explains OSPF's terms where they appear.
+# cards are new. Peers and adjacencies are stage 3's, and the story recalls them.
 skills: [outage-measure, bfd-fast-detection]
-# It follows stage 3's last mission; until stage 3 is written, it needs what stage 2's capstone earns.
-prerequisites: [static-line-of-routers]
-# peer: named in 1.1's Scene, explained here beside show ip ospf neighbor until stage 3 teaches it.
-teaches: [bfd, ospf-dead-interval, peer]
-names: [ospf-adjacency]
-uses: [route, next-hop, administrative-distance, vtysh, cli-modes]
+# It follows stage 3's last mission.
+prerequisites: [ospf-areas]
+teaches: [bfd, ospf-dead-interval]
+names: []
+uses: [peer, ospf-adjacency, route, next-hop, administrative-distance, vtysh, cli-modes]
 
 # Three routers in a triangle. Every link costs 10, so a reaches c directly (cost 10)
 # and keeps the way through b (cost 20) as its backup.
