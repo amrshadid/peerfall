@@ -7,6 +7,14 @@ journey, complete and checked; until then, releases are alpha pre-releases.
 
 ## [Unreleased]
 
+### Added
+
+- **A shared link shows a card, and search engines get the site's address.** A link to the
+  public site now carries the title screen as its picture, with the game's name and what
+  it teaches. The page names its canonical address, says it is a free game and who made
+  it, and has a `robots.txt` and a sitemap. With JavaScript off, the page says what
+  Peerfall is and where its source is.
+
 ### Changed
 
 - **The debrief is laid out as Kernelfall's level card:** the debrief's first line as its
@@ -23,6 +31,14 @@ journey, complete and checked; until then, releases are alpha pre-releases.
   order as before. A Missions / Skills switch names each stop by its mission or its first
   skill, and the side panel adds Skill, Needs (each skill met or not), Time and the
   mission's Codex cards.
+
+### Fixed
+
+- **A search result names the game, not "Needs a bigger screen".** Search engines read
+  the page at a phone's width, where the game shows its small-screen notice, and listed
+  that notice's title. The page keeps the game's title at every width, the notice now
+  says first what Peerfall is, and the page has bitmap icons beside the drawn one, for
+  search results and home screens.
 
 ## [0.1.0-alpha.3] - 2026-11-14
 
