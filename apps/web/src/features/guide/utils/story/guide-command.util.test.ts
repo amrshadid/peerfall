@@ -126,7 +126,7 @@ describe('the stories on disk', () => {
   it("waits for the commands The Router's Language asks for, the refused one and the `?` ones included", () => {
     expect(commandsOf('the-routers-language', 'see')).toEqual([
       'vtysh',
-      null,
+      '?',
       'show i?',
       'sh int br',
       'show interface a-c',
