@@ -75,8 +75,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       driver.js:
-        specifier: ^1.11.0
-        version: 1.12.1
+        specifier: ^1.14.0
+        version: 1.14.0
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -149,8 +149,8 @@ importers:
         specifier: ^4.4.2
         version: 4.4.2
       v86:
-        specifier: 0.5.471
-        version: 0.5.471
+        specifier: 0.5.473
+        version: 0.5.473
       zustand:
         specifier: ^5.1.0
         version: 5.1.0(@types/react@19.3.0)(react@19.3.1)
@@ -809,8 +809,8 @@ packages:
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
-  driver.js@1.12.1:
-    resolution: {integrity: sha512-upBRqQW+bz+yfH7ee1gjWBaq0ue7i2343f2U3WzIUc3bhs5hwb2jz86cuB8gArRh3nfNp77CLNgkUtArTYTKFA==}
+  driver.js@1.14.0:
+    resolution: {integrity: sha512-BnCFuNU8QO2rrYiDra43Ortx6D6chqMvEMF1q3fWQfsC3xNyCX4T1P1vZDTXTxGdtcXh2v5r11hxSpNLF3DJVw==}
 
   enhanced-resolve@5.27.0:
     resolution: {integrity: sha512-Do6BB2xzlcc/odFg+XEYyneAx4T/WfywO71yw9ePS2tVfRsf7JVR4mUeELadIeHzixkzbG5DpluiEFPi2WGfYQ==}
@@ -1081,8 +1081,8 @@ packages:
     resolution: {integrity: sha512-8Mx+uNKKER2bA4AdtedkqRbwUCIJFr2nJckXRe5yrDqzePqwLP7VNcctN8/XdmDSbF7mS+jJKIszlL+vbam1VA==}
     engines: {node: '>=22.19.0'}
 
-  v86@0.5.471:
-    resolution: {integrity: sha512-2TuNIpJU6sYYKnq/xR6F9Epi59DVBYpmkcV1LzLgNwHWxs/uFPB4szeYdsbhn6P8kV5YOlC6+7xSHEOQ2UiYdQ==}
+  v86@0.5.473:
+    resolution: {integrity: sha512-mNHB0DXDmfxn0CrlqCmlgMR1W7aKuD+sHmSctLcTROOwpOvbE4qsAhmaE6Vy+riQfcE4PfA2xvW59/ZXsYnHNw==}
 
   vite@8.3.8:
     resolution: {integrity: sha512-LzOn3h9rG/0vhLdXrV4yJ4QFA9eEoqCl+Yx+kGJd7aB9w6nfNgVHKSYwLPZUHrz4ZGa+t+kXjV9itvcHDLQouA==}
@@ -1667,7 +1667,7 @@ snapshots:
 
   dom-accessibility-api@0.5.16: {}
 
-  driver.js@1.12.1: {}
+  driver.js@1.14.0: {}
 
   enhanced-resolve@5.27.0:
     dependencies:
@@ -1924,7 +1924,7 @@ snapshots:
 
   undici@8.12.4: {}
 
-  v86@0.5.471: {}
+  v86@0.5.473: {}
 
   vite@8.3.8(@types/node@26.6.6)(jiti@2.7.0)(yaml@2.9.1):
     dependencies:
