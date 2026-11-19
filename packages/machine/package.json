@@ -31,7 +31,7 @@
   "dependencies": {
     "@peerfall/core": "workspace:*",
     "comlink": "^4.4.2",
-    "v86": "0.5.471",
+    "v86": "0.5.473",
     "zustand": "^5.1.0"
   },
   "peerDependencies": {
